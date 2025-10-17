@@ -1,7 +1,6 @@
 package com.nongtri.app
 
 object BuildConfig {
-    // Set this to your Railway deployment URL
-    // Example: "https://your-app-name.up.railway.app"
-    const val API_URL = "YOUR_API_URL_HERE"
+    // Railway deployment URL
+    const val API_URL = "https://nong-tri.up.railway.app"
 }
