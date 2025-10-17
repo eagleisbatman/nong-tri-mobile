@@ -2,7 +2,6 @@ package com.nongtri.app
 
 import androidx.compose.animation.*
 import androidx.compose.runtime.*
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.nongtri.app.data.preferences.UserPreferences
 import com.nongtri.app.l10n.Language
 import com.nongtri.app.ui.screens.ChatScreen
@@ -32,7 +31,7 @@ fun App() {
                     }
                 )
             } else {
-                val chatViewModel: ChatViewModel = viewModel { ChatViewModel() }
+                val chatViewModel = remember { ChatViewModel() }
                 ChatScreen(
                     viewModel = chatViewModel,
                     language = selectedLanguage,
