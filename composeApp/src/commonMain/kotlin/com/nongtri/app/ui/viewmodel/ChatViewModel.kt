@@ -1,4 +1,4 @@
-package com.nongtri.app.ui
+package com.nongtri.app.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -16,6 +16,7 @@ import kotlin.uuid.Uuid
 
 data class ChatUiState(
     val messages: List<ChatMessage> = emptyList(),
+    val currentMessage: String = "",
     val isLoading: Boolean = false,
     val error: String? = null
 )
@@ -23,7 +24,7 @@ data class ChatUiState(
 @OptIn(ExperimentalUuidApi::class)
 class ChatViewModel(
     private val api: NongTriApi = NongTriApi(),
-    private val userId: String = Uuid.random().toString() // Use device ID in production
+    private val userId: String = Uuid.random().toString() // Will be replaced with device ID
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ChatUiState())
@@ -33,8 +34,15 @@ class ChatViewModel(
         loadHistory()
     }
 
+    fun updateMessage(message: String) {
+        _uiState.update { it.copy(currentMessage = message) }
+    }
+
     fun sendMessage(message: String) {
         if (message.isBlank()) return
+
+        // Clear input field
+        _uiState.update { it.copy(currentMessage = "") }
 
         // Add user message
         val userMessage = ChatMessage(
@@ -88,7 +96,7 @@ class ChatViewModel(
         }
     }
 
-    fun loadHistory() {
+    private fun loadHistory() {
         viewModelScope.launch {
             api.getHistory(userId).fold(
                 onSuccess = { response ->
@@ -101,7 +109,7 @@ class ChatViewModel(
                                     else -> MessageRole.SYSTEM
                                 },
                                 content = item.content,
-                                timestamp = Clock.System.now() // Parse timestamp if needed
+                                timestamp = Clock.System.now() // TODO: Parse actual timestamp
                             )
                         }
                         _uiState.update { it.copy(messages = messages) }
@@ -118,7 +126,9 @@ class ChatViewModel(
                 onSuccess = {
                     _uiState.update { it.copy(messages = emptyList()) }
                 },
-                onFailure = { /* Show error */ }
+                onFailure = { error ->
+                    _uiState.update { it.copy(error = error.message) }
+                }
             )
         }
     }
