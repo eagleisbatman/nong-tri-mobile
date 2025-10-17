@@ -1,0 +1,39 @@
+package com.nongtri.app.data.api
+
+import kotlinx.serialization.Serializable
+
+@Serializable
+data class ChatRequest(
+    val userId: String,
+    val message: String,
+    val userName: String? = null
+)
+
+@Serializable
+data class ChatResponse(
+    val success: Boolean,
+    val response: String? = null,
+    val timestamp: String? = null,
+    val error: String? = null
+)
+
+@Serializable
+data class HistoryResponse(
+    val success: Boolean,
+    val history: List<HistoryItem> = emptyList(),
+    val error: String? = null
+)
+
+@Serializable
+data class HistoryItem(
+    val role: String,
+    val content: String,
+    val timestamp: String
+)
+
+@Serializable
+data class ApiError(
+    val success: Boolean = false,
+    val error: String,
+    val details: String? = null
+)
