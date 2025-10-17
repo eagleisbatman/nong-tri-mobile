@@ -1,5 +1,6 @@
 package com.nongtri.app.data.api
 
+import com.nongtri.app.BuildConfig
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.plugins.contentnegotiation.*
@@ -10,7 +11,7 @@ import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
 
 class NongTriApi(
-    private val baseUrl: String = "https://nong-tri.up.railway.app"
+    private val baseUrl: String = BuildConfig.API_URL
 ) {
     private val client = HttpClient {
         install(ContentNegotiation) {
