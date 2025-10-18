@@ -71,6 +71,28 @@ fun MessageBubble(
                     .widthIn(min = 100.dp),
                 horizontalAlignment = if (isUser) Alignment.End else Alignment.Start
             ) {
+                // Sender label and timestamp at top
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp, vertical = 2.dp),
+                    horizontalArrangement = if (isUser) Arrangement.End else Arrangement.Start,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = if (isUser) "You" else "Nông Trí AI",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = formatTimestamp(message.timestamp),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
                 // Message bubble
                 Box(
                     modifier = Modifier
@@ -112,16 +134,6 @@ fun MessageBubble(
                         )
                     }
                 }
-
-                // Timestamp
-                Text(
-                    text = formatTimestamp(message.timestamp),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                        .testTag(TestTags.messageTimestamp(index))
-                )
             }
         }
     }
