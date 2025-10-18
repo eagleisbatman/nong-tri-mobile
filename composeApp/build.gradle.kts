@@ -41,6 +41,7 @@ kotlin {
             implementation(libs.ktor.serialization.kotlinx.json)
             implementation(libs.ktor.client.logging)
             implementation(libs.multiplatform.markdown.m3)
+            implementation(libs.compose.material.icons.extended)
         }
     }
 }

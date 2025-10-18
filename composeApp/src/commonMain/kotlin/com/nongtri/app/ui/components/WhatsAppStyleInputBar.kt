@@ -3,7 +3,9 @@ package com.nongtri.app.ui.components
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.outlined.CameraAlt
+import androidx.compose.material.icons.outlined.Mic
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -39,10 +41,10 @@ fun WhatsAppStyleInputBar(
                 onClick = onImageClick,
                 enabled = isEnabled
             ) {
-                Text(
-                    text = "📷",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = if (isEnabled) MaterialTheme.colorScheme.primary
+                Icon(
+                    imageVector = Icons.Outlined.CameraAlt,
+                    contentDescription = "Attach image",
+                    tint = if (isEnabled) MaterialTheme.colorScheme.primary
                           else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                 )
             }
@@ -91,10 +93,10 @@ fun WhatsAppStyleInputBar(
                     onClick = onVoiceClick,
                     enabled = isEnabled
                 ) {
-                    Text(
-                        text = "🎤",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = if (isEnabled) MaterialTheme.colorScheme.primary
+                    Icon(
+                        imageVector = Icons.Outlined.Mic,
+                        contentDescription = "Voice input",
+                        tint = if (isEnabled) MaterialTheme.colorScheme.primary
                               else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                     )
                 }
