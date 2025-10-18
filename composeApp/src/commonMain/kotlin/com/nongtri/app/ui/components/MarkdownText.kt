@@ -37,17 +37,17 @@ fun MarkdownText(
         typography = markdownTypography(
             h1 = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
             h2 = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-            h3 = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+            h3 = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
             h4 = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-            h5 = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
-            h6 = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-            text = MaterialTheme.typography.bodyLarge,
+            h5 = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
+            h6 = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
+            text = MaterialTheme.typography.bodyMedium,
             code = MaterialTheme.typography.bodyMedium,
             quote = MaterialTheme.typography.bodyMedium,
-            paragraph = MaterialTheme.typography.bodyLarge,
-            ordered = MaterialTheme.typography.bodyLarge,
-            bullet = MaterialTheme.typography.bodyLarge,
-            list = MaterialTheme.typography.bodyLarge
+            paragraph = MaterialTheme.typography.bodyMedium,
+            ordered = MaterialTheme.typography.bodyMedium,
+            bullet = MaterialTheme.typography.bodyMedium,
+            list = MaterialTheme.typography.bodyMedium
         ),
         modifier = modifier
     )

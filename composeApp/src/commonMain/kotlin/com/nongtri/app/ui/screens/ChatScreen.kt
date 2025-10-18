@@ -90,9 +90,19 @@ fun ChatScreen(
                                     text = {
                                         Row(
                                             horizontalArrangement = Arrangement.SpaceBetween,
-                                            modifier = Modifier.fillMaxWidth()
+                                            modifier = Modifier.fillMaxWidth(),
+                                            verticalAlignment = Alignment.CenterVertically
                                         ) {
-                                            Text(lang.displayName)
+                                            Row(
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Text(
+                                                    text = lang.flag,
+                                                    style = MaterialTheme.typography.titleMedium
+                                                )
+                                                Text(lang.displayName)
+                                            }
                                             if (lang == language) {
                                                 Text(
                                                     text = "✓",
