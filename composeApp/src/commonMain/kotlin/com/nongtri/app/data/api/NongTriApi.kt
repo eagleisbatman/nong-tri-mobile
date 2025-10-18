@@ -107,6 +107,23 @@ class NongTriApi(
         }
     }
 
+    suspend fun submitFeedback(
+        userId: String,
+        conversationId: Int,
+        isPositive: Boolean,
+        feedbackText: String? = null
+    ): Result<Boolean> {
+        return try {
+            client.post("$baseUrl/api/feedback") {
+                contentType(ContentType.Application.Json)
+                setBody(FeedbackRequest(userId, conversationId, isPositive, feedbackText))
+            }
+            Result.success(true)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     fun close() {
         client.close()
     }

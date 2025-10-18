@@ -25,6 +25,7 @@ kotlin {
             implementation(libs.androidx.lifecycle.runtime.compose)
             implementation(libs.ktor.client.okhttp)
             implementation(libs.kotlinx.coroutines.android)
+            implementation(libs.okhttp)
         }
         commonMain.dependencies {
             implementation(compose.runtime)

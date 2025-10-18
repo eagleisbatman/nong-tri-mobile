@@ -285,7 +285,11 @@ fun ChatScreen(
                     MessageBubble(
                         message = message,
                         index = index,
-                        isLightTheme = isLightTheme
+                        isLightTheme = isLightTheme,
+                        language = language,
+                        onFeedback = { conversationId, isPositive ->
+                            viewModel.submitFeedback(conversationId, isPositive)
+                        }
                     )
                 }
 

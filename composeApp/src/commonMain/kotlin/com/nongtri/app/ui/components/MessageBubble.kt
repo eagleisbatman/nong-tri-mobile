@@ -30,6 +30,8 @@ fun MessageBubble(
     message: ChatMessage,
     index: Int,
     isLightTheme: Boolean,
+    language: com.nongtri.app.l10n.Language,
+    onFeedback: (Int?, Boolean) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier
 ) {
     val isUser = message.role == MessageRole.USER
@@ -63,20 +65,19 @@ fun MessageBubble(
                 .padding(horizontal = 16.dp, vertical = 4.dp)
                 .scale(scale)
                 .testTag(TestTags.messageBubble(index)),
-            horizontalArrangement = if (isUser) Arrangement.End else Arrangement.Start
+            horizontalArrangement = Arrangement.Start
         ) {
             Column(
                 modifier = Modifier
-                    .fillMaxWidth(if (isUser) 0.85f else 0.95f)
+                    .fillMaxWidth()
                     .widthIn(min = 100.dp),
-                horizontalAlignment = if (isUser) Alignment.End else Alignment.Start
+                horizontalAlignment = Alignment.Start
             ) {
                 // Sender label and timestamp at top
                 Row(
                     modifier = Modifier
-                        .fillMaxWidth()
                         .padding(horizontal = 8.dp, vertical = 2.dp),
-                    horizontalArrangement = if (isUser) Arrangement.End else Arrangement.Start,
+                    horizontalArrangement = Arrangement.Start,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
@@ -118,10 +119,13 @@ fun MessageBubble(
                         // Action buttons for AI messages
                         MessageActionButtons(
                             messageContent = message.content,
+                            language = language,
                             onCopy = { /* TODO */ },
                             onShare = { /* TODO */ },
                             onListen = { /* TODO */ },
-                            onFeedback = { isPositive -> /* TODO */ }
+                            onFeedback = { isPositive ->
+                                onFeedback(message.conversationId, isPositive)
+                            }
                         )
                     }
                 }

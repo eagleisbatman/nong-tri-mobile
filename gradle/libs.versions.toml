@@ -21,6 +21,7 @@ kotlinx-serialization = "1.7.3"
 kotlinx-datetime = "0.6.1"
 commonmark = "0.22.0"
 multiplatform-markdown = "0.29.0"
+okhttp = "4.12.0"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -48,6 +49,7 @@ ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx
 ktor-client-logging = { module = "io.ktor:ktor-client-logging", version.ref = "ktor" }
 commonmark = { module = "org.commonmark:commonmark", version.ref = "commonmark" }
 multiplatform-markdown-m3 = { module = "com.mikepenz:multiplatform-markdown-renderer-m3", version.ref = "multiplatform-markdown" }
+okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

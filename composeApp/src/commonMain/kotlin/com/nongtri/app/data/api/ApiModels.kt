@@ -37,3 +37,11 @@ data class ApiError(
     val error: String,
     val details: String? = null
 )
+
+@Serializable
+data class FeedbackRequest(
+    val userId: String,
+    val conversationId: Int,
+    val isPositive: Boolean,
+    val feedbackText: String? = null
+)

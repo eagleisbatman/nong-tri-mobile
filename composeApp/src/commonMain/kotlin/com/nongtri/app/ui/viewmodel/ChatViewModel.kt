@@ -153,6 +153,29 @@ class ChatViewModel(
         _uiState.update { it.copy(error = null) }
     }
 
+    fun submitFeedback(conversationId: Int?, isPositive: Boolean) {
+        if (conversationId == null) {
+            // Can't submit feedback without conversation ID
+            return
+        }
+
+        viewModelScope.launch {
+            api.submitFeedback(
+                userId = userId,
+                conversationId = conversationId,
+                isPositive = isPositive
+            ).fold(
+                onSuccess = {
+                    // Feedback submitted successfully (silent success)
+                },
+                onFailure = { error ->
+                    // Optionally log or handle error
+                    println("Failed to submit feedback: ${error.message}")
+                }
+            )
+        }
+    }
+
     override fun onCleared() {
         super.onCleared()
         api.close()

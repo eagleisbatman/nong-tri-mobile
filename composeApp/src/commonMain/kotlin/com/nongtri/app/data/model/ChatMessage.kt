@@ -11,7 +11,8 @@ data class ChatMessage(
     val content: String,
     val timestamp: Instant = Clock.System.now(),
     val isLoading: Boolean = false,
-    val hasError: Boolean = false
+    val hasError: Boolean = false,
+    val conversationId: Int? = null  // Backend database ID for feedback linking
 )
 
 @Serializable
