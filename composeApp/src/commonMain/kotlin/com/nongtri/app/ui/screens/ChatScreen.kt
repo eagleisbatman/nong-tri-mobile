@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -13,11 +15,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.nongtri.app.data.model.MessageRole
 import com.nongtri.app.l10n.Language
 import com.nongtri.app.l10n.LocalizationProvider
 import com.nongtri.app.ui.components.*
-import com.nongtri.app.ui.viewmodel.ChatUiState
 import com.nongtri.app.ui.viewmodel.ChatViewModel
 import kotlinx.coroutines.launch
 
@@ -26,7 +26,8 @@ import kotlinx.coroutines.launch
 fun ChatScreen(
     viewModel: ChatViewModel,
     language: Language,
-    onProfileClick: () -> Unit,
+    onLanguageChange: (Language) -> Unit,
+    onClearHistory: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -35,6 +36,8 @@ fun ChatScreen(
 
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
+
+    var showMenu by remember { mutableStateOf(false) }
 
     // Auto-scroll to bottom when new messages arrive
     LaunchedEffect(uiState.messages.size) {
@@ -52,30 +55,70 @@ fun ChatScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Column(
-                        modifier = Modifier.testTag(TestTags.CHAT_TITLE)
-                    ) {
-                        Text(
-                            text = strings.chatTitle,
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = strings.appTagline,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+                    Text(
+                        text = strings.chatTitle,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Medium
+                    )
                 },
                 actions = {
-                    IconButton(
-                        onClick = onProfileClick,
-                        modifier = Modifier.testTag(TestTags.PROFILE_BUTTON)
-                    ) {
-                        Text(
-                            text = "👤",
-                            style = MaterialTheme.typography.headlineSmall
-                        )
+                    Box {
+                        IconButton(
+                            onClick = { showMenu = true },
+                            modifier = Modifier.testTag(TestTags.PROFILE_BUTTON)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.MoreVert,
+                                contentDescription = "Settings"
+                            )
+                        }
+
+                        DropdownMenu(
+                            expanded = showMenu,
+                            onDismissRequest = { showMenu = false }
+                        ) {
+                            // Language selection
+                            Text(
+                                text = "Language",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                            )
+
+                            Language.entries.forEach { lang ->
+                                DropdownMenuItem(
+                                    text = {
+                                        Row(
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            Text(lang.displayName)
+                                            if (lang == language) {
+                                                Text(
+                                                    text = "✓",
+                                                    color = MaterialTheme.colorScheme.primary
+                                                )
+                                            }
+                                        }
+                                    },
+                                    onClick = {
+                                        onLanguageChange(lang)
+                                        showMenu = false
+                                    }
+                                )
+                            }
+
+                            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+
+                            // Clear history
+                            DropdownMenuItem(
+                                text = { Text("Clear history") },
+                                onClick = {
+                                    onClearHistory()
+                                    showMenu = false
+                                }
+                            )
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
