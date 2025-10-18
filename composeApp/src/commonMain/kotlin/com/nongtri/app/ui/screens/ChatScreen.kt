@@ -90,7 +90,35 @@ fun ChatScreen(
                             expanded = showMenu,
                             onDismissRequest = { showMenu = false }
                         ) {
-                            // Language selection
+                            // 1. New Chat (top priority)
+                            DropdownMenuItem(
+                                text = { Text("New Chat") },
+                                leadingIcon = {
+                                    Icon(Icons.Default.Add, contentDescription = null)
+                                },
+                                onClick = {
+                                    onClearHistory()
+                                    showMenu = false
+                                }
+                            )
+
+                            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+
+                            // 2. Share Location
+                            DropdownMenuItem(
+                                text = { Text("Share Location") },
+                                leadingIcon = {
+                                    Icon(Icons.Default.LocationOn, contentDescription = null)
+                                },
+                                onClick = {
+                                    showLocationDialog = true
+                                    showMenu = false
+                                }
+                            )
+
+                            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+
+                            // 3. Language selection
                             Text(
                                 text = "Language",
                                 style = MaterialTheme.typography.labelSmall,
@@ -133,7 +161,21 @@ fun ChatScreen(
 
                             HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
 
-                            // Dark Mode / Theme
+                            // 4. Conversation History
+                            DropdownMenuItem(
+                                text = { Text("Conversation History") },
+                                leadingIcon = {
+                                    Icon(Icons.Default.List, contentDescription = null)
+                                },
+                                onClick = {
+                                    // TODO: Navigate to history screen
+                                    showMenu = false
+                                }
+                            )
+
+                            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+
+                            // 5. Theme (at bottom)
                             Text(
                                 text = "Theme",
                                 style = MaterialTheme.typography.labelSmall,
@@ -169,60 +211,6 @@ fun ChatScreen(
                                     }
                                 )
                             }
-
-                            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-
-                            // New Chat
-                            DropdownMenuItem(
-                                text = { Text("New Chat") },
-                                leadingIcon = {
-                                    Icon(Icons.Default.Add, contentDescription = null)
-                                },
-                                onClick = {
-                                    onClearHistory()
-                                    showMenu = false
-                                }
-                            )
-
-                            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-
-                            // Location
-                            DropdownMenuItem(
-                                text = { Text("Share Location") },
-                                leadingIcon = {
-                                    Icon(Icons.Default.LocationOn, contentDescription = null)
-                                },
-                                onClick = {
-                                    showLocationDialog = true
-                                    showMenu = false
-                                }
-                            )
-
-                            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-
-                            // Conversation history
-                            DropdownMenuItem(
-                                text = { Text("Conversation History") },
-                                leadingIcon = {
-                                    Icon(Icons.Default.List, contentDescription = null)
-                                },
-                                onClick = {
-                                    // TODO: Navigate to history screen
-                                    showMenu = false
-                                }
-                            )
-
-                            // Clear history
-                            DropdownMenuItem(
-                                text = { Text("Clear History") },
-                                leadingIcon = {
-                                    Icon(Icons.Default.Delete, contentDescription = null)
-                                },
-                                onClick = {
-                                    onClearHistory()
-                                    showMenu = false
-                                }
-                            )
                         }
                     }
                 },

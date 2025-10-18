@@ -93,43 +93,25 @@ fun MessageBubble(
                     )
                 }
 
-                // Message bubble
-                Box(
+                // Message content (no bubble, just text)
+                Column(
                     modifier = Modifier
-                        .clip(
-                            RoundedCornerShape(
-                                topStart = 20.dp,
-                                topEnd = 20.dp,
-                                bottomStart = if (isUser) 20.dp else 4.dp,
-                                bottomEnd = if (isUser) 4.dp else 20.dp
-                            )
-                        )
-                        .background(
-                            color = if (isUser) {
-                                if (isLightTheme) LightColors.UserMessageBubble
-                                else DarkColors.UserMessageBubble
-                            } else {
-                                if (isLightTheme) LightColors.AiMessageBubble
-                                else DarkColors.AiMessageBubble
-                            }
-                        )
-                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     // Use markdown rendering for AI messages, plain text for user messages
                     if (isUser) {
                         Text(
                             text = message.content,
                             style = MaterialTheme.typography.bodyLarge,
-                            color = if (isLightTheme) LightColors.UserMessageText
-                            else DarkColors.UserMessageText,
+                            color = MaterialTheme.colorScheme.onBackground,
                             modifier = Modifier.testTag(TestTags.messageText(index))
                         )
                     } else {
                         // Render markdown for AI responses
                         MarkdownText(
                             text = message.content,
-                            color = if (isLightTheme) LightColors.AiMessageText
-                                else DarkColors.AiMessageText,
+                            color = MaterialTheme.colorScheme.onBackground,
                             modifier = Modifier.testTag(TestTags.messageText(index))
                         )
                     }
