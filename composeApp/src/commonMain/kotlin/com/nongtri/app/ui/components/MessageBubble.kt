@@ -114,6 +114,15 @@ fun MessageBubble(
                             color = MaterialTheme.colorScheme.onBackground,
                             modifier = Modifier.testTag(TestTags.messageText(index))
                         )
+
+                        // Action buttons for AI messages
+                        MessageActionButtons(
+                            messageContent = message.content,
+                            onCopy = { /* TODO */ },
+                            onShare = { /* TODO */ },
+                            onListen = { /* TODO */ },
+                            onFeedback = { isPositive -> /* TODO */ }
+                        )
                     }
                 }
             }
