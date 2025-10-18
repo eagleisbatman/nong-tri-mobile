@@ -28,6 +28,8 @@ fun ChatScreen(
     language: Language,
     onLanguageChange: (Language) -> Unit,
     onClearHistory: () -> Unit,
+    onThemeModeChange: (com.nongtri.app.data.preferences.ThemeMode) -> Unit,
+    currentThemeMode: com.nongtri.app.data.preferences.ThemeMode,
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -128,6 +130,59 @@ fun ChatScreen(
                                     }
                                 )
                             }
+
+                            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+
+                            // Dark Mode / Theme
+                            Text(
+                                text = "Theme",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                            )
+
+                            com.nongtri.app.data.preferences.ThemeMode.entries.forEach { mode ->
+                                DropdownMenuItem(
+                                    text = {
+                                        Row(
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            Text(
+                                                when (mode) {
+                                                    com.nongtri.app.data.preferences.ThemeMode.LIGHT -> "Light"
+                                                    com.nongtri.app.data.preferences.ThemeMode.DARK -> "Dark"
+                                                    com.nongtri.app.data.preferences.ThemeMode.SYSTEM -> "System Default"
+                                                }
+                                            )
+                                            if (mode == currentThemeMode) {
+                                                Text(
+                                                    text = "✓",
+                                                    color = MaterialTheme.colorScheme.primary
+                                                )
+                                            }
+                                        }
+                                    },
+                                    onClick = {
+                                        onThemeModeChange(mode)
+                                        showMenu = false
+                                    }
+                                )
+                            }
+
+                            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+
+                            // New Chat
+                            DropdownMenuItem(
+                                text = { Text("New Chat") },
+                                leadingIcon = {
+                                    Icon(Icons.Default.Add, contentDescription = null)
+                                },
+                                onClick = {
+                                    onClearHistory()
+                                    showMenu = false
+                                }
+                            )
 
                             HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
 
