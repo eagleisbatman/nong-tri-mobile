@@ -66,7 +66,9 @@ fun MessageBubble(
             horizontalArrangement = if (isUser) Arrangement.End else Arrangement.Start
         ) {
             Column(
-                modifier = Modifier.widthIn(max = 280.dp),
+                modifier = Modifier
+                    .fillMaxWidth(if (isUser) 0.85f else 0.95f)
+                    .widthIn(min = 100.dp),
                 horizontalAlignment = if (isUser) Alignment.End else Alignment.Start
             ) {
                 // Message bubble
@@ -91,18 +93,24 @@ fun MessageBubble(
                         )
                         .padding(horizontal = 16.dp, vertical = 12.dp)
                 ) {
-                    Text(
-                        text = message.content,
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = if (isUser) {
-                            if (isLightTheme) LightColors.UserMessageText
-                            else DarkColors.UserMessageText
-                        } else {
-                            if (isLightTheme) LightColors.AiMessageText
-                            else DarkColors.AiMessageText
-                        },
-                        modifier = Modifier.testTag(TestTags.messageText(index))
-                    )
+                    // Use markdown rendering for AI messages, plain text for user messages
+                    if (isUser) {
+                        Text(
+                            text = message.content,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = if (isLightTheme) LightColors.UserMessageText
+                            else DarkColors.UserMessageText,
+                            modifier = Modifier.testTag(TestTags.messageText(index))
+                        )
+                    } else {
+                        // Render markdown for AI responses
+                        MarkdownText(
+                            text = message.content,
+                            color = if (isLightTheme) LightColors.AiMessageText
+                                else DarkColors.AiMessageText,
+                            modifier = Modifier.testTag(TestTags.messageText(index))
+                        )
+                    }
                 }
 
                 // Timestamp

@@ -5,10 +5,13 @@ import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.logging.*
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
+import io.ktor.utils.io.*
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
 
 class NongTriApi(
     private val baseUrl: String = BuildConfig.API_URL
@@ -25,15 +28,60 @@ class NongTriApi(
             logger = Logger.DEFAULT
             level = LogLevel.INFO
         }
+        install(HttpTimeout) {
+            requestTimeoutMillis = 60000  // 60 seconds for AI responses
+            connectTimeoutMillis = 15000  // 15 seconds to establish connection
+            socketTimeoutMillis = 60000   // 60 seconds for socket read/write
+        }
     }
 
-    suspend fun sendMessage(userId: String, message: String, userName: String? = null): Result<ChatResponse> {
+    suspend fun sendMessageStream(
+        userId: String,
+        message: String,
+        userName: String? = null,
+        onChunk: (String) -> Unit
+    ): Result<String> {
         return try {
-            val response: ChatResponse = client.post("$baseUrl/api/chat") {
+            var fullResponse = ""
+
+            client.preparePost("$baseUrl/api/chat/stream") {
                 contentType(ContentType.Application.Json)
                 setBody(ChatRequest(userId, message, userName))
-            }.body()
-            Result.success(response)
+            }.execute { response ->
+                val channel: ByteReadChannel = response.body()
+
+                while (!channel.isClosedForRead) {
+                    val line = channel.readUTF8Line() ?: break
+
+                    if (line.startsWith("data: ")) {
+                        val jsonData = line.substring(6)
+                        try {
+                            val parsed = Json.parseToJsonElement(jsonData).jsonObject
+
+                            // Check if done
+                            if (parsed["done"]?.toString() == "true") {
+                                break
+                            }
+
+                            // Check for error
+                            parsed["error"]?.let { errorMsg ->
+                                throw Exception(errorMsg.toString())
+                            }
+
+                            // Extract content chunk
+                            parsed["content"]?.let { content ->
+                                val chunk = content.toString().trim('"')
+                                fullResponse += chunk
+                                onChunk(chunk)
+                            }
+                        } catch (e: Exception) {
+                            println("Failed to parse SSE data: $jsonData - ${e.message}")
+                        }
+                    }
+                }
+            }
+
+            Result.success(fullResponse)
         } catch (e: Exception) {
             Result.failure(e)
         }

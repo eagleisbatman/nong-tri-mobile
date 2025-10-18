@@ -9,7 +9,7 @@ enum class ThemeMode {
     LIGHT, DARK, SYSTEM
 }
 
-class UserPreferences {
+class UserPreferences private constructor() {
     private val _language = MutableStateFlow(Language.ENGLISH)
     val language: StateFlow<Language> = _language.asStateFlow()
 
@@ -20,27 +20,26 @@ class UserPreferences {
     val hasCompletedOnboarding: StateFlow<Boolean> = _hasCompletedOnboarding.asStateFlow()
 
     fun setLanguage(language: Language) {
+        println("UserPreferences: Setting language to $language")
         _language.value = language
         // TODO: Persist to local storage
     }
 
     fun setThemeMode(mode: ThemeMode) {
+        println("UserPreferences: Setting theme mode to $mode")
         _themeMode.value = mode
         // TODO: Persist to local storage
     }
 
     fun completeOnboarding() {
+        println("UserPreferences: Completing onboarding")
         _hasCompletedOnboarding.value = true
         // TODO: Persist to local storage
     }
 
     companion object {
-        private var instance: UserPreferences? = null
+        private val instance = UserPreferences()
 
-        fun getInstance(): UserPreferences {
-            return instance ?: synchronized(this) {
-                instance ?: UserPreferences().also { instance = it }
-            }
-        }
+        fun getInstance(): UserPreferences = instance
     }
 }

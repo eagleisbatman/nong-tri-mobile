@@ -59,34 +59,50 @@ class ChatViewModel(
             )
         }
 
-        // Send to API
+        // Create placeholder for streaming assistant message
+        val assistantMessageId = Uuid.random().toString()
+        val initialAssistantMessage = ChatMessage(
+            id = assistantMessageId,
+            role = MessageRole.ASSISTANT,
+            content = "",
+            timestamp = Clock.System.now()
+        )
+
+        _uiState.update { state ->
+            state.copy(messages = state.messages + initialAssistantMessage)
+        }
+
+        // Send to API with streaming
         viewModelScope.launch {
-            api.sendMessage(userId, message).fold(
-                onSuccess = { response ->
-                    if (response.success && response.response != null) {
-                        val assistantMessage = ChatMessage(
-                            role = MessageRole.ASSISTANT,
-                            content = response.response,
-                            timestamp = Clock.System.now()
+            api.sendMessageStream(
+                userId = userId,
+                message = message,
+                onChunk = { chunk ->
+                    // Update the assistant message with each chunk
+                    _uiState.update { state ->
+                        state.copy(
+                            messages = state.messages.map { msg ->
+                                if (msg.id == assistantMessageId) {
+                                    msg.copy(content = msg.content + chunk)
+                                } else {
+                                    msg
+                                }
+                            }
                         )
-                        _uiState.update { state ->
-                            state.copy(
-                                messages = state.messages + assistantMessage,
-                                isLoading = false
-                            )
-                        }
-                    } else {
-                        _uiState.update { state ->
-                            state.copy(
-                                isLoading = false,
-                                error = response.error ?: "Unknown error occurred"
-                            )
-                        }
+                    }
+                }
+            ).fold(
+                onSuccess = { fullResponse ->
+                    // Mark loading as complete
+                    _uiState.update { state ->
+                        state.copy(isLoading = false)
                     }
                 },
                 onFailure = { error ->
+                    // Remove the placeholder message and show error
                     _uiState.update { state ->
                         state.copy(
+                            messages = state.messages.filter { it.id != assistantMessageId },
                             isLoading = false,
                             error = error.message ?: "Failed to send message"
                         )
