@@ -39,10 +39,10 @@ fun WhatsAppStyleInputBar(
                 onClick = onImageClick,
                 enabled = isEnabled
             ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "Attach image",
-                    tint = if (isEnabled) MaterialTheme.colorScheme.primary
+                Text(
+                    text = "📷",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = if (isEnabled) MaterialTheme.colorScheme.primary
                           else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                 )
             }
@@ -91,10 +91,10 @@ fun WhatsAppStyleInputBar(
                     onClick = onVoiceClick,
                     enabled = isEnabled
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Phone,
-                        contentDescription = "Voice input",
-                        tint = if (isEnabled) MaterialTheme.colorScheme.primary
+                    Text(
+                        text = "🎤",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = if (isEnabled) MaterialTheme.colorScheme.primary
                               else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                     )
                 }
