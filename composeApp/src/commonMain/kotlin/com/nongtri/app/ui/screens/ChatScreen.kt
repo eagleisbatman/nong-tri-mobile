@@ -7,7 +7,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -38,12 +38,23 @@ fun ChatScreen(
     val coroutineScope = rememberCoroutineScope()
 
     var showMenu by remember { mutableStateOf(false) }
+    var showLocationDialog by remember { mutableStateOf(false) }
 
-    // Auto-scroll to bottom when new messages arrive
-    LaunchedEffect(uiState.messages.size) {
-        if (uiState.messages.isNotEmpty()) {
+    // Check if user has scrolled up
+    val isScrolledToBottom by remember {
+        derivedStateOf {
+            val lastVisibleItem = listState.layoutInfo.visibleItemsInfo.lastOrNull()
+            lastVisibleItem?.index == listState.layoutInfo.totalItemsCount - 1
+        }
+    }
+
+    // Auto-scroll to bottom when new messages arrive or loading starts
+    LaunchedEffect(uiState.messages.size, uiState.isLoading) {
+        if (uiState.messages.isNotEmpty() || uiState.isLoading) {
             coroutineScope.launch {
-                listState.animateScrollToItem(uiState.messages.size)
+                listState.animateScrollToItem(
+                    index = maxOf(0, listState.layoutInfo.totalItemsCount - 1)
+                )
             }
         }
     }
@@ -120,9 +131,38 @@ fun ChatScreen(
 
                             HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
 
+                            // Location
+                            DropdownMenuItem(
+                                text = { Text("Share Location") },
+                                leadingIcon = {
+                                    Icon(Icons.Default.LocationOn, contentDescription = null)
+                                },
+                                onClick = {
+                                    showLocationDialog = true
+                                    showMenu = false
+                                }
+                            )
+
+                            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+
+                            // Conversation history
+                            DropdownMenuItem(
+                                text = { Text("Conversation History") },
+                                leadingIcon = {
+                                    Icon(Icons.Default.List, contentDescription = null)
+                                },
+                                onClick = {
+                                    // TODO: Navigate to history screen
+                                    showMenu = false
+                                }
+                            )
+
                             // Clear history
                             DropdownMenuItem(
-                                text = { Text("Clear history") },
+                                text = { Text("Clear History") },
+                                leadingIcon = {
+                                    Icon(Icons.Default.Delete, contentDescription = null)
+                                },
                                 onClick = {
                                     onClearHistory()
                                     showMenu = false
@@ -138,15 +178,40 @@ fun ChatScreen(
             )
         },
         bottomBar = {
-            MessageInputBar(
+            WhatsAppStyleInputBar(
                 value = uiState.currentMessage,
                 onValueChange = viewModel::updateMessage,
                 onSend = {
                     viewModel.sendMessage(uiState.currentMessage)
                 },
+                onImageClick = {
+                    // TODO: Handle image selection
+                },
+                onVoiceClick = {
+                    // TODO: Handle voice input
+                },
                 strings = strings,
                 isEnabled = !uiState.isLoading
             )
+        },
+        floatingActionButton = {
+            // Show scroll-to-bottom button when not at bottom
+            if (!isScrolledToBottom && uiState.messages.isNotEmpty()) {
+                FloatingActionButton(
+                    onClick = {
+                        coroutineScope.launch {
+                            listState.animateScrollToItem(listState.layoutInfo.totalItemsCount - 1)
+                        }
+                    },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(48.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.KeyboardArrowDown,
+                        contentDescription = "Scroll to bottom"
+                    )
+                }
+            }
         }
     ) { paddingValues ->
         Box(
@@ -160,7 +225,7 @@ fun ChatScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .testTag(TestTags.MESSAGE_LIST),
-                contentPadding = PaddingValues(vertical = 8.dp)
+                contentPadding = PaddingValues(top = 8.dp, bottom = 16.dp)
             ) {
                 // Welcome card (only show when no messages)
                 if (uiState.messages.isEmpty() && !uiState.isLoading) {
@@ -188,9 +253,9 @@ fun ChatScreen(
                     }
                 }
 
-                // Add spacing at bottom for better UX
+                // Bottom spacing to prevent overlap with input
                 item {
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
             }
 
@@ -210,5 +275,30 @@ fun ChatScreen(
                 }
             }
         }
+    }
+
+    // Location dialog
+    if (showLocationDialog) {
+        AlertDialog(
+            onDismissRequest = { showLocationDialog = false },
+            icon = { Icon(Icons.Default.LocationOn, contentDescription = null) },
+            title = { Text("Share Location") },
+            text = { Text("Location sharing will help provide location-specific farming advice.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        // TODO: Request location permission and get location
+                        showLocationDialog = false
+                    }
+                ) {
+                    Text("Allow")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLocationDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }

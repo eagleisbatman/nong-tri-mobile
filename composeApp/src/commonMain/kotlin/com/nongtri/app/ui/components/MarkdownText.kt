@@ -41,13 +41,13 @@ fun MarkdownText(
             h4 = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
             h5 = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
             h6 = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-            text = MaterialTheme.typography.bodyMedium,
-            code = MaterialTheme.typography.bodyMedium,
-            quote = MaterialTheme.typography.bodyMedium,
-            paragraph = MaterialTheme.typography.bodyMedium,
-            ordered = MaterialTheme.typography.bodyMedium,
-            bullet = MaterialTheme.typography.bodyMedium,
-            list = MaterialTheme.typography.bodyMedium
+            text = MaterialTheme.typography.bodyLarge,
+            code = MaterialTheme.typography.bodyLarge,
+            quote = MaterialTheme.typography.bodyLarge,
+            paragraph = MaterialTheme.typography.bodyLarge,
+            ordered = MaterialTheme.typography.bodyLarge,
+            bullet = MaterialTheme.typography.bodyLarge,
+            list = MaterialTheme.typography.bodyLarge
         ),
         modifier = modifier
     )

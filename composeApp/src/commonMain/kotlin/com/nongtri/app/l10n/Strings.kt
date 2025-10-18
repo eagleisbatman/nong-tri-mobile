@@ -1,8 +1,8 @@
 package com.nongtri.app.l10n
 
 enum class Language(val code: String, val displayName: String, val flag: String) {
-    ENGLISH("en", "English", "🇬🇧"),
-    VIETNAMESE("vi", "Tiếng Việt", "🇻🇳")
+    VIETNAMESE("vi", "Tiếng Việt", "🇻🇳"),
+    ENGLISH("en", "English", "🇬🇧")
 }
 
 interface Strings {
