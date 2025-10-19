@@ -5,6 +5,7 @@ import com.nongtri.app.l10n.Language
 import com.nongtri.app.data.model.DeviceInfo
 import com.nongtri.app.data.provider.DeviceInfoProvider
 import io.ktor.client.request.*
+import io.ktor.client.statement.*
 import io.ktor.http.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -30,6 +31,15 @@ actual class UserPreferences private constructor(context: Context) {
     init {
         // Load preferences from local storage on initialization
         loadPreferencesFromLocal()
+
+        // If local storage is empty, fetch from backend
+        if (_language.value == Language.ENGLISH &&
+            _themeMode.value == ThemeMode.SYSTEM &&
+            !_hasCompletedOnboarding.value) {
+            // Defaults detected - might be first launch or cleared data
+            // Try fetching from backend asynchronously
+            fetchPreferencesFromBackend()
+        }
     }
 
     private fun loadPreferencesFromLocal() {
@@ -141,6 +151,77 @@ actual class UserPreferences private constructor(context: Context) {
             }
         }
     }
+
+    private fun fetchPreferencesFromBackend() {
+        coroutineScope.launch {
+            try {
+                val deviceId = deviceInfoProvider.getDeviceId()
+                val apiClient = com.nongtri.app.data.api.ApiClient.getInstance()
+
+                println("UserPreferences: Fetching preferences from backend for deviceId: $deviceId")
+
+                val response: io.ktor.client.statement.HttpResponse = apiClient.client.get("/api/preferences/$deviceId")
+
+                if (response.status.isSuccess()) {
+                    val responseBody = response.bodyAsText()
+                    val json = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }
+                    val prefsResponse = json.decodeFromString<PreferencesResponse>(responseBody)
+
+                    if (prefsResponse.success && prefsResponse.preferences != null) {
+                        println("UserPreferences: Found preferences on backend, loading...")
+
+                        // Update in-memory state
+                        prefsResponse.preferences.language?.let { lang ->
+                            _language.value = when(lang) {
+                                "en" -> Language.ENGLISH
+                                "vi" -> Language.VIETNAMESE
+                                else -> Language.ENGLISH
+                            }
+                            // Save to local for next time
+                            prefs.edit().putString("language", lang).apply()
+                            println("UserPreferences: Loaded language from backend: ${_language.value}")
+                        }
+
+                        prefsResponse.preferences.themeMode?.let { theme ->
+                            _themeMode.value = when(theme) {
+                                "light" -> ThemeMode.LIGHT
+                                "dark" -> ThemeMode.DARK
+                                else -> ThemeMode.SYSTEM
+                            }
+                            prefs.edit().putString("theme_mode", theme).apply()
+                            println("UserPreferences: Loaded theme from backend: ${_themeMode.value}")
+                        }
+
+                        prefsResponse.preferences.onboardingCompleted?.let { completed ->
+                            _hasCompletedOnboarding.value = completed
+                            prefs.edit().putBoolean("onboarding_completed", completed).apply()
+                            println("UserPreferences: Loaded onboarding status from backend: $completed")
+                        }
+                    } else {
+                        println("UserPreferences: No preferences found on backend (new user)")
+                    }
+                } else {
+                    println("UserPreferences: Failed to fetch preferences from backend: ${response.status}")
+                }
+            } catch (e: Exception) {
+                println("UserPreferences: Error fetching preferences from backend: ${e.message}")
+                // Don't throw - app can continue with defaults
+            }
+        }
+    }
+
+    @kotlinx.serialization.Serializable
+    private data class PreferencesResponse(
+        val success: Boolean,
+        val preferences: PreferencesData? = null
+    )
+
+    @kotlinx.serialization.Serializable
+    private data class PreferencesData(
+        val language: String? = null,
+        val themeMode: String? = null,
+        val onboardingCompleted: Boolean? = null
+    )
 
     // Device identification methods
     actual fun getDeviceId(): String {
