@@ -5,6 +5,7 @@ import io.ktor.client.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.logging.*
 import io.ktor.client.plugins.HttpTimeout
+import io.ktor.client.plugins.defaultRequest
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
 
@@ -13,6 +14,8 @@ import kotlinx.serialization.json.Json
  * Provides a shared HttpClient instance with proper configuration
  */
 class ApiClient private constructor() {
+    val baseUrl: String = BuildConfig.API_URL
+
     val client = HttpClient {
         install(ContentNegotiation) {
             json(Json {
@@ -30,9 +33,11 @@ class ApiClient private constructor() {
             connectTimeoutMillis = 15000  // 15 seconds to establish connection
             socketTimeoutMillis = 60000   // 60 seconds for socket read/write
         }
+        // Set default base URL for all requests
+        defaultRequest {
+            url(baseUrl)
+        }
     }
-
-    val baseUrl: String = BuildConfig.API_URL
 
     companion object {
         @Volatile
