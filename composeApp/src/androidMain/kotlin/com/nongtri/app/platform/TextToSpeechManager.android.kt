@@ -17,6 +17,9 @@ import java.util.concurrent.TimeUnit
 
 actual class TextToSpeechManager(private val context: Context) {
     private var mediaPlayer: MediaPlayer? = null
+    @Volatile
+    private var isProcessing = false
+
     private val client = OkHttpClient.Builder()
         .connectTimeout(15, TimeUnit.SECONDS)
         .readTimeout(60, TimeUnit.SECONDS)
@@ -38,11 +41,21 @@ actual class TextToSpeechManager(private val context: Context) {
         voice: String,
         tone: String
     ) = withContext(Dispatchers.IO) {
+        // Prevent multiple simultaneous TTS requests
+        if (isProcessing) {
+            Log.d(TAG, "TTS: Already processing, ignoring request")
+            withContext(Dispatchers.Main) {
+                Toast.makeText(context, "Speech already playing", Toast.LENGTH_SHORT).show()
+            }
+            return@withContext
+        }
+
+        isProcessing = true
         try {
             Log.d(TAG, "TTS: Starting speech generation for text: ${text.take(50)}...")
 
             // Stop any current playback
-            stop()
+            stopInternal()
 
             // Request TTS audio from backend
             Log.d(TAG, "TTS: Requesting audio from backend")
@@ -58,11 +71,13 @@ actual class TextToSpeechManager(private val context: Context) {
                         Log.d(TAG, "TTS: Playback completed")
                         release()
                         mediaPlayer = null
+                        isProcessing = false
                     }
                     setOnErrorListener { _, what, extra ->
                         Log.e(TAG, "TTS: MediaPlayer error - what: $what, extra: $extra")
                         release()
                         mediaPlayer = null
+                        isProcessing = false
                         true
                     }
                     prepare()
@@ -71,6 +86,7 @@ actual class TextToSpeechManager(private val context: Context) {
                 }
             }
         } catch (e: Exception) {
+            isProcessing = false
             Log.e(TAG, "TTS error: ${e.message}", e)
             withContext(Dispatchers.Main) {
                 Toast.makeText(context, "TTS Error: ${e.message}", Toast.LENGTH_LONG).show()
@@ -159,14 +175,25 @@ actual class TextToSpeechManager(private val context: Context) {
         }
     }
 
-    actual fun stop() {
+    private fun stopInternal() {
         mediaPlayer?.let {
-            if (it.isPlaying) {
-                it.stop()
+            try {
+                if (it.isPlaying) {
+                    it.stop()
+                }
+                it.reset()
+                it.release()
+            } catch (e: Exception) {
+                Log.w(TAG, "TTS: Error stopping MediaPlayer: ${e.message}")
+            } finally {
+                mediaPlayer = null
             }
-            it.release()
-            mediaPlayer = null
         }
+    }
+
+    actual fun stop() {
+        stopInternal()
+        isProcessing = false
     }
 
     actual fun isSpeaking(): Boolean {
