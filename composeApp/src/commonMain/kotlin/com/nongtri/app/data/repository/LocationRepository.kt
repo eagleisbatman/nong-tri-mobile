@@ -26,14 +26,33 @@ class LocationRepository private constructor() {
 
     /**
      * Initialize location on app startup
-     * Detects and saves IP-based location so it's available for first query
+     * Creates user if doesn't exist, detects and saves IP-based location
      */
     suspend fun initializeLocation(): Result<UserLocation?> {
         return try {
-            val userId = userPreferences.getDeviceId()
+            val deviceInfo = deviceInfoProvider.getDeviceInfo()
             val response = apiClient.client.post("/api/location/init") {
                 contentType(ContentType.Application.Json)
-                setBody(mapOf("userId" to userId))
+                setBody(mapOf(
+                    "userId" to deviceInfo.device_id,
+                    "deviceInfo" to mapOf(
+                        "uuid" to deviceInfo.uuid,
+                        "device_type" to deviceInfo.device_type,
+                        "device_os" to deviceInfo.device_os,
+                        "device_os_version" to deviceInfo.device_os_version,
+                        "device_manufacturer" to deviceInfo.device_manufacturer,
+                        "device_model" to deviceInfo.device_model,
+                        "device_brand" to deviceInfo.device_brand,
+                        "screen_width" to deviceInfo.screen_width,
+                        "screen_height" to deviceInfo.screen_height,
+                        "screen_density" to deviceInfo.screen_density,
+                        "client_source" to deviceInfo.client_source,
+                        "client_version" to deviceInfo.client_version,
+                        "client_build_number" to deviceInfo.client_build_number,
+                        "timezone_offset" to deviceInfo.timezone_offset,
+                        "device_language" to deviceInfo.device_language
+                    )
+                ))
             }
 
             if (response.status.isSuccess()) {
