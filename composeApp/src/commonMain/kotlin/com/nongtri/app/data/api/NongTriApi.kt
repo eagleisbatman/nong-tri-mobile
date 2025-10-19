@@ -1,6 +1,7 @@
 package com.nongtri.app.data.api
 
 import com.nongtri.app.BuildConfig
+import com.nongtri.app.data.preferences.UserPreferences
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.plugins.contentnegotiation.*
@@ -16,6 +17,8 @@ import kotlinx.serialization.json.jsonObject
 class NongTriApi(
     private val baseUrl: String = BuildConfig.API_URL
 ) {
+    private val userPreferences = UserPreferences.getInstance()
+
     private val client = HttpClient {
         install(ContentNegotiation) {
             json(Json {
@@ -44,9 +47,12 @@ class NongTriApi(
         return try {
             var fullResponse = ""
 
+            // Get device info to send with request
+            val deviceInfo = userPreferences.getDeviceInfo()
+
             client.preparePost("$baseUrl/api/chat/stream") {
                 contentType(ContentType.Application.Json)
-                setBody(ChatRequest(userId, message, userName))
+                setBody(ChatRequest(userId, message, userName, deviceInfo))
             }.execute { response ->
                 val channel: ByteReadChannel = response.body()
 

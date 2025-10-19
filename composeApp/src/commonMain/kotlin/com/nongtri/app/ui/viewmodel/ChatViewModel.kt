@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.nongtri.app.data.api.NongTriApi
 import com.nongtri.app.data.model.ChatMessage
 import com.nongtri.app.data.model.MessageRole
+import com.nongtri.app.data.preferences.UserPreferences
 import com.nongtri.app.data.repository.LocationRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,9 +25,13 @@ data class ChatUiState(
 
 @OptIn(ExperimentalUuidApi::class)
 class ChatViewModel(
-    private val api: NongTriApi = NongTriApi(),
-    private val userId: String = Uuid.random().toString() // Will be replaced with device ID
+    private val api: NongTriApi = NongTriApi()
 ) : ViewModel() {
+
+    private val userPreferences = UserPreferences.getInstance()
+
+    // Use device ID from UserPreferences (backed by Android ID)
+    private val userId: String = userPreferences.getDeviceId()
 
     private val _uiState = MutableStateFlow(ChatUiState())
     val uiState: StateFlow<ChatUiState> = _uiState.asStateFlow()

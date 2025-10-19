@@ -8,6 +8,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.tooling.preview.Preview
+import com.nongtri.app.data.preferences.UserPreferences
 import com.nongtri.app.platform.LocalShareManager
 import com.nongtri.app.platform.LocalTextToSpeechManager
 import com.nongtri.app.platform.ShareManager
@@ -37,6 +38,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        // Initialize UserPreferences with device info provider
+        UserPreferences.initialize(applicationContext)
 
         ttsManager = TextToSpeechManager(applicationContext)
 

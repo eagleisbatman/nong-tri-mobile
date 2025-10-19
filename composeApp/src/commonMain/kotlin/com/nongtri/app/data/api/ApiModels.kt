@@ -1,12 +1,14 @@
 package com.nongtri.app.data.api
 
+import com.nongtri.app.data.model.DeviceInfo
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class ChatRequest(
     val userId: String,
     val message: String,
-    val userName: String? = null
+    val userName: String? = null,
+    val deviceInfo: DeviceInfo? = null
 )
 
 @Serializable
