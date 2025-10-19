@@ -28,15 +28,15 @@ class ChatViewModel(
     private val api: NongTriApi = NongTriApi()
 ) : ViewModel() {
 
-    private val userPreferences = UserPreferences.getInstance()
+    private val userPreferences by lazy { UserPreferences.getInstance() }
 
     // Use device ID from UserPreferences (backed by Android ID)
-    private val userId: String = userPreferences.getDeviceId()
+    private val userId: String by lazy { userPreferences.getDeviceId() }
 
     private val _uiState = MutableStateFlow(ChatUiState())
     val uiState: StateFlow<ChatUiState> = _uiState.asStateFlow()
 
-    private val locationRepository = LocationRepository.getInstance()
+    private val locationRepository by lazy { LocationRepository.getInstance() }
 
     init {
         loadHistory()

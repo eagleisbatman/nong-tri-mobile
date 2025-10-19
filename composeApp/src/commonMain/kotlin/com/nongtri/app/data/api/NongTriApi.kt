@@ -17,7 +17,7 @@ import kotlinx.serialization.json.jsonObject
 class NongTriApi(
     private val baseUrl: String = BuildConfig.API_URL
 ) {
-    private val userPreferences = UserPreferences.getInstance()
+    private val userPreferences by lazy { UserPreferences.getInstance() }
 
     private val client = HttpClient {
         install(ContentNegotiation) {

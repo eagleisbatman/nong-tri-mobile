@@ -2,6 +2,8 @@ package com.nongtri.app.platform
 
 import android.content.Context
 import android.media.MediaPlayer
+import android.util.Log
+import android.widget.Toast
 import com.nongtri.app.BuildConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -37,33 +39,47 @@ actual class TextToSpeechManager(private val context: Context) {
         tone: String
     ) = withContext(Dispatchers.IO) {
         try {
+            Log.d(TAG, "TTS: Starting speech generation for text: ${text.take(50)}...")
+
             // Stop any current playback
             stop()
 
             // Request TTS audio from backend
+            Log.d(TAG, "TTS: Requesting audio from backend")
             val audioFile = requestTTS(text, language, voice, tone)
+
+            Log.d(TAG, "TTS: Audio file received, size: ${audioFile.length()} bytes")
 
             // Play the audio
             withContext(Dispatchers.Main) {
                 mediaPlayer = MediaPlayer().apply {
                     setDataSource(audioFile.absolutePath)
                     setOnCompletionListener {
+                        Log.d(TAG, "TTS: Playback completed")
                         release()
                         mediaPlayer = null
                     }
-                    setOnErrorListener { _, _, _ ->
+                    setOnErrorListener { _, what, extra ->
+                        Log.e(TAG, "TTS: MediaPlayer error - what: $what, extra: $extra")
                         release()
                         mediaPlayer = null
                         true
                     }
                     prepare()
                     start()
+                    Log.d(TAG, "TTS: Playback started")
                 }
             }
         } catch (e: Exception) {
-            println("TTS error: ${e.message}")
-            e.printStackTrace()
+            Log.e(TAG, "TTS error: ${e.message}", e)
+            withContext(Dispatchers.Main) {
+                Toast.makeText(context, "TTS Error: ${e.message}", Toast.LENGTH_LONG).show()
+            }
         }
+    }
+
+    companion object {
+        private const val TAG = "TextToSpeechManager"
     }
 
     private suspend fun requestTTS(
@@ -88,19 +104,57 @@ actual class TextToSpeechManager(private val context: Context) {
             .post(requestBody)
             .build()
 
-        // Execute request
-        client.newCall(request).execute().use { response ->
+        // Execute request to get audio URL from backend
+        Log.d(TAG, "TTS: Sending request to ${BuildConfig.API_URL}/api/tts")
+        val audioUrl = client.newCall(request).execute().use { response ->
+            Log.d(TAG, "TTS: Backend response code: ${response.code}")
+
             if (!response.isSuccessful) {
-                throw Exception("TTS request failed: ${response.code}")
+                throw Exception("TTS request failed: ${response.code} - ${response.message}")
             }
 
-            // Save audio to cache
-            val audioBytes = response.body?.bytes()
+            val responseBody = response.body?.string()
                 ?: throw Exception("Empty TTS response")
+
+            Log.d(TAG, "TTS: Response body: $responseBody")
+
+            // Parse JSON response to get audio URL from MinIO
+            val responseJson = JSONObject(responseBody)
+
+            if (!responseJson.getBoolean("success")) {
+                val error = responseJson.optString("error", "Unknown error")
+                Log.e(TAG, "TTS: Generation failed - $error")
+                throw Exception("TTS generation failed: $error")
+            }
+
+            val url = responseJson.getString("audioUrl")
+            Log.d(TAG, "TTS: Got audio URL: $url")
+            url
+        }
+
+        // Download audio file from MinIO URL
+        Log.d(TAG, "TTS: Downloading from MinIO: $audioUrl")
+        val audioRequest = Request.Builder()
+            .url(audioUrl)
+            .get()
+            .build()
+
+        client.newCall(audioRequest).execute().use { audioResponse ->
+            Log.d(TAG, "TTS: MinIO response code: ${audioResponse.code}")
+
+            if (!audioResponse.isSuccessful) {
+                throw Exception("Failed to download audio: ${audioResponse.code} - ${audioResponse.message}")
+            }
+
+            val audioBytes = audioResponse.body?.bytes()
+                ?: throw Exception("Empty audio response")
+
+            Log.d(TAG, "TTS: Downloaded ${audioBytes.size} bytes")
 
             val audioFile = File(cacheDir, "current_tts.mp3")
             audioFile.writeBytes(audioBytes)
 
+            Log.d(TAG, "TTS: Saved to ${audioFile.absolutePath}")
             audioFile
         }
     }

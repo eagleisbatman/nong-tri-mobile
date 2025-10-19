@@ -19,7 +19,9 @@ import com.nongtri.app.l10n.Language
 import com.nongtri.app.l10n.LocalizationProvider
 import com.nongtri.app.ui.components.*
 import com.nongtri.app.ui.viewmodel.ChatViewModel
+import com.nongtri.app.ui.viewmodel.LocationState
 import com.nongtri.app.ui.viewmodel.LocationViewModel
+import com.nongtri.app.ui.viewmodel.rememberLocationViewModel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)

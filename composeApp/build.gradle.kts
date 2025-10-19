@@ -27,6 +27,7 @@ kotlin {
             implementation(libs.kotlinx.coroutines.android)
             implementation(libs.okhttp)
             implementation("com.google.android.gms:play-services-location:21.1.0")
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
         }
         commonMain.dependencies {
             implementation(compose.runtime)

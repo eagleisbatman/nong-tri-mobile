@@ -116,17 +116,19 @@ fun MessageBubble(
                             modifier = Modifier.testTag(TestTags.messageText(index))
                         )
 
-                        // Action buttons for AI messages
-                        MessageActionButtons(
-                            messageContent = message.content,
-                            language = language,
-                            onCopy = { /* TODO */ },
-                            onShare = { /* TODO */ },
-                            onListen = { /* TODO */ },
-                            onFeedback = { isPositive ->
-                                onFeedback(message.conversationId, isPositive)
-                            }
-                        )
+                        // Action buttons for AI messages (only show when message is complete)
+                        if (!message.isLoading && message.content.isNotEmpty()) {
+                            MessageActionButtons(
+                                messageContent = message.content,
+                                language = language,
+                                onCopy = { /* TODO */ },
+                                onShare = { /* TODO */ },
+                                onListen = { /* TODO */ },
+                                onFeedback = { isPositive ->
+                                    onFeedback(message.conversationId, isPositive)
+                                }
+                            )
+                        }
                     }
                 }
             }

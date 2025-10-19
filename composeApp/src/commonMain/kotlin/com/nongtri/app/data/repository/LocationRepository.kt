@@ -10,8 +10,8 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
 class LocationRepository private constructor() {
-    private val apiClient = ApiClient.getInstance()
-    private val userPreferences = UserPreferences.getInstance()
+    private val apiClient by lazy { ApiClient.getInstance() }
+    private val userPreferences by lazy { UserPreferences.getInstance() }
 
     companion object {
         @Volatile
