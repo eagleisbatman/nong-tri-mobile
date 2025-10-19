@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.nongtri.app.data.api.NongTriApi
 import com.nongtri.app.data.model.ChatMessage
 import com.nongtri.app.data.model.MessageRole
+import com.nongtri.app.data.repository.LocationRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -30,8 +31,27 @@ class ChatViewModel(
     private val _uiState = MutableStateFlow(ChatUiState())
     val uiState: StateFlow<ChatUiState> = _uiState.asStateFlow()
 
+    private val locationRepository = LocationRepository.getInstance()
+
     init {
         loadHistory()
+        initializeLocation()
+    }
+
+    /**
+     * Initialize user's IP-based location on app startup
+     * This ensures location is available for the first conversation query
+     */
+    private fun initializeLocation() {
+        viewModelScope.launch {
+            try {
+                locationRepository.initializeLocation()
+                println("✓ Location initialized successfully")
+            } catch (e: Exception) {
+                println("⚠ Failed to initialize location: ${e.message}")
+                // Don't block app startup if location fails
+            }
+        }
     }
 
     fun updateMessage(message: String) {

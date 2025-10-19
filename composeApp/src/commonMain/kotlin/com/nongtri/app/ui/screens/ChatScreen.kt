@@ -19,6 +19,7 @@ import com.nongtri.app.l10n.Language
 import com.nongtri.app.l10n.LocalizationProvider
 import com.nongtri.app.ui.components.*
 import com.nongtri.app.ui.viewmodel.ChatViewModel
+import com.nongtri.app.ui.viewmodel.LocationViewModel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -40,7 +41,8 @@ fun ChatScreen(
     val coroutineScope = rememberCoroutineScope()
 
     var showMenu by remember { mutableStateOf(false) }
-    var showLocationDialog by remember { mutableStateOf(false) }
+    var showLocationBottomSheet by remember { mutableStateOf(false) }
+    val locationViewModel = rememberLocationViewModel()
 
     // Check if user has scrolled up
     val isScrolledToBottom by remember {
@@ -111,7 +113,7 @@ fun ChatScreen(
                                     Icon(Icons.Default.LocationOn, contentDescription = null)
                                 },
                                 onClick = {
-                                    showLocationDialog = true
+                                    showLocationBottomSheet = true
                                     showMenu = false
                                 }
                             )
@@ -324,27 +326,25 @@ fun ChatScreen(
         }
     }
 
-    // Location dialog
-    if (showLocationDialog) {
-        AlertDialog(
-            onDismissRequest = { showLocationDialog = false },
-            icon = { Icon(Icons.Default.LocationOn, contentDescription = null) },
-            title = { Text("Share Location") },
-            text = { Text("Location sharing will help provide location-specific farming advice.") },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        // TODO: Request location permission and get location
-                        showLocationDialog = false
-                    }
-                ) {
-                    Text("Allow")
-                }
+    // Location Bottom Sheet
+    if (showLocationBottomSheet) {
+        val locationState by locationViewModel.locationState.collectAsState()
+
+        LocationBottomSheet(
+            currentLocation = locationState.currentLocation,
+            savedLocations = locationState.savedLocations,
+            isLoading = locationState.isLoading,
+            onShareLocation = {
+                locationViewModel.requestLocationPermission()
             },
-            dismissButton = {
-                TextButton(onClick = { showLocationDialog = false }) {
-                    Text("Cancel")
-                }
+            onSetPrimary = { locationId ->
+                locationViewModel.setPrimaryLocation(locationId)
+            },
+            onDeleteLocation = { locationId ->
+                locationViewModel.deleteLocation(locationId)
+            },
+            onDismiss = {
+                showLocationBottomSheet = false
             }
         )
     }

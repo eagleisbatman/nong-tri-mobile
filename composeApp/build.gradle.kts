@@ -26,6 +26,7 @@ kotlin {
             implementation(libs.ktor.client.okhttp)
             implementation(libs.kotlinx.coroutines.android)
             implementation(libs.okhttp)
+            implementation("com.google.android.gms:play-services-location:21.1.0")
         }
         commonMain.dependencies {
             implementation(compose.runtime)
