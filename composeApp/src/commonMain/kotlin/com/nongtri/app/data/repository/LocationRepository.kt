@@ -30,27 +30,27 @@ class LocationRepository private constructor() {
      */
     suspend fun initializeLocation(): Result<UserLocation?> {
         return try {
-            val deviceInfo = deviceInfoProvider.getDeviceInfo()
+            val deviceInfo = userPreferences.getDeviceInfo()
             val response = apiClient.client.post("/api/location/init") {
                 contentType(ContentType.Application.Json)
                 setBody(mapOf(
-                    "userId" to deviceInfo.device_id,
+                    "userId" to deviceInfo.deviceId,
                     "deviceInfo" to mapOf(
                         "uuid" to deviceInfo.uuid,
-                        "device_type" to deviceInfo.device_type,
-                        "device_os" to deviceInfo.device_os,
-                        "device_os_version" to deviceInfo.device_os_version,
-                        "device_manufacturer" to deviceInfo.device_manufacturer,
-                        "device_model" to deviceInfo.device_model,
-                        "device_brand" to deviceInfo.device_brand,
-                        "screen_width" to deviceInfo.screen_width,
-                        "screen_height" to deviceInfo.screen_height,
-                        "screen_density" to deviceInfo.screen_density,
-                        "client_source" to deviceInfo.client_source,
-                        "client_version" to deviceInfo.client_version,
-                        "client_build_number" to deviceInfo.client_build_number,
-                        "timezone_offset" to deviceInfo.timezone_offset,
-                        "device_language" to deviceInfo.device_language
+                        "device_type" to deviceInfo.deviceType,
+                        "device_os" to deviceInfo.deviceOs,
+                        "device_os_version" to deviceInfo.deviceOsVersion,
+                        "device_manufacturer" to deviceInfo.deviceManufacturer,
+                        "device_model" to deviceInfo.deviceModel,
+                        "device_brand" to deviceInfo.deviceBrand,
+                        "screen_width" to deviceInfo.screenWidth,
+                        "screen_height" to deviceInfo.screenHeight,
+                        "screen_density" to deviceInfo.screenDensity,
+                        "client_source" to deviceInfo.clientSource,
+                        "client_version" to deviceInfo.clientVersion,
+                        "client_build_number" to deviceInfo.clientBuildNumber,
+                        "timezone_offset" to deviceInfo.timezoneOffset,
+                        "device_language" to deviceInfo.deviceLanguage
                     )
                 ))
             }
