@@ -125,14 +125,14 @@ actual class UserPreferences private constructor(context: Context) {
                 val deviceId = deviceInfoProvider.getDeviceId()
                 val apiClient = com.nongtri.app.data.api.ApiClient.getInstance()
 
-                val requestBody = mapOf(
-                    "language" to _language.value.code,
-                    "themeMode" to when(_themeMode.value) {
+                val requestBody = PreferencesSyncRequest(
+                    language = _language.value.code,
+                    themeMode = when(_themeMode.value) {
                         ThemeMode.LIGHT -> "light"
                         ThemeMode.DARK -> "dark"
                         ThemeMode.SYSTEM -> "system"
                     },
-                    "onboardingCompleted" to _hasCompletedOnboarding.value
+                    onboardingCompleted = _hasCompletedOnboarding.value
                 )
 
                 val response = apiClient.client.put("${apiClient.baseUrl}/api/preferences/$deviceId") {
@@ -151,6 +151,13 @@ actual class UserPreferences private constructor(context: Context) {
             }
         }
     }
+
+    @kotlinx.serialization.Serializable
+    private data class PreferencesSyncRequest(
+        val language: String,
+        val themeMode: String,
+        val onboardingCompleted: Boolean
+    )
 
     private fun fetchPreferencesFromBackend() {
         coroutineScope.launch {
