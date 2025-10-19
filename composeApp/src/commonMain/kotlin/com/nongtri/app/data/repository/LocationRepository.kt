@@ -33,24 +33,24 @@ class LocationRepository private constructor() {
             val deviceInfo = userPreferences.getDeviceInfo()
             val response = apiClient.client.post("/api/location/init") {
                 contentType(ContentType.Application.Json)
-                setBody(mapOf(
-                    "userId" to deviceInfo.deviceId,
-                    "deviceInfo" to mapOf(
-                        "uuid" to deviceInfo.uuid,
-                        "device_type" to deviceInfo.deviceType,
-                        "device_os" to deviceInfo.deviceOs,
-                        "device_os_version" to deviceInfo.deviceOsVersion,
-                        "device_manufacturer" to deviceInfo.deviceManufacturer,
-                        "device_model" to deviceInfo.deviceModel,
-                        "device_brand" to deviceInfo.deviceBrand,
-                        "screen_width" to deviceInfo.screenWidth,
-                        "screen_height" to deviceInfo.screenHeight,
-                        "screen_density" to deviceInfo.screenDensity,
-                        "client_source" to deviceInfo.clientSource,
-                        "client_version" to deviceInfo.clientVersion,
-                        "client_build_number" to deviceInfo.clientBuildNumber,
-                        "timezone_offset" to deviceInfo.timezoneOffset,
-                        "device_language" to deviceInfo.deviceLanguage
+                setBody(LocationInitRequest(
+                    userId = deviceInfo.deviceId,
+                    deviceInfo = DeviceInfoDTO(
+                        uuid = deviceInfo.uuid,
+                        device_type = deviceInfo.deviceType,
+                        device_os = deviceInfo.deviceOs,
+                        device_os_version = deviceInfo.deviceOsVersion,
+                        device_manufacturer = deviceInfo.deviceManufacturer,
+                        device_model = deviceInfo.deviceModel,
+                        device_brand = deviceInfo.deviceBrand,
+                        screen_width = deviceInfo.screenWidth,
+                        screen_height = deviceInfo.screenHeight,
+                        screen_density = deviceInfo.screenDensity,
+                        client_source = deviceInfo.clientSource,
+                        client_version = deviceInfo.clientVersion,
+                        client_build_number = deviceInfo.clientBuildNumber,
+                        timezone_offset = deviceInfo.timezoneOffset,
+                        device_language = deviceInfo.deviceLanguage
                     )
                 ))
             }
@@ -213,6 +213,31 @@ class LocationRepository private constructor() {
 }
 
 // API Models
+@Serializable
+data class LocationInitRequest(
+    val userId: String,
+    val deviceInfo: DeviceInfoDTO
+)
+
+@Serializable
+data class DeviceInfoDTO(
+    val uuid: String,
+    val device_type: String,
+    val device_os: String,
+    val device_os_version: String,
+    val device_manufacturer: String? = null,
+    val device_model: String? = null,
+    val device_brand: String? = null,
+    val screen_width: Int? = null,
+    val screen_height: Int? = null,
+    val screen_density: Float? = null,
+    val client_source: String,
+    val client_version: String,
+    val client_build_number: String,
+    val timezone_offset: Int? = null,
+    val device_language: String? = null
+)
+
 @Serializable
 data class ShareLocationRequest(
     val userId: String,
