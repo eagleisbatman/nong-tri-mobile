@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import com.nongtri.app.l10n.Language
 import com.nongtri.app.platform.LocalShareManager
 import com.nongtri.app.platform.LocalTextToSpeechManager
+import com.nongtri.app.platform.TtsState
 import kotlinx.coroutines.launch
 
 @Composable
@@ -29,6 +30,7 @@ fun MessageActionButtons(
     val clipboardManager = LocalClipboardManager.current
     val shareManager = LocalShareManager.current
     val ttsManager = LocalTextToSpeechManager.current
+    val ttsState by ttsManager.state.collectAsState()
     val coroutineScope = rememberCoroutineScope()
     var showCopiedSnackbar by remember { mutableStateOf(false) }
     var feedbackGiven by remember { mutableStateOf<Boolean?>(null) }
@@ -71,13 +73,13 @@ fun MessageActionButtons(
             )
         }
 
-        // Listen button (TTS with OpenAI)
+        // Listen button (TTS with OpenAI) - shows state: loading, playing, error
         IconButton(
             onClick = {
                 coroutineScope.launch {
-                    if (ttsManager.isSpeaking()) {
+                    if (ttsState == TtsState.PLAYING) {
                         ttsManager.stop()
-                    } else {
+                    } else if (ttsState == TtsState.IDLE) {
                         // Use OpenAI TTS with tone control
                         ttsManager.speak(
                             text = messageContent,
@@ -89,14 +91,42 @@ fun MessageActionButtons(
                     onListen()
                 }
             },
+            enabled = ttsState != TtsState.LOADING,
             modifier = Modifier.size(32.dp)
         ) {
-            Icon(
-                imageVector = Icons.Outlined.VolumeUp,
-                contentDescription = "Listen",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(18.dp)
-            )
+            when (ttsState) {
+                TtsState.LOADING -> {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+                TtsState.PLAYING -> {
+                    Icon(
+                        imageVector = Icons.Filled.Pause,
+                        contentDescription = "Pause",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+                TtsState.ERROR -> {
+                    Icon(
+                        imageVector = Icons.Outlined.VolumeUp,
+                        contentDescription = "Listen (Error - tap to retry)",
+                        tint = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+                TtsState.IDLE -> {
+                    Icon(
+                        imageVector = Icons.Outlined.VolumeUp,
+                        contentDescription = "Listen",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            }
         }
 
         Spacer(modifier = Modifier.weight(1f))

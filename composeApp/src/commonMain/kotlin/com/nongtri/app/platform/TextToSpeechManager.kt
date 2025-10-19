@@ -1,9 +1,26 @@
 package com.nongtri.app.platform
 
+import kotlinx.coroutines.flow.StateFlow
+
+/**
+ * TTS playback state
+ */
+enum class TtsState {
+    IDLE,       // Not doing anything
+    LOADING,    // Downloading audio
+    PLAYING,    // Playing audio
+    ERROR       // Error occurred
+}
+
 /**
  * Platform-specific Text-to-Speech functionality using OpenAI TTS API
  */
 expect class TextToSpeechManager {
+    /**
+     * Current TTS state
+     */
+    val state: StateFlow<TtsState>
+
     /**
      * Speak the given text using OpenAI TTS
      * @param text The text to speak

@@ -1,11 +1,15 @@
 package com.nongtri.app.platform
 
 import android.content.Context
+import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.util.Log
 import android.widget.Toast
 import com.nongtri.app.BuildConfig
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -16,6 +20,9 @@ import java.io.File
 import java.util.concurrent.TimeUnit
 
 actual class TextToSpeechManager(private val context: Context) {
+    private val _state = MutableStateFlow(TtsState.IDLE)
+    actual val state: StateFlow<TtsState> = _state.asStateFlow()
+
     private var mediaPlayer: MediaPlayer? = null
     @Volatile
     private var isProcessing = false
@@ -51,6 +58,8 @@ actual class TextToSpeechManager(private val context: Context) {
         }
 
         isProcessing = true
+        _state.value = TtsState.LOADING
+
         try {
             Log.d(TAG, "TTS: Starting speech generation for text: ${text.take(50)}...")
 
@@ -62,35 +71,54 @@ actual class TextToSpeechManager(private val context: Context) {
             val audioFile = requestTTS(text, language, voice, tone)
 
             Log.d(TAG, "TTS: Audio file received, size: ${audioFile.length()} bytes")
+            _state.value = TtsState.PLAYING
 
             // Play the audio
             withContext(Dispatchers.Main) {
                 mediaPlayer = MediaPlayer().apply {
+                    // Set audio attributes to use MEDIA stream with proper content type
+                    setAudioAttributes(
+                        AudioAttributes.Builder()
+                            .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                            .setUsage(AudioAttributes.USAGE_MEDIA)
+                            .build()
+                    )
+
                     setDataSource(audioFile.absolutePath)
                     setOnCompletionListener {
                         Log.d(TAG, "TTS: Playback completed")
                         release()
                         mediaPlayer = null
                         isProcessing = false
+                        _state.value = TtsState.IDLE
                     }
                     setOnErrorListener { _, what, extra ->
                         Log.e(TAG, "TTS: MediaPlayer error - what: $what, extra: $extra")
                         release()
                         mediaPlayer = null
                         isProcessing = false
+                        _state.value = TtsState.ERROR
                         true
                     }
+
+                    // Set volume to maximum to ensure audibility
+                    setVolume(1.0f, 1.0f)
+
                     prepare()
                     start()
-                    Log.d(TAG, "TTS: Playback started")
+                    Log.d(TAG, "TTS: Playback started with audio attributes and max volume")
                 }
             }
         } catch (e: Exception) {
             isProcessing = false
+            _state.value = TtsState.ERROR
             Log.e(TAG, "TTS error: ${e.message}", e)
             withContext(Dispatchers.Main) {
                 Toast.makeText(context, "TTS Error: ${e.message}", Toast.LENGTH_LONG).show()
             }
+            // Reset to IDLE after showing error
+            kotlinx.coroutines.delay(3000)
+            _state.value = TtsState.IDLE
         }
     }
 
@@ -194,6 +222,7 @@ actual class TextToSpeechManager(private val context: Context) {
     actual fun stop() {
         stopInternal()
         isProcessing = false
+        _state.value = TtsState.IDLE
     }
 
     actual fun isSpeaking(): Boolean {
