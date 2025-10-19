@@ -39,7 +39,8 @@ class ChatViewModel(
     private val locationRepository by lazy { LocationRepository.getInstance() }
 
     init {
-        loadHistory()
+        // Don't load history on init - start fresh chat each time
+        // History will be loaded only when user opens conversation history screen
         initializeLocation()
     }
 
