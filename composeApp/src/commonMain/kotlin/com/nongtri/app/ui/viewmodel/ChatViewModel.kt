@@ -116,6 +116,25 @@ class ChatViewModel(
                             }
                         )
                     }
+                },
+                onMetadata = { metadata ->
+                    // Update the assistant message with metadata (response type, follow-up questions, etc.)
+                    _uiState.update { state ->
+                        state.copy(
+                            messages = state.messages.map { msg ->
+                                if (msg.id == assistantMessageId) {
+                                    msg.copy(
+                                        responseType = metadata.responseType,
+                                        followUpQuestions = metadata.followUpQuestions,
+                                        isGenericResponse = metadata.isGenericResponse,
+                                        language = metadata.language
+                                    )
+                                } else {
+                                    msg
+                                }
+                            }
+                        )
+                    }
                 }
             ).fold(
                 onSuccess = { fullResponse ->
@@ -201,6 +220,8 @@ class ChatViewModel(
             )
         }
     }
+
+    fun getDeviceId(): String = userId
 
     override fun onCleared() {
         super.onCleared()

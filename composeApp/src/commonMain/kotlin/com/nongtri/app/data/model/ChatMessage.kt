@@ -15,7 +15,12 @@ data class ChatMessage(
     val timestamp: Instant = Clock.System.now(),
     val isLoading: Boolean = false,
     val hasError: Boolean = false,
-    val conversationId: Int? = null  // Backend database ID for feedback linking
+    val conversationId: Int? = null,  // Backend database ID for feedback linking
+    // Response metadata (from AI agent)
+    val responseType: String? = null,  // "generic" | "agricultural_weather" | "agricultural_crops" | etc.
+    val followUpQuestions: List<String> = emptyList(),  // Tappable follow-up questions
+    val isGenericResponse: Boolean = false,  // true = greeting/casual, false = agricultural advice
+    val language: String = "en"  // "vi" | "en"
 )
 
 @Serializable

@@ -163,12 +163,12 @@ class NongTriApi(
 
     suspend fun getStarterQuestions(
         language: String,
-        locationName: String? = null
+        deviceId: String
     ): Result<List<String>> {
         return try {
             val response: StarterQuestionsResponse = client.get("$baseUrl/api/starter-questions") {
                 parameter("language", language)
-                locationName?.let { parameter("locationName", it) }
+                parameter("device_id", deviceId)
             }.body()
 
             if (response.success) {

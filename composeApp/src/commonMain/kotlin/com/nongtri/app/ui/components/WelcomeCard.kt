@@ -27,6 +27,7 @@ import kotlinx.coroutines.launch
 fun WelcomeCard(
     strings: Strings,
     language: Language,
+    deviceId: String,
     locationName: String? = null,
     onStarterQuestionClick: (String) -> Unit = {},
     modifier: Modifier = Modifier
@@ -36,11 +37,11 @@ fun WelcomeCard(
     val scope = rememberCoroutineScope()
     val api = remember { NongTriApi() }
 
-    LaunchedEffect(language, locationName) {
+    LaunchedEffect(language, deviceId) {
         scope.launch {
             val result = api.getStarterQuestions(
                 language = if (language == Language.VIETNAMESE) "vi" else "en",
-                locationName = locationName
+                deviceId = deviceId
             )
             result.onSuccess { questions ->
                 starterQuestions = questions

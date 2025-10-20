@@ -2,6 +2,7 @@ package com.nongtri.app.ui.components
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.VolumeUp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
@@ -21,6 +22,7 @@ import kotlinx.coroutines.launch
 fun MessageActionButtons(
     messageContent: String,
     language: Language,
+    isGenericResponse: Boolean = false,  // true = greeting/casual, false = agricultural advice
     onCopy: () -> Unit,
     onShare: () -> Unit,
     onListen: () -> Unit,
@@ -43,37 +45,42 @@ fun MessageActionButtons(
         horizontalArrangement = Arrangement.Start,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Copy button
-        IconButton(
-            onClick = {
-                clipboardManager.setText(AnnotatedString(messageContent))
-                showCopiedSnackbar = true
-                onCopy()
-            },
-            modifier = Modifier.size(32.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.ContentCopy,
-                contentDescription = "Copy",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(18.dp)
-            )
+        // For generic responses (greetings, casual): ONLY show Listen button
+        // For agricultural responses: Show ALL buttons (Copy, Share, Listen, Feedback)
+
+        if (!isGenericResponse) {
+            // Copy button (only for agricultural responses)
+            IconButton(
+                onClick = {
+                    clipboardManager.setText(AnnotatedString(messageContent))
+                    showCopiedSnackbar = true
+                    onCopy()
+                },
+                modifier = Modifier.size(32.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.ContentCopy,
+                    contentDescription = "Copy",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+
+            // Share button (only for agricultural responses)
+            IconButton(
+                onClick = { showShareSheet = true },
+                modifier = Modifier.size(32.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Share,
+                    contentDescription = "Share",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
         }
 
-        // Share button
-        IconButton(
-            onClick = { showShareSheet = true },
-            modifier = Modifier.size(32.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.Share,
-                contentDescription = "Share",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(18.dp)
-            )
-        }
-
-        // Listen button (TTS with OpenAI) - shows state: loading, playing, error
+        // Listen button (TTS) - ALWAYS shown for all responses
         IconButton(
             onClick = {
                 coroutineScope.launch {
@@ -112,7 +119,7 @@ fun MessageActionButtons(
                 }
                 TtsState.ERROR -> {
                     Icon(
-                        imageVector = Icons.Outlined.VolumeUp,
+                        imageVector = Icons.AutoMirrored.Outlined.VolumeUp,
                         contentDescription = "Listen (Error - tap to retry)",
                         tint = MaterialTheme.colorScheme.error,
                         modifier = Modifier.size(18.dp)
@@ -120,7 +127,7 @@ fun MessageActionButtons(
                 }
                 TtsState.IDLE -> {
                     Icon(
-                        imageVector = Icons.Outlined.VolumeUp,
+                        imageVector = Icons.AutoMirrored.Outlined.VolumeUp,
                         contentDescription = "Listen",
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(18.dp)
@@ -129,40 +136,42 @@ fun MessageActionButtons(
             }
         }
 
-        Spacer(modifier = Modifier.weight(1f))
+        if (!isGenericResponse) {
+            Spacer(modifier = Modifier.weight(1f))
 
-        // Thumbs up
-        IconButton(
-            onClick = {
-                feedbackGiven = true
-                onFeedback(true)
-            },
-            modifier = Modifier.size(32.dp)
-        ) {
-            Icon(
-                imageVector = if (feedbackGiven == true) Icons.Filled.ThumbUp else Icons.Outlined.ThumbUp,
-                contentDescription = "Good response",
-                tint = if (feedbackGiven == true) MaterialTheme.colorScheme.primary
-                       else MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(18.dp)
-            )
-        }
+            // Thumbs up (only for agricultural responses)
+            IconButton(
+                onClick = {
+                    feedbackGiven = true
+                    onFeedback(true)
+                },
+                modifier = Modifier.size(32.dp)
+            ) {
+                Icon(
+                    imageVector = if (feedbackGiven == true) Icons.Filled.ThumbUp else Icons.Outlined.ThumbUp,
+                    contentDescription = "Good response",
+                    tint = if (feedbackGiven == true) MaterialTheme.colorScheme.primary
+                           else MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
 
-        // Thumbs down
-        IconButton(
-            onClick = {
-                feedbackGiven = false
-                onFeedback(false)
-            },
-            modifier = Modifier.size(32.dp)
-        ) {
-            Icon(
-                imageVector = if (feedbackGiven == false) Icons.Filled.ThumbDown else Icons.Outlined.ThumbDown,
-                contentDescription = "Bad response",
-                tint = if (feedbackGiven == false) MaterialTheme.colorScheme.error
-                       else MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(18.dp)
-            )
+            // Thumbs down (only for agricultural responses)
+            IconButton(
+                onClick = {
+                    feedbackGiven = false
+                    onFeedback(false)
+                },
+                modifier = Modifier.size(32.dp)
+            ) {
+                Icon(
+                    imageVector = if (feedbackGiven == false) Icons.Filled.ThumbDown else Icons.Outlined.ThumbDown,
+                    contentDescription = "Bad response",
+                    tint = if (feedbackGiven == false) MaterialTheme.colorScheme.error
+                           else MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
         }
     }
 

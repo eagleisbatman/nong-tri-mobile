@@ -5,7 +5,9 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -25,6 +27,7 @@ import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun MessageBubble(
     message: ChatMessage,
@@ -32,6 +35,7 @@ fun MessageBubble(
     isLightTheme: Boolean,
     language: com.nongtri.app.l10n.Language,
     onFeedback: (Int?, Boolean) -> Unit = { _, _ -> },
+    onFollowUpClick: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val isUser = message.role == MessageRole.USER
@@ -121,13 +125,37 @@ fun MessageBubble(
                             MessageActionButtons(
                                 messageContent = message.content,
                                 language = language,
-                                onCopy = { /* TODO */ },
-                                onShare = { /* TODO */ },
-                                onListen = { /* TODO */ },
+                                isGenericResponse = message.isGenericResponse,
+                                onCopy = { },
+                                onShare = { },
+                                onListen = { },
                                 onFeedback = { isPositive ->
                                     onFeedback(message.conversationId, isPositive)
                                 }
                             )
+                        }
+
+                        // Follow-up question chips (only for agricultural responses with questions)
+                        if (!message.isLoading && !message.isGenericResponse && message.followUpQuestions.isNotEmpty()) {
+                            FlowRow(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 8.dp, vertical = 8.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                message.followUpQuestions.forEach { question ->
+                                    SuggestionChip(
+                                        onClick = { onFollowUpClick(question) },
+                                        label = {
+                                            Text(
+                                                text = question,
+                                                style = MaterialTheme.typography.bodySmall
+                                            )
+                                        }
+                                    )
+                                }
+                            }
                         }
                     }
                 }

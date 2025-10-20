@@ -3,6 +3,7 @@ package com.nongtri.app.ui.components
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -36,7 +37,7 @@ fun ShareBottomSheet(
 
             // Share as text
             ShareOption(
-                icon = Icons.Default.Send,
+                icon = Icons.AutoMirrored.Filled.Send,
                 title = "Share as Text",
                 description = "Share via messaging apps",
                 onClick = {

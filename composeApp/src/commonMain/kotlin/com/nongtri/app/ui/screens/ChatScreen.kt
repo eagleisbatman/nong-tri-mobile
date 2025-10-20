@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -45,6 +46,7 @@ fun ChatScreen(
     var showMenu by remember { mutableStateOf(false) }
     var showLocationBottomSheet by remember { mutableStateOf(false) }
     val locationViewModel = rememberLocationViewModel()
+    val locationState by locationViewModel.locationState.collectAsState()
 
     // Check if user has scrolled up
     val isScrolledToBottom by remember {
@@ -169,7 +171,7 @@ fun ChatScreen(
                             DropdownMenuItem(
                                 text = { Text("Conversation History") },
                                 leadingIcon = {
-                                    Icon(Icons.Default.List, contentDescription = null)
+                                    Icon(Icons.AutoMirrored.Filled.List, contentDescription = null)
                                 },
                                 onClick = {
                                     // TODO: Navigate to history screen
@@ -277,7 +279,16 @@ fun ChatScreen(
                 // Welcome card (only show when no messages)
                 if (uiState.messages.isEmpty() && !uiState.isLoading) {
                     item {
-                        WelcomeCard(strings = strings)
+                        WelcomeCard(
+                            strings = strings,
+                            language = language,
+                            deviceId = viewModel.getDeviceId(),
+                            locationName = locationState.currentLocation?.geoLevel3
+                                ?: locationState.currentLocation?.city,
+                            onStarterQuestionClick = { question ->
+                                viewModel.sendMessage(question)
+                            }
+                        )
                     }
                 }
 
@@ -293,6 +304,9 @@ fun ChatScreen(
                         language = language,
                         onFeedback = { conversationId, isPositive ->
                             viewModel.submitFeedback(conversationId, isPositive)
+                        },
+                        onFollowUpClick = { question ->
+                            viewModel.sendMessage(question)
                         }
                     )
                 }
