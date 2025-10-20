@@ -19,10 +19,7 @@ import androidx.compose.ui.unit.dp
 import com.nongtri.app.l10n.Language
 import com.nongtri.app.l10n.LocalizationProvider
 import com.nongtri.app.ui.components.*
-import com.nongtri.app.ui.viewmodel.ChatViewModel
-import com.nongtri.app.ui.viewmodel.LocationState
-import com.nongtri.app.ui.viewmodel.LocationViewModel
-import com.nongtri.app.ui.viewmodel.rememberLocationViewModel
+import com.nongtri.app.ui.viewmodel.*
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -47,6 +44,11 @@ fun ChatScreen(
     var showLocationBottomSheet by remember { mutableStateOf(false) }
     val locationViewModel = rememberLocationViewModel()
     val locationState by locationViewModel.locationState.collectAsState()
+
+    // Voice recording state
+    val audioRecorder = com.nongtri.app.platform.LocalAudioRecorder.current
+    val voiceRecordingViewModel = remember { VoiceRecordingViewModel(audioRecorder) }
+    val voiceRecordingState by voiceRecordingViewModel.state.collectAsState()
 
     // Check if user has scrolled up
     val isScrolledToBottom by remember {
@@ -230,21 +232,48 @@ fun ChatScreen(
             )
         },
         bottomBar = {
-            WhatsAppStyleInputBar(
-                value = uiState.currentMessage,
-                onValueChange = viewModel::updateMessage,
-                onSend = {
-                    viewModel.sendMessage(uiState.currentMessage)
-                },
-                onImageClick = {
-                    // TODO: Handle image selection
-                },
-                onVoiceClick = {
-                    // TODO: Handle voice input
-                },
-                strings = strings,
-                isEnabled = !uiState.isLoading
-            )
+            Column {
+                // Voice recording bar (shown when recording)
+                if (voiceRecordingState !is VoiceRecordingState.Idle && voiceRecordingState !is VoiceRecordingState.Cancelled) {
+                    VoiceRecordingBar(
+                        recordingState = voiceRecordingState,
+                        onCancel = {
+                            voiceRecordingViewModel.cancelRecording()
+                        }
+                    )
+                }
+
+                // Input bar
+                WhatsAppStyleInputBar(
+                    value = uiState.currentMessage,
+                    onValueChange = viewModel::updateMessage,
+                    onSend = {
+                        viewModel.sendMessage(uiState.currentMessage)
+                    },
+                    onImageClick = {
+                        // TODO: Handle image selection
+                    },
+                    onVoiceClick = {
+                        // Short click - do nothing for now
+                    },
+                    onVoiceLongPress = {
+                        // Start recording
+                        voiceRecordingViewModel.startRecording()
+                    },
+                    onVoiceRelease = {
+                        // Stop recording and transcribe
+                        voiceRecordingViewModel.stopRecording(
+                            userId = viewModel.getDeviceId(),
+                            language = if (language == Language.VIETNAMESE) "vi" else "en"
+                        ) { transcription, voiceAudioUrl ->
+                            // Send transcribed text as a message
+                            viewModel.sendMessage(transcription)
+                        }
+                    },
+                    strings = strings,
+                    isEnabled = !uiState.isLoading
+                )
+            }
         },
         floatingActionButton = {
             // Show scroll-to-bottom button when not at bottom
