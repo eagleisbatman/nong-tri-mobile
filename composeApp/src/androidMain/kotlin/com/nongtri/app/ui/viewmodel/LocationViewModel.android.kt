@@ -380,8 +380,12 @@ actual class LocationViewModel actual constructor() : ViewModel() {
 
             if (!addresses.isNullOrEmpty()) {
                 val address = addresses[0]
+                // Generate a meaningful location name: use locality (city) or admin area (region)
+                // Don't use featureName as it can be just a street number like "9"
+                val meaningfulName = address.locality ?: address.adminArea ?: address.countryName
+
                 AddressInfo(
-                    locationName = address.featureName ?: address.locality,
+                    locationName = meaningfulName,
                     address = address.getAddressLine(0),
                     city = address.locality,
                     region = address.adminArea,

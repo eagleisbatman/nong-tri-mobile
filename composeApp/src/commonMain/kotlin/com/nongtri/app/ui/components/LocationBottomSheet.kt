@@ -301,20 +301,37 @@ private fun SavedLocationCard(
                         )
                     }
 
-                    Text(
-                        text = buildString {
-                            if (location.city != null) {
+                    // Show location details: city, region, or country
+                    val locationDetails = buildString {
+                        when {
+                            location.city != null && location.city != "null" -> {
                                 append(location.city)
-                                if (location.country != null) {
+                                if (location.country != null && location.country != "null") {
                                     append(", ")
                                     append(location.country)
                                 }
                             }
-                        },
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = 4.dp)
-                    )
+                            location.region != null && location.region != "null" -> {
+                                append(location.region)
+                                if (location.country != null && location.country != "null") {
+                                    append(", ")
+                                    append(location.country)
+                                }
+                            }
+                            location.country != null && location.country != "null" -> {
+                                append(location.country)
+                            }
+                        }
+                    }
+
+                    if (locationDetails.isNotEmpty()) {
+                        Text(
+                            text = locationDetails,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
                 }
 
                 Box {
