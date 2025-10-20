@@ -91,7 +91,8 @@ class ChatViewModel(
             id = assistantMessageId,
             role = MessageRole.ASSISTANT,
             content = "",
-            timestamp = Clock.System.now()
+            timestamp = Clock.System.now(),
+            isLoading = true  // Mark as loading during streaming
         )
 
         _uiState.update { state ->
@@ -138,9 +139,18 @@ class ChatViewModel(
                 }
             ).fold(
                 onSuccess = { fullResponse ->
-                    // Mark loading as complete
+                    // Mark loading as complete and mark message as not loading
                     _uiState.update { state ->
-                        state.copy(isLoading = false)
+                        state.copy(
+                            isLoading = false,
+                            messages = state.messages.map { msg ->
+                                if (msg.id == assistantMessageId) {
+                                    msg.copy(isLoading = false)
+                                } else {
+                                    msg
+                                }
+                            }
+                        )
                     }
                 },
                 onFailure = { error ->

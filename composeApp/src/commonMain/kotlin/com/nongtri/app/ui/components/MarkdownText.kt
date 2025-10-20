@@ -19,12 +19,14 @@ fun MarkdownText(
     color: Color,
     modifier: Modifier = Modifier
 ) {
-    // Clean up escaped characters that GPT-4o sometimes sends
+    // Clean up escaped characters and extra newlines that GPT-4o sometimes sends
     val processedText = text
         .replace("\\n", "\n")
         .replace("\\\"", "\"")
         .replace("\\'", "'")
         .replace("\\\\", "\\")
+        // Reduce multiple consecutive newlines to maximum of 1 (no blank lines between paragraphs)
+        .replace(Regex("\n{2,}"), "\n")
 
     Markdown(
         content = processedText,

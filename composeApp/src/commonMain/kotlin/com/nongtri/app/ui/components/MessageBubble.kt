@@ -153,8 +153,8 @@ fun MessageBubble(
 
                                 FlowRow(
                                     modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
                                     message.followUpQuestions.forEach { question ->
                                         SuggestionChip(
@@ -162,12 +162,12 @@ fun MessageBubble(
                                             label = {
                                                 Text(
                                                     text = question,
-                                                    style = MaterialTheme.typography.bodyMedium,
-                                                    fontWeight = FontWeight.Medium
+                                                    style = MaterialTheme.typography.bodyLarge,
+                                                    fontWeight = FontWeight.Medium,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                                 )
                                             },
-                                            modifier = Modifier
-                                                .defaultMinSize(minHeight = 40.dp)
+                                            modifier = Modifier.fillMaxWidth()
                                         )
                                     }
                                 }

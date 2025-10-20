@@ -71,7 +71,7 @@ fun WelcomeCard(
         Column(
             modifier = Modifier.fillMaxWidth()
         ) {
-            // Welcome greeting card with improved design
+            // Welcome greeting card with clean design
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -79,40 +79,25 @@ fun WelcomeCard(
                     .testTag(TestTags.WELCOME_CARD),
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                    containerColor = MaterialTheme.colorScheme.surface
                 ),
                 elevation = CardDefaults.cardElevation(
-                    defaultElevation = 2.dp
+                    defaultElevation = 0.dp
                 )
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(
-                            brush = Brush.verticalGradient(
-                                colors = listOf(
-                                    NongTriColors.Primary.copy(alpha = 0.08f),
-                                    MaterialTheme.colorScheme.surface.copy(alpha = 0.3f)
-                                )
-                            )
-                        )
                         .padding(28.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Icon with background
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(NongTriColors.Primary.copy(alpha = 0.1f))
-                            .padding(12.dp)
-                    ) {
-                        Text(
-                            text = "🌾",
-                            style = MaterialTheme.typography.displayMedium
-                        )
-                    }
+                    // Icon - simple, no background
+                    Text(
+                        text = "🌾",
+                        style = MaterialTheme.typography.displayMedium
+                    )
 
-                    Spacer(modifier = Modifier.height(20.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     // Welcome message with better typography
                     Text(
@@ -121,7 +106,7 @@ fun WelcomeCard(
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center,
                         color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.padding(bottom = 12.dp)
+                        modifier = Modifier.padding(bottom = 8.dp)
                     )
 
                     // Description with improved spacing
@@ -130,8 +115,7 @@ fun WelcomeCard(
                         style = MaterialTheme.typography.bodyLarge,
                         textAlign = TextAlign.Center,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        lineHeight = MaterialTheme.typography.bodyLarge.fontSize * 1.6,
-                        modifier = Modifier.padding(horizontal = 8.dp)
+                        lineHeight = MaterialTheme.typography.bodyLarge.fontSize * 1.5
                     )
                 }
             }

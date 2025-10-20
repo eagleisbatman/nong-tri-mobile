@@ -56,8 +56,11 @@ fun ChatScreen(
         }
     }
 
-    // Auto-scroll to bottom when new messages arrive or loading starts
-    LaunchedEffect(uiState.messages.size, uiState.isLoading) {
+    // Track the content of the last message for auto-scrolling during streaming
+    val lastMessageContent = uiState.messages.lastOrNull()?.content ?: ""
+
+    // Auto-scroll to bottom when new messages arrive, loading starts, or message content changes (streaming)
+    LaunchedEffect(uiState.messages.size, uiState.isLoading, lastMessageContent) {
         if (uiState.messages.isNotEmpty() || uiState.isLoading) {
             coroutineScope.launch {
                 listState.animateScrollToItem(
