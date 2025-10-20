@@ -37,8 +37,6 @@ actual class LocationViewModel actual constructor() : ViewModel() {
         var permissionResultCallback: ((Boolean) -> Unit)? = null
     }
 
-    private var permissionRequestTime: Long = 0  // Track when permission was requested
-
     fun initialize(context: Context) {
         this.context = context
         this.fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
@@ -62,23 +60,27 @@ actual class LocationViewModel actual constructor() : ViewModel() {
         }
 
         val activity = context as? ComponentActivity ?: return
-        val shouldShowRationale = activity.shouldShowRequestPermissionRationale(
-            Manifest.permission.ACCESS_FINE_LOCATION
-        )
 
         // Check SharedPreferences to see if we've ever requested permission before
         val prefs = context.getSharedPreferences("location_prefs", Context.MODE_PRIVATE)
         val hasEverRequested = prefs.getBoolean("permission_requested", false)
 
+        if (!hasEverRequested) {
+            // First time user, show "Share My Location" button
+            return
+        }
+
+        // User has requested before, check if they can still see the permission dialog
+        val shouldShowRationale = activity.shouldShowRequestPermissionRationale(
+            Manifest.permission.ACCESS_FINE_LOCATION
+        )
+
         println("Initial permission check: hasPermission=false, shouldShowRationale=$shouldShowRationale, hasEverRequested=$hasEverRequested")
 
-        // Show "Open Settings" if:
-        // 1. We've requested permission before (hasEverRequested=true), AND
-        // 2. Android says don't show rationale (shouldShowRationale=false)
-        // This means user permanently denied
-
-        if (hasEverRequested && !shouldShowRationale) {
-            println("User has permanently denied permission - showing Settings button")
+        // If shouldShowRationale=false AND hasEverRequested=true,
+        // user has denied twice and exhausted the limit
+        if (!shouldShowRationale) {
+            println("User has exhausted permission requests - showing Settings button")
             _locationState.update {
                 it.copy(
                     shouldShowSettings = true,
@@ -165,13 +167,10 @@ actual class LocationViewModel actual constructor() : ViewModel() {
         } else {
             // Check if we should show settings button
             if (_locationState.value.shouldShowSettings) {
-                // User has permanently denied, open settings
-                println("Opening settings - permission permanently denied")
+                // User has exhausted permission requests, open settings
+                println("Opening settings - user exhausted permission requests")
                 openLocationSettings()
             } else {
-                // Request permission and track the time
-                permissionRequestTime = System.currentTimeMillis()
-
                 // Save to SharedPreferences that we've requested permission
                 val prefs = context.getSharedPreferences("location_prefs", Context.MODE_PRIVATE)
                 prefs.edit().putBoolean("permission_requested", true).apply()
@@ -190,45 +189,43 @@ actual class LocationViewModel actual constructor() : ViewModel() {
     }
 
     actual fun onPermissionResult(granted: Boolean) {
-        val responseTime = System.currentTimeMillis() - permissionRequestTime
-        println("Permission result: granted=$granted, responseTime=${responseTime}ms")
+        println("Permission result: granted=$granted")
 
         if (granted) {
             // Permission granted, reset state and share location
             _locationState.update {
                 it.copy(
                     shouldShowSettings = false,
-                    permissionRequested = true,  // Keep track that we've requested
+                    permissionRequested = true,
                     error = null
                 )
             }
             shareCurrentLocation()
         } else {
-            // Permission denied
-            // If response was instant (< 500ms), user didn't see dialog - permission exhausted
-            val wasInstantDenial = responseTime < 500
-
-            // Check Android's rationale API
+            // Permission denied - check if user has exhausted requests
             val shouldShowRationale = shouldShowRequestPermissionRationale()
 
-            // Show settings if:
-            // 1. Instant denial (no dialog shown), OR
-            // 2. Android says we shouldn't show rationale AND we've requested before
-            val shouldShowSettings = wasInstantDenial ||
-                                   (!shouldShowRationale && _locationState.value.permissionRequested)
+            println("Permission denied: shouldShowRationale=$shouldShowRationale")
 
-            println("shouldShowRationale=$shouldShowRationale, wasInstantDenial=$wasInstantDenial, shouldShowSettings=$shouldShowSettings")
-
-            _locationState.update {
-                it.copy(
-                    shouldShowSettings = shouldShowSettings,
-                    permissionRequested = true,  // Mark that we've requested
-                    error = if (shouldShowSettings) {
-                        "Please enable location permission in Settings to share your location"
-                    } else {
-                        "Location permission is needed to share your exact location"
-                    }
-                )
+            // If shouldShowRationale=false, user has exhausted permission requests
+            // Show "Open Settings" button
+            if (!shouldShowRationale) {
+                println("User exhausted permission requests - showing Settings button")
+                _locationState.update {
+                    it.copy(
+                        shouldShowSettings = true,
+                        permissionRequested = true,
+                        error = "Please enable location permission in Settings to share your location"
+                    )
+                }
+            } else {
+                // User can still request permission again
+                _locationState.update {
+                    it.copy(
+                        permissionRequested = true,
+                        error = "Location permission is needed to share your exact location"
+                    )
+                }
             }
         }
     }
