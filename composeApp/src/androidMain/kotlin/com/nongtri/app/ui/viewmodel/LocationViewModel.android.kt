@@ -33,6 +33,7 @@ actual class LocationViewModel actual constructor() : ViewModel() {
 
     companion object {
         var permissionLauncher: ((Array<String>) -> Unit)? = null
+        var permissionResultCallback: ((Boolean) -> Unit)? = null
     }
 
     fun initialize(context: Context) {
@@ -40,6 +41,25 @@ actual class LocationViewModel actual constructor() : ViewModel() {
         this.fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
         loadCurrentLocation()
         loadSavedLocations()
+
+        // Set up permission result callback
+        permissionResultCallback = { granted -> onPermissionResult(granted) }
+    }
+
+    /**
+     * Call this when app resumes from background to check if permission was granted in settings
+     */
+    fun onResume() {
+        if (_locationState.value.shouldShowSettings && hasLocationPermission()) {
+            // User granted permission in settings, reset state
+            _locationState.update {
+                it.copy(
+                    permissionDenialCount = 0,
+                    shouldShowSettings = false,
+                    error = null
+                )
+            }
+        }
     }
 
     actual fun loadCurrentLocation() {
@@ -98,14 +118,63 @@ actual class LocationViewModel actual constructor() : ViewModel() {
             // Permission already granted, get location directly
             shareCurrentLocation()
         } else {
-            // Request permission
-            _locationState.update { it.copy(permissionRequested = true) }
-            permissionLauncher?.invoke(
-                arrayOf(
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION
+            // Check if we should show settings instead (after 2+ denials)
+            if (_locationState.value.shouldShowSettings) {
+                openLocationSettings()
+            } else {
+                // Request permission
+                _locationState.update { it.copy(permissionRequested = true) }
+                permissionLauncher?.invoke(
+                    arrayOf(
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.ACCESS_COARSE_LOCATION
+                    )
                 )
+            }
+        }
+    }
+
+    actual fun onPermissionResult(granted: Boolean) {
+        if (granted) {
+            // Permission granted, reset denial count and share location
+            _locationState.update {
+                it.copy(
+                    permissionDenialCount = 0,
+                    shouldShowSettings = false,
+                    permissionRequested = false
+                )
+            }
+            shareCurrentLocation()
+        } else {
+            // Permission denied, increment count
+            val newCount = _locationState.value.permissionDenialCount + 1
+            _locationState.update {
+                it.copy(
+                    permissionDenialCount = newCount,
+                    shouldShowSettings = newCount >= 2,  // After 2 denials, show settings
+                    permissionRequested = false,
+                    error = if (newCount >= 2) {
+                        "Please enable location permission in Settings to share your location"
+                    } else {
+                        "Location permission is needed to share your exact location"
+                    }
+                )
+            }
+        }
+    }
+
+    actual fun openLocationSettings() {
+        try {
+            val intent = android.content.Intent(
+                android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                android.net.Uri.fromParts("package", context.packageName, null)
             )
+            intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            _locationState.update {
+                it.copy(error = "Could not open settings: ${e.message}")
+            }
         }
     }
 

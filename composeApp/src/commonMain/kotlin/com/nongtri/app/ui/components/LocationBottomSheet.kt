@@ -33,6 +33,7 @@ fun LocationBottomSheet(
     currentLocation: UserLocation?,
     savedLocations: List<UserLocation>,
     isLoading: Boolean,
+    shouldShowSettings: Boolean = false,  // Show "Open Settings" instead of "Share My Location"
     onShareLocation: () -> Unit,
     onSetPrimary: (Int) -> Unit,
     onDeleteLocation: (Int) -> Unit,
@@ -47,10 +48,10 @@ fun LocationBottomSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 32.dp)
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 24.dp)
         ) {
-            // Header
+            // Header - more compact
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -58,7 +59,7 @@ fun LocationBottomSheet(
             ) {
                 Text(
                     text = "Location",
-                    style = MaterialTheme.typography.headlineSmall,
+                    style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
                 IconButton(onClick = onDismiss) {
@@ -66,7 +67,7 @@ fun LocationBottomSheet(
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             // Current Location Card
             CurrentLocationCard(
@@ -74,20 +75,23 @@ fun LocationBottomSheet(
                 isLoading = isLoading
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            // Share Current Location Button
+            // Share Current Location Button OR Open Settings button
             Button(
                 onClick = onShareLocation,
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !isLoading
             ) {
-                Icon(Icons.Default.MyLocation, contentDescription = null)
+                Icon(
+                    imageVector = if (shouldShowSettings) Icons.Default.Settings else Icons.Default.MyLocation,
+                    contentDescription = null
+                )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Share Current GPS Location")
+                Text(if (shouldShowSettings) "Open Settings" else "Share My Location")
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Saved Locations Section
             if (savedLocations.isNotEmpty()) {
@@ -112,7 +116,7 @@ fun LocationBottomSheet(
                     }
                 }
             } else {
-                // Empty state
+                // Empty state - more compact
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
@@ -122,23 +126,24 @@ fun LocationBottomSheet(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(24.dp),
+                            .padding(16.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Icon(
                             Icons.Default.LocationOff,
                             contentDescription = null,
-                            modifier = Modifier.size(48.dp),
+                            modifier = Modifier.size(40.dp),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        Spacer(modifier = Modifier.height(12.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             text = "No saved locations yet",
                             style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text = "Share your GPS location to get accurate weather and farming advice",
+                            text = "Share your location for accurate weather and farming advice",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                             modifier = Modifier.padding(top = 4.dp)
@@ -200,12 +205,9 @@ private fun CurrentLocationCard(
                     )
                 }
             } else if (location != null) {
+                // Location name and city (user-friendly, no coordinates)
                 Text(
                     text = buildString {
-                        if (location.locationName != null) {
-                            append(location.locationName)
-                            append(" • ")
-                        }
                         if (location.city != null) {
                             append(location.city)
                             if (location.country != null) {
@@ -213,19 +215,12 @@ private fun CurrentLocationCard(
                                 append(location.country)
                             }
                         } else {
-                            append("Unknown location")
+                            append("Location detected")
                         }
                     },
                     style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium,
+                    fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-
-                Text(
-                    text = "${String.format("%.6f", location.latitude)}, ${String.format("%.6f", location.longitude)}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
-                    modifier = Modifier.padding(top = 4.dp)
                 )
             } else {
                 Text(

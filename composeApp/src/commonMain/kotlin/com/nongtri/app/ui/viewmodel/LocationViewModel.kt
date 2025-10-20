@@ -14,7 +14,9 @@ data class LocationState(
     val savedLocations: List<UserLocation> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null,
-    val permissionRequested: Boolean = false
+    val permissionRequested: Boolean = false,
+    val permissionDenialCount: Int = 0,  // Track how many times permission was denied
+    val shouldShowSettings: Boolean = false  // Show "Open Settings" instead of "Share My Location"
 )
 
 expect class LocationViewModel() : ViewModel {
@@ -26,6 +28,8 @@ expect class LocationViewModel() : ViewModel {
     fun shareCurrentLocation()
     fun setPrimaryLocation(locationId: Int)
     fun deleteLocation(locationId: Int)
+    fun onPermissionResult(granted: Boolean)  // Handle permission result
+    fun openLocationSettings()  // Open app settings
 }
 
 @Composable

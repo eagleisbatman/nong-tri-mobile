@@ -25,12 +25,14 @@ class MainActivity : ComponentActivity() {
         val fineLocationGranted = permissions[android.Manifest.permission.ACCESS_FINE_LOCATION] ?: false
         val coarseLocationGranted = permissions[android.Manifest.permission.ACCESS_COARSE_LOCATION] ?: false
 
-        if (fineLocationGranted || coarseLocationGranted) {
-            // Permission granted, trigger location sharing
-            // The LocationViewModel will handle this via its callback
+        val granted = fineLocationGranted || coarseLocationGranted
+
+        // Notify LocationViewModel about permission result
+        LocationViewModel.permissionResultCallback?.invoke(granted)
+
+        if (granted) {
             println("Location permission granted")
         } else {
-            // Permission denied
             println("Location permission denied")
         }
     }

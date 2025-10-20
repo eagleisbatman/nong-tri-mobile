@@ -336,6 +336,7 @@ fun ChatScreen(
             currentLocation = locationState.currentLocation,
             savedLocations = locationState.savedLocations,
             isLoading = locationState.isLoading,
+            shouldShowSettings = locationState.shouldShowSettings,
             onShareLocation = {
                 locationViewModel.requestLocationPermission()
             },
