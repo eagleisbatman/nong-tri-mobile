@@ -12,6 +12,8 @@ import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.utils.io.*
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 
 data class StreamMetadata(
@@ -84,16 +86,32 @@ class NongTriApi(
 
                             // Check for metadata chunk (special chunk sent at end)
                             if (parsed["__metadata"]?.toString() == "true") {
-                                val followUpQuestionsRaw = parsed["followUpQuestions"]?.toString() ?: "[]"
+                                println("[SSE] Metadata chunk received: $parsed")
+
                                 val followUpQuestions = try {
-                                    Json.parseToJsonElement(followUpQuestionsRaw).toString()
-                                        .removeSurrounding("[", "]")
-                                        .split(",")
-                                        .map { it.trim().removeSurrounding("\"") }
-                                        .filter { it.isNotEmpty() && it != "null" }
+                                    val questionsElement = parsed["followUpQuestions"]
+                                    if (questionsElement != null) {
+                                        // Parse as JSON array
+                                        val questionsArray = if (questionsElement is JsonArray) {
+                                            questionsElement
+                                        } else {
+                                            // If it's a string, parse it
+                                            Json.parseToJsonElement(questionsElement.toString()).jsonArray
+                                        }
+
+                                        questionsArray.map { element ->
+                                            element.toString().trim('"')
+                                        }.filter { it.isNotEmpty() && it != "null" }
+                                    } else {
+                                        emptyList()
+                                    }
                                 } catch (e: Exception) {
+                                    println("[SSE] Error parsing follow-up questions: ${e.message}")
+                                    e.printStackTrace()
                                     emptyList()
                                 }
+
+                                println("[SSE] Parsed ${followUpQuestions.size} follow-up questions: $followUpQuestions")
 
                                 val metadata = StreamMetadata(
                                     responseType = parsed["responseType"]?.toString()?.trim('"') ?: "generic",
@@ -101,6 +119,8 @@ class NongTriApi(
                                     isGenericResponse = parsed["isGenericResponse"]?.toString() == "true",
                                     language = parsed["language"]?.toString()?.trim('"') ?: "en"
                                 )
+
+                                println("[SSE] Metadata created: isGenericResponse=${metadata.isGenericResponse}, questions=${metadata.followUpQuestions.size}")
                                 onMetadata?.invoke(metadata)
                                 continue
                             }
