@@ -90,11 +90,14 @@ actual class LocationViewModel actual constructor() : ViewModel() {
     }
 
     /**
-     * Call this when app resumes from background to check if permission was granted in settings
+     * Check permission state - call when returning from settings or when bottom sheet is shown
      */
-    fun onResume() {
+    actual fun checkPermissionState() {
+        println("Checking permission state...")
+
         // If we were showing settings button but permission is now granted, reset state
         if (_locationState.value.shouldShowSettings && hasLocationPermission()) {
+            println("Permission granted in settings! Resetting to 'Share My Location'")
             _locationState.update {
                 it.copy(
                     shouldShowSettings = false,

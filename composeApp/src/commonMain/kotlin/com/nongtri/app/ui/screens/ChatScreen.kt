@@ -332,6 +332,12 @@ fun ChatScreen(
     if (showLocationBottomSheet) {
         val locationState by locationViewModel.locationState.collectAsState()
 
+        // Check permission state when bottom sheet is shown
+        // This handles the case when user returns from settings with permission granted
+        LaunchedEffect(showLocationBottomSheet) {
+            locationViewModel.checkPermissionState()
+        }
+
         LocationBottomSheet(
             currentLocation = locationState.currentLocation,
             savedLocations = locationState.savedLocations,

@@ -29,6 +29,7 @@ expect class LocationViewModel() : ViewModel {
     fun deleteLocation(locationId: Int)
     fun onPermissionResult(granted: Boolean)  // Handle permission result
     fun openLocationSettings()  // Open app settings
+    fun checkPermissionState()  // Check permission state (e.g., when returning from settings)
 }
 
 @Composable
