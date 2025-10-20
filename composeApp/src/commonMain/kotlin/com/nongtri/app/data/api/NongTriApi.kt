@@ -166,17 +166,25 @@ class NongTriApi(
         deviceId: String
     ): Result<List<String>> {
         return try {
+            println("[NongTriApi] Requesting starter questions: deviceId=$deviceId, language=$language")
+            println("[NongTriApi] URL: $baseUrl/api/starter-questions")
+
             val response: StarterQuestionsResponse = client.get("$baseUrl/api/starter-questions") {
                 parameter("language", language)
                 parameter("device_id", deviceId)
             }.body()
 
+            println("[NongTriApi] Response received: success=${response.success}, questions=${response.questions.size}")
+
             if (response.success) {
                 Result.success(response.questions)
             } else {
+                println("[NongTriApi] API returned success=false")
                 Result.failure(Exception("Failed to fetch starter questions"))
             }
         } catch (e: Exception) {
+            println("[NongTriApi] Exception occurred: ${e.message}")
+            e.printStackTrace()
             Result.failure(e)
         }
     }

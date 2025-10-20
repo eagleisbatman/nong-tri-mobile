@@ -39,12 +39,17 @@ fun WelcomeCard(
 
     LaunchedEffect(language, deviceId) {
         scope.launch {
+            println("[WelcomeCard] Fetching starter questions for deviceId: $deviceId, language: $language")
             val result = api.getStarterQuestions(
                 language = if (language == Language.VIETNAMESE) "vi" else "en",
                 deviceId = deviceId
             )
             result.onSuccess { questions ->
+                println("[WelcomeCard] Successfully fetched ${questions.size} starter questions: $questions")
                 starterQuestions = questions
+            }.onFailure { error ->
+                println("[WelcomeCard] Failed to fetch starter questions: ${error.message}")
+                error.printStackTrace()
             }
         }
     }
