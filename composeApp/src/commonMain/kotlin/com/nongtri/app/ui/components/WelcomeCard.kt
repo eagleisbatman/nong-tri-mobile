@@ -34,11 +34,13 @@ fun WelcomeCard(
 ) {
     var visible by remember { mutableStateOf(false) }
     var starterQuestions by remember { mutableStateOf<List<String>>(emptyList()) }
+    var isLoadingQuestions by remember { mutableStateOf(true) }
     val scope = rememberCoroutineScope()
     val api = remember { NongTriApi() }
 
     LaunchedEffect(language, deviceId) {
         scope.launch {
+            isLoadingQuestions = true
             println("[WelcomeCard] Fetching starter questions for deviceId: $deviceId, language: $language")
             val result = api.getStarterQuestions(
                 language = if (language == Language.VIETNAMESE) "vi" else "en",
@@ -47,9 +49,11 @@ fun WelcomeCard(
             result.onSuccess { questions ->
                 println("[WelcomeCard] Successfully fetched ${questions.size} starter questions: $questions")
                 starterQuestions = questions
+                isLoadingQuestions = false
             }.onFailure { error ->
                 println("[WelcomeCard] Failed to fetch starter questions: ${error.message}")
                 error.printStackTrace()
+                isLoadingQuestions = false
             }
         }
     }
@@ -132,14 +136,88 @@ fun WelcomeCard(
                 }
             }
 
-            // Starter Questions below the card with proper spacing
-            if (starterQuestions.isNotEmpty()) {
+            // Starter Questions or Loading Skeleton below the card
+            if (isLoadingQuestions) {
+                // Show loading skeleton
+                StarterQuestionsLoadingSkeleton(
+                    modifier = Modifier.padding(top = 16.dp)
+                )
+            } else if (starterQuestions.isNotEmpty()) {
                 StarterQuestions(
                     questions = starterQuestions,
                     language = language,
                     onQuestionClick = onStarterQuestionClick,
                     modifier = Modifier.padding(top = 16.dp)
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun StarterQuestionsLoadingSkeleton(
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        // Title with pulsing effect
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(bottom = 8.dp)
+        ) {
+            Text(
+                text = "💡",
+                style = MaterialTheme.typography.titleMedium
+            )
+            Text(
+                text = "Building your experience...",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
+
+        // Skeleton question cards
+        repeat(4) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        brush = Brush.horizontalGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                            )
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    ),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                )
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    // Placeholder text with varying widths
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(if (it % 2 == 0) 0.8f else 0.6f)
+                            .height(20.dp)
+                            .background(
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.1f),
+                                shape = RoundedCornerShape(4.dp)
+                            )
+                    )
+                }
             }
         }
     }
