@@ -51,14 +51,7 @@ fun StarterQuestions(
                             text = question,
                             style = MaterialTheme.typography.bodyMedium
                         )
-                    },
-                    colors = SuggestionChipDefaults.suggestionChipColors(
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                        labelColor = MaterialTheme.colorScheme.onSecondaryContainer
-                    ),
-                    border = SuggestionChipDefaults.suggestionChipBorder(
-                        borderColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
-                    )
+                    }
                 )
             }
         }
