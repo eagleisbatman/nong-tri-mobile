@@ -17,9 +17,11 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.nongtri.app.data.api.NongTriApi
 import com.nongtri.app.l10n.Language
 import com.nongtri.app.l10n.Strings
 import com.nongtri.app.ui.theme.NongTriColors
+import kotlinx.coroutines.launch
 
 @Composable
 fun WelcomeCard(
@@ -30,6 +32,21 @@ fun WelcomeCard(
     modifier: Modifier = Modifier
 ) {
     var visible by remember { mutableStateOf(false) }
+    var starterQuestions by remember { mutableStateOf<List<String>>(emptyList()) }
+    val scope = rememberCoroutineScope()
+    val api = remember { NongTriApi() }
+
+    LaunchedEffect(language, locationName) {
+        scope.launch {
+            val result = api.getStarterQuestions(
+                language = if (language == Language.VIETNAMESE) "vi" else "en",
+                locationName = locationName
+            )
+            result.onSuccess { questions ->
+                starterQuestions = questions
+            }
+        }
+    }
 
     LaunchedEffect(Unit) {
         kotlinx.coroutines.delay(300)
@@ -110,12 +127,14 @@ fun WelcomeCard(
             }
 
             // Starter Questions below the card with proper spacing
-            StarterQuestions(
-                language = language,
-                locationName = locationName,
-                onQuestionClick = onStarterQuestionClick,
-                modifier = Modifier.padding(top = 16.dp)
-            )
+            if (starterQuestions.isNotEmpty()) {
+                StarterQuestions(
+                    questions = starterQuestions,
+                    language = language,
+                    onQuestionClick = onStarterQuestionClick,
+                    modifier = Modifier.padding(top = 16.dp)
+                )
+            }
         }
     }
 }

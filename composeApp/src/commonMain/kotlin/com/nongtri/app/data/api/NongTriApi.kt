@@ -14,6 +14,13 @@ import io.ktor.utils.io.*
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 
+data class StreamMetadata(
+    val responseType: String = "generic",
+    val followUpQuestions: List<String> = emptyList(),
+    val isGenericResponse: Boolean = false,
+    val language: String = "en"
+)
+
 class NongTriApi(
     private val baseUrl: String = BuildConfig.API_URL
 ) {
@@ -42,7 +49,8 @@ class NongTriApi(
         userId: String,
         message: String,
         userName: String? = null,
-        onChunk: (String) -> Unit
+        onChunk: (String) -> Unit,
+        onMetadata: ((StreamMetadata) -> Unit)? = null
     ): Result<String> {
         return try {
             var fullResponse = ""
@@ -72,6 +80,29 @@ class NongTriApi(
                             // Check for error
                             parsed["error"]?.let { errorMsg ->
                                 throw Exception(errorMsg.toString())
+                            }
+
+                            // Check for metadata chunk (special chunk sent at end)
+                            if (parsed["__metadata"]?.toString() == "true") {
+                                val followUpQuestionsRaw = parsed["followUpQuestions"]?.toString() ?: "[]"
+                                val followUpQuestions = try {
+                                    Json.parseToJsonElement(followUpQuestionsRaw).toString()
+                                        .removeSurrounding("[", "]")
+                                        .split(",")
+                                        .map { it.trim().removeSurrounding("\"") }
+                                        .filter { it.isNotEmpty() && it != "null" }
+                                } catch (e: Exception) {
+                                    emptyList()
+                                }
+
+                                val metadata = StreamMetadata(
+                                    responseType = parsed["responseType"]?.toString()?.trim('"') ?: "generic",
+                                    followUpQuestions = followUpQuestions,
+                                    isGenericResponse = parsed["isGenericResponse"]?.toString() == "true",
+                                    language = parsed["language"]?.toString()?.trim('"') ?: "en"
+                                )
+                                onMetadata?.invoke(metadata)
+                                continue
                             }
 
                             // Extract content chunk
@@ -130,7 +161,42 @@ class NongTriApi(
         }
     }
 
+    suspend fun getStarterQuestions(
+        language: String,
+        locationName: String? = null
+    ): Result<List<String>> {
+        return try {
+            val response: StarterQuestionsResponse = client.get("$baseUrl/api/starter-questions") {
+                parameter("language", language)
+                locationName?.let { parameter("locationName", it) }
+            }.body()
+
+            if (response.success) {
+                Result.success(response.questions)
+            } else {
+                Result.failure(Exception("Failed to fetch starter questions"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     fun close() {
         client.close()
     }
 }
+
+@kotlinx.serialization.Serializable
+data class StarterQuestionsResponse(
+    val success: Boolean,
+    val questions: List<String>,
+    val context: StarterQuestionsContext? = null
+)
+
+@kotlinx.serialization.Serializable
+data class StarterQuestionsContext(
+    val season: String,
+    val isCoastal: Boolean,
+    val locationName: String?,
+    val language: String
+)
