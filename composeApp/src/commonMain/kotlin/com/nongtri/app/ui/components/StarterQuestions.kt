@@ -24,24 +24,34 @@ fun StarterQuestions(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
-        Text(
-            text = if (language == Language.VIETNAMESE) {
-                "Gợi ý câu hỏi:"
-            } else {
-                "Suggested questions:"
-            },
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurface,
+        // Section header with icon
+        Row(
+            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
             modifier = Modifier.padding(bottom = 12.dp)
-        )
+        ) {
+            Text(
+                text = "💡",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(end = 8.dp)
+            )
+            Text(
+                text = if (language == Language.VIETNAMESE) {
+                    "Gợi ý câu hỏi"
+                } else {
+                    "Suggested questions"
+                },
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
 
         FlowRow(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             questions.forEach { question ->
                 SuggestionChip(
@@ -49,9 +59,12 @@ fun StarterQuestions(
                     label = {
                         Text(
                             text = question,
-                            style = MaterialTheme.typography.bodyMedium
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Medium
                         )
-                    }
+                    },
+                    modifier = Modifier
+                        .defaultMinSize(minHeight = 40.dp)
                 )
             }
         }
