@@ -20,7 +20,8 @@ data class StreamMetadata(
     val responseType: String = "generic",
     val followUpQuestions: List<String> = emptyList(),
     val isGenericResponse: Boolean = false,
-    val language: String = "en"
+    val language: String = "en",
+    val conversationId: Int? = null  // Backend conversation ID for TTS audio URL caching
 )
 
 class NongTriApi(
@@ -117,7 +118,8 @@ class NongTriApi(
                                     responseType = parsed["responseType"]?.toString()?.trim('"') ?: "generic",
                                     followUpQuestions = followUpQuestions,
                                     isGenericResponse = parsed["isGenericResponse"]?.toString() == "true",
-                                    language = parsed["language"]?.toString()?.trim('"') ?: "en"
+                                    language = parsed["language"]?.toString()?.trim('"') ?: "en",
+                                    conversationId = parsed["conversationId"]?.toString()?.toIntOrNull()
                                 )
 
                                 println("[SSE] Metadata created: isGenericResponse=${metadata.isGenericResponse}, questions=${metadata.followUpQuestions.size}")
@@ -236,6 +238,40 @@ class NongTriApi(
         }
     }
 
+    /**
+     * Update conversation with TTS audio URL for persistence
+     * @param conversationId Backend conversation ID
+     * @param audioUrl MinIO audio URL
+     * @param ttsVoice Voice used for TTS (alloy, echo, etc.)
+     * @return Result indicating success/failure
+     */
+    suspend fun updateConversationAudioUrl(
+        conversationId: Int,
+        audioUrl: String,
+        ttsVoice: String
+    ): Result<Unit> {
+        return try {
+            val response: UpdateAudioResponse = client.post("$baseUrl/api/conversation/update-audio") {
+                contentType(ContentType.Application.Json)
+                setBody(mapOf(
+                    "conversationId" to conversationId,
+                    "audioUrl" to audioUrl,
+                    "ttsVoice" to ttsVoice
+                ))
+            }.body()
+
+            if (response.success) {
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception(response.message ?: "Failed to update audio URL"))
+            }
+        } catch (e: Exception) {
+            println("[NongTriApi] Update audio URL error: ${e.message}")
+            e.printStackTrace()
+            Result.failure(e)
+        }
+    }
+
     fun close() {
         client.close()
     }
@@ -261,4 +297,10 @@ data class TranscriptionResponse(
     val text: String = "",
     val language: String = "",
     val error: String? = null
+)
+
+@kotlinx.serialization.Serializable
+data class UpdateAudioResponse(
+    val success: Boolean,
+    val message: String? = null
 )

@@ -119,7 +119,7 @@ class ChatViewModel(
                     }
                 },
                 onMetadata = { metadata ->
-                    // Update the assistant message with metadata (response type, follow-up questions, etc.)
+                    // Update the assistant message with metadata (response type, follow-up questions, conversation ID, etc.)
                     _uiState.update { state ->
                         state.copy(
                             messages = state.messages.map { msg ->
@@ -128,7 +128,8 @@ class ChatViewModel(
                                         responseType = metadata.responseType,
                                         followUpQuestions = metadata.followUpQuestions,
                                         isGenericResponse = metadata.isGenericResponse,
-                                        language = metadata.language
+                                        language = metadata.language,
+                                        conversationId = metadata.conversationId  // Store for TTS audio URL persistence
                                     )
                                 } else {
                                     msg
@@ -235,10 +236,12 @@ class ChatViewModel(
 
     /**
      * Update message with cached TTS audio URL to prevent regeneration
+     * Also persists to backend database for survival across app restarts
      * @param messageId The message ID to update
      * @param audioUrl The cached audio URL from TTS generation
      */
     fun updateMessageAudioUrl(messageId: String, audioUrl: String) {
+        // Update in-memory state
         _uiState.update { state ->
             state.copy(
                 messages = state.messages.map { msg ->
@@ -249,6 +252,27 @@ class ChatViewModel(
                     }
                 }
             )
+        }
+
+        // Persist to backend database (if conversation ID exists)
+        viewModelScope.launch {
+            val message = _uiState.value.messages.find { it.id == messageId }
+            if (message?.conversationId != null) {
+                api.updateConversationAudioUrl(
+                    conversationId = message.conversationId,
+                    audioUrl = audioUrl,
+                    ttsVoice = "alloy"  // TODO: Track voice used for TTS
+                ).fold(
+                    onSuccess = {
+                        println("[ChatViewModel] Audio URL persisted to database for conversation ${message.conversationId}")
+                    },
+                    onFailure = { error ->
+                        println("[ChatViewModel] Failed to persist audio URL: ${error.message}")
+                    }
+                )
+            } else {
+                println("[ChatViewModel] No conversation ID for message $messageId, skipping database persistence")
+            }
         }
     }
 
