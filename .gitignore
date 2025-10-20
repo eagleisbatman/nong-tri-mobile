@@ -50,3 +50,6 @@ Pods/
 *.swp
 *.swo
 *~
+
+# Claude development rules (personal, not committed)
+Claude.md
