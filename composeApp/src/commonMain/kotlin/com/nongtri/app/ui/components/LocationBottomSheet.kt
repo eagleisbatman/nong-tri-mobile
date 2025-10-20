@@ -205,23 +205,49 @@ private fun CurrentLocationCard(
                     )
                 }
             } else if (location != null) {
-                // Location name and city (user-friendly, no coordinates)
-                Text(
-                    text = buildString {
-                        if (location.city != null) {
+                // Show city, country - or fallback to region/country if city is null
+                // Never show ambiguous "Location detected"
+                val locationText = buildString {
+                    when {
+                        location.city != null -> {
                             append(location.city)
                             if (location.country != null) {
                                 append(", ")
                                 append(location.country)
                             }
-                        } else {
-                            append("Location detected")
                         }
-                    },
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                )
+                        location.region != null -> {
+                            append(location.region)
+                            if (location.country != null) {
+                                append(", ")
+                                append(location.country)
+                            }
+                        }
+                        location.country != null -> {
+                            append(location.country)
+                        }
+                        else -> {
+                            // No usable location data - treat as not detected
+                            append("")
+                        }
+                    }
+                }
+
+                if (locationText.isNotEmpty()) {
+                    Text(
+                        text = locationText,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                } else {
+                    // Location object exists but has no usable data
+                    Text(
+                        text = "Unable to determine location",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                    )
+                }
             } else {
                 Text(
                     text = "No location detected",
