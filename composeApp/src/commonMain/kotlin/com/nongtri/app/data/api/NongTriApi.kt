@@ -203,8 +203,7 @@ data class StarterQuestionsResponse(
 
 @kotlinx.serialization.Serializable
 data class StarterQuestionsContext(
-    val season: String,
-    val isCoastal: Boolean,
     val locationName: String?,
-    val language: String
+    val language: String,
+    val personalized: Boolean
 )
