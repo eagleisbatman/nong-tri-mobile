@@ -233,6 +233,25 @@ class ChatViewModel(
 
     fun getDeviceId(): String = userId
 
+    /**
+     * Update message with cached TTS audio URL to prevent regeneration
+     * @param messageId The message ID to update
+     * @param audioUrl The cached audio URL from TTS generation
+     */
+    fun updateMessageAudioUrl(messageId: String, audioUrl: String) {
+        _uiState.update { state ->
+            state.copy(
+                messages = state.messages.map { msg ->
+                    if (msg.id == messageId) {
+                        msg.copy(audioUrl = audioUrl)
+                    } else {
+                        msg
+                    }
+                }
+            )
+        }
+    }
+
     override fun onCleared() {
         super.onCleared()
         api.close()

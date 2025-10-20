@@ -36,6 +36,7 @@ fun MessageBubble(
     language: com.nongtri.app.l10n.Language,
     onFeedback: (Int?, Boolean) -> Unit = { _, _ -> },
     onFollowUpClick: (String) -> Unit = {},
+    onAudioUrlCached: (String, String) -> Unit = { _, _ -> },  // (messageId, audioUrl)
     modifier: Modifier = Modifier
 ) {
     val isUser = message.role == MessageRole.USER
@@ -126,11 +127,15 @@ fun MessageBubble(
                                 messageContent = message.content,
                                 language = language,
                                 isGenericResponse = message.isGenericResponse,
+                                cachedAudioUrl = message.audioUrl,
                                 onCopy = { },
                                 onShare = { },
                                 onListen = { },
                                 onFeedback = { isPositive ->
                                     onFeedback(message.conversationId, isPositive)
+                                },
+                                onAudioUrlCached = { audioUrl ->
+                                    onAudioUrlCached(message.id, audioUrl)
                                 }
                             )
                         }

@@ -310,6 +310,9 @@ fun ChatScreen(
                         },
                         onFollowUpClick = { question ->
                             viewModel.sendMessage(question)
+                        },
+                        onAudioUrlCached = { messageId, audioUrl ->
+                            viewModel.updateMessageAudioUrl(messageId, audioUrl)
                         }
                     )
                 }
