@@ -2,8 +2,6 @@ package com.nongtri.app.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -91,66 +89,13 @@ fun LocationBottomSheet(
                 Text(if (shouldShowSettings) "Open Settings" else "Share My Location")
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Saved Locations Section
-            if (savedLocations.isNotEmpty()) {
-                Text(
-                    text = "Saved Locations",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                LazyColumn(
-                    modifier = Modifier.heightIn(max = 300.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(savedLocations) { location ->
-                        SavedLocationCard(
-                            location = location,
-                            onSetPrimary = { onSetPrimary(location.id) },
-                            onDelete = { onDeleteLocation(location.id) }
-                        )
-                    }
-                }
-            } else {
-                // Empty state - more compact
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                    )
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Icon(
-                            Icons.Default.LocationOff,
-                            contentDescription = null,
-                            modifier = Modifier.size(40.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "No saved locations yet",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = "Share your location for accurate weather and farming advice",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                            modifier = Modifier.padding(top = 4.dp)
-                        )
-                    }
-                }
-            }
+            // Info text about location usage
+            Text(
+                text = "Your location helps provide accurate weather forecasts and farming advice for your area.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
         }
     }
 }
@@ -181,10 +126,6 @@ private fun CurrentLocationCard(
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
-
-                if (location != null) {
-                    LocationSourceBadge(source = location.source)
-                }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -257,177 +198,4 @@ private fun CurrentLocationCard(
             }
         }
     }
-}
-
-@Composable
-private fun SavedLocationCard(
-    location: UserLocation,
-    onSetPrimary: () -> Unit,
-    onDelete: () -> Unit
-) {
-    var showMenu by remember { mutableStateOf(false) }
-
-    Card(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        if (location.isPrimary) {
-                            Icon(
-                                Icons.Default.Star,
-                                contentDescription = "Primary location",
-                                modifier = Modifier.size(16.dp),
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                        }
-
-                        Text(
-                            text = location.locationName ?: "Unnamed Location",
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = if (location.isPrimary) FontWeight.Bold else FontWeight.Medium
-                        )
-                    }
-
-                    // Show location details: city, region, or country
-                    val locationDetails = buildString {
-                        when {
-                            location.city != null && location.city != "null" -> {
-                                append(location.city)
-                                if (location.country != null && location.country != "null") {
-                                    append(", ")
-                                    append(location.country)
-                                }
-                            }
-                            location.region != null && location.region != "null" -> {
-                                append(location.region)
-                                if (location.country != null && location.country != "null") {
-                                    append(", ")
-                                    append(location.country)
-                                }
-                            }
-                            location.country != null && location.country != "null" -> {
-                                append(location.country)
-                            }
-                        }
-                    }
-
-                    if (locationDetails.isNotEmpty()) {
-                        Text(
-                            text = locationDetails,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(top = 4.dp)
-                        )
-                    }
-                }
-
-                Box {
-                    IconButton(onClick = { showMenu = true }) {
-                        Icon(Icons.Default.MoreVert, contentDescription = "More options")
-                    }
-
-                    DropdownMenu(
-                        expanded = showMenu,
-                        onDismissRequest = { showMenu = false }
-                    ) {
-                        if (!location.isPrimary) {
-                            DropdownMenuItem(
-                                text = { Text("Set as primary") },
-                                leadingIcon = {
-                                    Icon(Icons.Default.Star, contentDescription = null)
-                                },
-                                onClick = {
-                                    onSetPrimary()
-                                    showMenu = false
-                                }
-                            )
-                        }
-
-                        DropdownMenuItem(
-                            text = { Text("Delete", color = MaterialTheme.colorScheme.error) },
-                            leadingIcon = {
-                                Icon(
-                                    Icons.Default.Delete,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.error
-                                )
-                            },
-                            onClick = {
-                                onDelete()
-                                showMenu = false
-                            }
-                        )
-                    }
-                }
-            }
-
-            if (location.sharedAt != null) {
-                Text(
-                    text = "Shared ${formatRelativeTime(location.sharedAt)}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                    modifier = Modifier.padding(top = 8.dp)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun LocationSourceBadge(source: String) {
-    val (icon, text, color) = when (source) {
-        "gps" -> Triple(
-            Icons.Default.GpsFixed,
-            "GPS",
-            MaterialTheme.colorScheme.primary
-        )
-        else -> Triple(
-            Icons.Default.WifiTethering,
-            "IP-based",
-            MaterialTheme.colorScheme.tertiary
-        )
-    }
-
-    Surface(
-        shape = RoundedCornerShape(12.dp),
-        color = color.copy(alpha = 0.15f)
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                icon,
-                contentDescription = null,
-                modifier = Modifier.size(12.dp),
-                tint = color
-            )
-            Spacer(modifier = Modifier.width(4.dp))
-            Text(
-                text = text,
-                style = MaterialTheme.typography.labelSmall,
-                color = color,
-                fontWeight = FontWeight.Medium
-            )
-        }
-    }
-}
-
-private fun formatRelativeTime(isoString: String): String {
-    // TODO: Implement proper relative time formatting
-    // For now, just return a simple format
-    return "recently"
 }
