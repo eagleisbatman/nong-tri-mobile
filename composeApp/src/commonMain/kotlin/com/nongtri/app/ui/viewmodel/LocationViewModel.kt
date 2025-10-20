@@ -14,9 +14,8 @@ data class LocationState(
     val savedLocations: List<UserLocation> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null,
-    val permissionRequested: Boolean = false,
-    val permissionDenialCount: Int = 0,  // Track how many times permission was denied
-    val shouldShowSettings: Boolean = false  // Show "Open Settings" instead of "Share My Location"
+    val permissionRequested: Boolean = false,  // Track if permission has ever been requested
+    val shouldShowSettings: Boolean = false  // Show "Open Settings" instead of "Share My Location" (based on Android's rationale API)
 )
 
 expect class LocationViewModel() : ViewModel {
