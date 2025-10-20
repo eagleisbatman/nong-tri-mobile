@@ -26,6 +26,8 @@ actual class TextToSpeechManager(private val context: Context) {
     private var mediaPlayer: MediaPlayer? = null
     @Volatile
     private var isProcessing = false
+    private var currentAudioFile: File? = null  // Track current audio file for resume
+    private var pausedPosition: Int = 0  // Track playback position for resume
 
     private val client = OkHttpClient.Builder()
         .connectTimeout(15, TimeUnit.SECONDS)
@@ -84,6 +86,8 @@ actual class TextToSpeechManager(private val context: Context) {
             }
 
             Log.d(TAG, "TTS: Audio file received, size: ${audioFile.length()} bytes")
+            currentAudioFile = audioFile  // Store for pause/resume
+            pausedPosition = 0  // Reset position for new audio
             _state.value = TtsState.PLAYING
 
             // Play the audio
@@ -242,9 +246,73 @@ actual class TextToSpeechManager(private val context: Context) {
         }
     }
 
+    actual fun pause() {
+        mediaPlayer?.let {
+            if (it.isPlaying) {
+                pausedPosition = it.currentPosition
+                it.pause()
+                _state.value = TtsState.PAUSED
+                Log.d(TAG, "TTS: Paused at position $pausedPosition ms")
+            }
+        }
+    }
+
+    actual fun resume() {
+        mediaPlayer?.let {
+            if (_state.value == TtsState.PAUSED) {
+                it.seekTo(pausedPosition)
+                it.start()
+                _state.value = TtsState.PLAYING
+                Log.d(TAG, "TTS: Resumed from position $pausedPosition ms")
+            }
+        } ?: run {
+            // If MediaPlayer is null but we have a paused state, recreate and resume
+            if (_state.value == TtsState.PAUSED && currentAudioFile != null) {
+                Log.d(TAG, "TTS: Recreating MediaPlayer to resume from $pausedPosition ms")
+                try {
+                    mediaPlayer = MediaPlayer().apply {
+                        setAudioAttributes(
+                            AudioAttributes.Builder()
+                                .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                                .setUsage(AudioAttributes.USAGE_MEDIA)
+                                .build()
+                        )
+                        setDataSource(currentAudioFile!!.absolutePath)
+                        setOnCompletionListener {
+                            Log.d(TAG, "TTS: Playback completed")
+                            release()
+                            mediaPlayer = null
+                            isProcessing = false
+                            currentAudioFile = null
+                            _state.value = TtsState.IDLE
+                        }
+                        setOnErrorListener { _, what, extra ->
+                            Log.e(TAG, "TTS: MediaPlayer error - what: $what, extra: $extra")
+                            release()
+                            mediaPlayer = null
+                            isProcessing = false
+                            _state.value = TtsState.ERROR
+                            true
+                        }
+                        setVolume(1.0f, 1.0f)
+                        prepare()
+                        seekTo(pausedPosition)
+                        start()
+                        _state.value = TtsState.PLAYING
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "TTS: Failed to resume playback", e)
+                    _state.value = TtsState.ERROR
+                }
+            }
+        }
+    }
+
     actual fun stop() {
         stopInternal()
         isProcessing = false
+        currentAudioFile = null
+        pausedPosition = 0
         _state.value = TtsState.IDLE
     }
 

@@ -86,19 +86,30 @@ fun MessageActionButtons(
         IconButton(
             onClick = {
                 coroutineScope.launch {
-                    if (ttsState == TtsState.PLAYING) {
-                        ttsManager.stop()
-                    } else if (ttsState == TtsState.IDLE) {
-                        // Use OpenAI TTS with tone control and caching
-                        val audioUrl = ttsManager.speak(
-                            text = messageContent,
-                            language = language.code,
-                            voice = "alloy", // Options: alloy, echo, fable, onyx, nova, shimmer
-                            tone = "friendly", // friendly, professional, empathetic, excited, calm, neutral
-                            cachedAudioUrl = cachedAudioUrl  // Use cached if available
-                        )
-                        // Cache the audio URL for future use
-                        audioUrl?.let { onAudioUrlCached(it) }
+                    when (ttsState) {
+                        TtsState.PLAYING -> {
+                            // Pause playback
+                            ttsManager.pause()
+                        }
+                        TtsState.PAUSED -> {
+                            // Resume playback from paused position
+                            ttsManager.resume()
+                        }
+                        TtsState.IDLE, TtsState.ERROR -> {
+                            // Start new playback with caching
+                            val audioUrl = ttsManager.speak(
+                                text = messageContent,
+                                language = language.code,
+                                voice = "alloy", // Options: alloy, echo, fable, onyx, nova, shimmer
+                                tone = "friendly", // friendly, professional, empathetic, excited, calm, neutral
+                                cachedAudioUrl = cachedAudioUrl  // Use cached if available
+                            )
+                            // Cache the audio URL for future use
+                            audioUrl?.let { onAudioUrlCached(it) }
+                        }
+                        TtsState.LOADING -> {
+                            // Do nothing while loading
+                        }
                     }
                     onListen()
                 }
@@ -118,6 +129,14 @@ fun MessageActionButtons(
                     Icon(
                         imageVector = Icons.Filled.Pause,
                         contentDescription = "Pause",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+                TtsState.PAUSED -> {
+                    Icon(
+                        imageVector = Icons.Filled.PlayArrow,
+                        contentDescription = "Resume",
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(18.dp)
                     )

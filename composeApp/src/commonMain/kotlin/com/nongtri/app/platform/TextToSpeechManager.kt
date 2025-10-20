@@ -9,6 +9,7 @@ enum class TtsState {
     IDLE,       // Not doing anything
     LOADING,    // Downloading audio
     PLAYING,    // Playing audio
+    PAUSED,     // Paused (can resume)
     ERROR       // Error occurred
 }
 
@@ -39,7 +40,17 @@ expect class TextToSpeechManager {
     ): String?
 
     /**
-     * Stop any ongoing speech
+     * Pause current speech (can be resumed)
+     */
+    fun pause()
+
+    /**
+     * Resume paused speech
+     */
+    fun resume()
+
+    /**
+     * Stop any ongoing speech (releases resources, cannot resume)
      */
     fun stop()
 
