@@ -89,12 +89,111 @@ fun LocationBottomSheet(
 
             // GPS Location Card OR Share Location Button
             if (gpsLocation != null) {
-                LocationCard(
-                    location = gpsLocation,
-                    title = "My Shared Location (GPS)",
-                    icon = Icons.Default.MyLocation,
-                    isLoading = false
-                )
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.MyLocation,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Text(
+                                    text = "My Shared Location (GPS)",
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        val locationText = buildString {
+                            val level3 = gpsLocation.geoLevel3
+                            val level2 = gpsLocation.geoLevel2
+                            val level1 = gpsLocation.geoLevel1
+
+                            val city = level3 ?: gpsLocation.city
+                            val region = level2 ?: gpsLocation.region
+                            val country = level1 ?: gpsLocation.country
+
+                            when {
+                                city != null && city != "null" -> {
+                                    append(city)
+                                    if (country != null && country != "null") {
+                                        append(", ")
+                                        append(country)
+                                    }
+                                }
+                                region != null && region != "null" -> {
+                                    append(region)
+                                    if (country != null && country != "null") {
+                                        append(", ")
+                                        append(country)
+                                    }
+                                }
+                                country != null && country != "null" -> {
+                                    append(country)
+                                }
+                                else -> {
+                                    append("")
+                                }
+                            }
+                        }
+
+                        if (locationText.isNotEmpty()) {
+                            Text(
+                                text = locationText,
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        } else {
+                            Text(
+                                text = "Unable to determine location",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        // Update Location Button
+                        OutlinedButton(
+                            onClick = onShareLocation,
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = !isLoading,
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Refresh,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Update Location")
+                        }
+                    }
+                }
             } else {
                 // Share Location Card
                 Card(
@@ -263,14 +362,6 @@ private fun LocationCard(
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                     )
                 }
-
-                // Show coordinates in smaller text
-                Text(
-                    text = "${String.format("%.4f", location.latitude)}, ${String.format("%.4f", location.longitude)}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
-                    modifier = Modifier.padding(top = 4.dp)
-                )
             }
         }
     }
