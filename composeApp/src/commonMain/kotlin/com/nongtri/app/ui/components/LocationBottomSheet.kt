@@ -15,14 +15,19 @@ import androidx.compose.ui.unit.dp
 data class UserLocation(
     val id: Int,
     val locationName: String?,
-    val city: String?,
-    val region: String?,
-    val country: String?,
     val latitude: Double,
     val longitude: Double,
     val isPrimary: Boolean,
     val source: String, // "gps" or "ip"
-    val sharedAt: String?
+    val sharedAt: String?,
+    // Geo-level hierarchy (universal, works for any country)
+    val geoLevel1: String? = null,  // Country
+    val geoLevel2: String? = null,  // Region/State
+    val geoLevel3: String? = null,  // City/Locality
+    // Legacy fields (for backward compatibility, will be removed later)
+    val city: String? = null,
+    val region: String? = null,
+    val country: String? = null
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -146,29 +151,38 @@ private fun CurrentLocationCard(
                     )
                 }
             } else if (location != null) {
-                // Show city, country - or fallback to region/country if city is null
-                // Never show ambiguous "Location detected"
+                // Use geo-level hierarchy with fallback to legacy fields
+                // Display format: "City, Country" or "Region, Country" or "Country"
                 val locationText = buildString {
+                    // Try geo-levels first (new approach)
+                    val level3 = location.geoLevel3  // City/Locality
+                    val level2 = location.geoLevel2  // Region/State
+                    val level1 = location.geoLevel1  // Country
+
+                    // Fallback to legacy fields if geo-levels not available
+                    val city = level3 ?: location.city
+                    val region = level2 ?: location.region
+                    val country = level1 ?: location.country
+
                     when {
-                        location.city != null -> {
-                            append(location.city)
-                            if (location.country != null) {
+                        city != null && city != "null" -> {
+                            append(city)
+                            if (country != null && country != "null") {
                                 append(", ")
-                                append(location.country)
+                                append(country)
                             }
                         }
-                        location.region != null -> {
-                            append(location.region)
-                            if (location.country != null) {
+                        region != null && region != "null" -> {
+                            append(region)
+                            if (country != null && country != "null") {
                                 append(", ")
-                                append(location.country)
+                                append(country)
                             }
                         }
-                        location.country != null -> {
-                            append(location.country)
+                        country != null && country != "null" -> {
+                            append(country)
                         }
                         else -> {
-                            // No usable location data - treat as not detected
                             append("")
                         }
                     }

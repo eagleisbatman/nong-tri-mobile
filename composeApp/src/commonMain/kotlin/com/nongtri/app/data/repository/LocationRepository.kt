@@ -259,13 +259,18 @@ data class LocationDTO(
     val priority: Int,
     val latitude: Double,
     val longitude: Double,
-    val city: String? = null,
-    val region: String? = null,
-    val country: String? = null,
     val location_name: String? = null,
     val address: String? = null,
     val is_primary: Boolean = false,
-    val shared_at: String? = null
+    val shared_at: String? = null,
+    // Geo-level hierarchy (new, universal approach)
+    val geo_level_1: String? = null,  // Country
+    val geo_level_2: String? = null,  // Region/State
+    val geo_level_3: String? = null,  // City/Locality
+    // Legacy fields (for backward compatibility)
+    val city: String? = null,
+    val region: String? = null,
+    val country: String? = null
 )
 
 @Serializable
@@ -293,13 +298,18 @@ private fun LocationDTO.toUserLocation(): UserLocation {
     return UserLocation(
         id = this.id ?: 0,
         locationName = this.location_name,
-        city = this.city,
-        region = this.region,
-        country = this.country,
         latitude = this.latitude,
         longitude = this.longitude,
         isPrimary = this.is_primary,
         source = this.source,
-        sharedAt = this.shared_at
+        sharedAt = this.shared_at,
+        // Geo-level hierarchy (new approach)
+        geoLevel1 = this.geo_level_1,
+        geoLevel2 = this.geo_level_2,
+        geoLevel3 = this.geo_level_3,
+        // Legacy fields (backward compatibility)
+        city = this.city,
+        region = this.region,
+        country = this.country
     )
 }
