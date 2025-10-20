@@ -272,6 +272,31 @@ class NongTriApi(
         }
     }
 
+    /**
+     * Get conversation history for a user
+     * Includes all audio URLs for TTS and voice messages
+     * @param userId Device ID
+     * @param limit Number of messages to load (default 20)
+     * @return Result with list of history messages
+     */
+    suspend fun getConversationHistory(userId: String, limit: Int = 20): Result<List<HistoryMessage>> {
+        return try {
+            val response: ConversationHistoryResponse = client.get("$baseUrl/api/chat/history/$userId") {
+                parameter("limit", limit)
+            }.body()
+
+            if (response.success) {
+                Result.success(response.history)
+            } else {
+                Result.failure(Exception(response.message ?: "Failed to load history"))
+            }
+        } catch (e: Exception) {
+            println("[NongTriApi] History loading error: ${e.message}")
+            e.printStackTrace()
+            Result.failure(e)
+        }
+    }
+
     fun close() {
         client.close()
     }
@@ -303,4 +328,26 @@ data class TranscriptionResponse(
 data class UpdateAudioResponse(
     val success: Boolean,
     val message: String? = null
+)
+
+@kotlinx.serialization.Serializable
+data class ConversationHistoryResponse(
+    val success: Boolean,
+    val history: List<HistoryMessage> = emptyList(),
+    val message: String? = null
+)
+
+@kotlinx.serialization.Serializable
+data class HistoryMessage(
+    val id: Int,                              // Conversation ID
+    val role: String,                         // "user" or "assistant"
+    val content: String,                      // Message text
+    val timestamp: String,                    // ISO timestamp
+    val messageType: String? = "text",        // text, voice, image
+    val audioUrl: String? = null,             // TTS audio URL
+    val ttsVoice: String? = null,             // Voice used
+    val voiceAudioUrl: String? = null,        // User voice recording
+    val voiceTranscription: String? = null,   // Transcribed text
+    val imageUrl: String? = null,             // Image URL
+    val language: String? = "en"              // Message language
 )

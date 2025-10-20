@@ -39,9 +39,47 @@ class ChatViewModel(
     private val locationRepository by lazy { LocationRepository.getInstance() }
 
     init {
-        // Don't load history on init - start fresh chat each time
-        // History will be loaded only when user opens conversation history screen
+        // Load conversation history to restore TTS audio URLs and voice messages
+        loadConversationHistory()
         initializeLocation()
+    }
+
+    /**
+     * Load conversation history from backend
+     * Restores messages with TTS audio URLs for offline playback
+     */
+    private fun loadConversationHistory() {
+        viewModelScope.launch {
+            try {
+                api.getConversationHistory(userId, limit = 20).fold(
+                    onSuccess = { history ->
+                        if (history.isNotEmpty()) {
+                            val messages = history.map { h ->
+                                ChatMessage(
+                                    id = h.id.toString(), // Use conversation ID as message ID
+                                    role = if (h.role == "user") MessageRole.USER else MessageRole.ASSISTANT,
+                                    content = h.content,
+                                    timestamp = kotlinx.datetime.Instant.parse(h.timestamp),
+                                    conversationId = h.id,
+                                    audioUrl = h.audioUrl,
+                                    audioVoice = h.ttsVoice,
+                                    language = h.language ?: "en"
+                                    // TODO: Support voice messages (voiceAudioUrl, voiceTranscription)
+                                )
+                            }
+                            _uiState.update { it.copy(messages = messages) }
+                            println("✓ Loaded ${messages.size} messages from history with audio URLs")
+                        }
+                    },
+                    onFailure = { error ->
+                        println("⚠ Failed to load history: ${error.message}")
+                        // Don't block app if history fails
+                    }
+                )
+            } catch (e: Exception) {
+                println("⚠ Error loading history: ${e.message}")
+            }
+        }
     }
 
     /**
