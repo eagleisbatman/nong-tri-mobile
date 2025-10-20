@@ -72,9 +72,9 @@ class LocationRepository private constructor() {
     }
 
     /**
-     * Get user's current best location (GPS > IP)
+     * Get user's IP and GPS locations separately
      */
-    suspend fun getCurrentLocation(): Result<UserLocation?> {
+    suspend fun getCurrentLocations(): Result<Pair<UserLocation?, UserLocation?>> {
         return try {
             val userId = userPreferences.getDeviceId()
             val response = apiClient.client.get("/api/location/current") {
@@ -82,14 +82,32 @@ class LocationRepository private constructor() {
             }
 
             if (response.status.isSuccess()) {
-                val body = response.body<LocationResponse>()
-                if (body.success && body.location != null) {
-                    Result.success(body.location.toUserLocation())
+                val body = response.body<DualLocationResponse>()
+                if (body.success) {
+                    val ipLocation = body.ipLocation?.toUserLocation()
+                    val gpsLocation = body.gpsLocation?.toUserLocation()
+                    Result.success(Pair(ipLocation, gpsLocation))
                 } else {
-                    Result.success(null)
+                    Result.success(Pair(null, null))
                 }
             } else {
-                Result.failure(Exception("Failed to get location: ${response.status}"))
+                Result.failure(Exception("Failed to get locations: ${response.status}"))
+            }
+        } catch (e: Exception) {
+            println("Error getting current locations: ${e.message}")
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Get user's current best location (GPS > IP) - Legacy method for backward compatibility
+     */
+    @Deprecated("Use getCurrentLocations() instead", ReplaceWith("getCurrentLocations()"))
+    suspend fun getCurrentLocation(): Result<UserLocation?> {
+        return try {
+            val result = getCurrentLocations()
+            result.map { (ipLocation, gpsLocation) ->
+                gpsLocation ?: ipLocation
             }
         } catch (e: Exception) {
             println("Error getting current location: ${e.message}")
@@ -277,6 +295,13 @@ data class LocationDTO(
 data class LocationResponse(
     val success: Boolean,
     val location: LocationDTO? = null
+)
+
+@Serializable
+data class DualLocationResponse(
+    val success: Boolean,
+    val ipLocation: LocationDTO? = null,
+    val gpsLocation: LocationDTO? = null
 )
 
 @Serializable

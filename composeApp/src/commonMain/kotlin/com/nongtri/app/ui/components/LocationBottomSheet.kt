@@ -41,7 +41,10 @@ fun LocationBottomSheet(
     onSetPrimary: (Int) -> Unit,
     onDeleteLocation: (Int) -> Unit,
     onDismiss: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    // New parameters for dual location display
+    ipLocation: UserLocation? = null,
+    gpsLocation: UserLocation? = null
 ) {
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -72,27 +75,72 @@ fun LocationBottomSheet(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Current Location Card
-            CurrentLocationCard(
-                location = currentLocation,
-                isLoading = isLoading
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Share Current Location Button OR Open Settings button
-            Button(
-                onClick = onShareLocation,
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !isLoading
-            ) {
-                Icon(
-                    imageVector = if (shouldShowSettings) Icons.Default.Settings else Icons.Default.MyLocation,
-                    contentDescription = null
+            // IP Location Card (always shown if available)
+            if (ipLocation != null) {
+                LocationCard(
+                    location = ipLocation,
+                    title = "Detected Location (IP)",
+                    icon = Icons.Default.LocationOn,
+                    isLoading = false
                 )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(if (shouldShowSettings) "Open Settings" else "Share My Location")
+
+                Spacer(modifier = Modifier.height(12.dp))
             }
+
+            // GPS Location Card OR Share Location Button
+            if (gpsLocation != null) {
+                LocationCard(
+                    location = gpsLocation,
+                    title = "My Shared Location (GPS)",
+                    icon = Icons.Default.MyLocation,
+                    isLoading = false
+                )
+            } else {
+                // Share Location Card
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                    ) {
+                        Text(
+                            text = "Share GPS Location",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text(
+                            text = "Share your precise location for more accurate weather forecasts and farming advice.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Button(
+                            onClick = onShareLocation,
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = !isLoading
+                        ) {
+                            Icon(
+                                imageVector = if (shouldShowSettings) Icons.Default.Settings else Icons.Default.MyLocation,
+                                contentDescription = null
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(if (shouldShowSettings) "Open Settings" else "Share My Location")
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
 
             // Info text about location usage
             Text(
@@ -106,8 +154,10 @@ fun LocationBottomSheet(
 }
 
 @Composable
-private fun CurrentLocationCard(
-    location: UserLocation?,
+private fun LocationCard(
+    location: UserLocation,
+    title: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
     isLoading: Boolean
 ) {
     Card(
@@ -126,11 +176,22 @@ private fun CurrentLocationCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "Current Location",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -150,7 +211,7 @@ private fun CurrentLocationCard(
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                 }
-            } else if (location != null) {
+            } else {
                 // Use geo-level hierarchy with fallback to legacy fields
                 // Display format: "City, Country" or "Region, Country" or "Country"
                 val locationText = buildString {
@@ -196,18 +257,19 @@ private fun CurrentLocationCard(
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                 } else {
-                    // Location object exists but has no usable data
                     Text(
                         text = "Unable to determine location",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                     )
                 }
-            } else {
+
+                // Show coordinates in smaller text
                 Text(
-                    text = "No location detected",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                    text = "${String.format("%.4f", location.latitude)}, ${String.format("%.4f", location.longitude)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
+                    modifier = Modifier.padding(top = 4.dp)
                 )
             }
         }

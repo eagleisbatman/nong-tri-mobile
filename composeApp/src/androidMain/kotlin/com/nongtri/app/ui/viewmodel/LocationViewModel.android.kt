@@ -114,11 +114,13 @@ actual class LocationViewModel actual constructor() : ViewModel() {
             _locationState.update { it.copy(isLoading = true) }
 
             try {
-                val result = locationRepository.getCurrentLocation()
-                result.onSuccess { location ->
+                val result = locationRepository.getCurrentLocations()
+                result.onSuccess { (ipLocation, gpsLocation) ->
                     _locationState.update {
                         it.copy(
-                            currentLocation = location,
+                            ipLocation = ipLocation,
+                            gpsLocation = gpsLocation,
+                            currentLocation = gpsLocation ?: ipLocation,  // Deprecated field for backward compatibility
                             isLoading = false,
                             error = null
                         )
@@ -285,7 +287,8 @@ actual class LocationViewModel actual constructor() : ViewModel() {
                     result.onSuccess { savedLocation ->
                         _locationState.update {
                             it.copy(
-                                currentLocation = savedLocation,
+                                gpsLocation = savedLocation,
+                                currentLocation = savedLocation,  // Deprecated field for backward compatibility
                                 isLoading = false,
                                 error = null
                             )

@@ -10,7 +10,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 data class LocationState(
-    val currentLocation: UserLocation? = null,
+    val ipLocation: UserLocation? = null,  // IP-based location (always shown if available)
+    val gpsLocation: UserLocation? = null,  // GPS location (if user has shared)
+    val currentLocation: UserLocation? = null,  // Deprecated: Use ipLocation/gpsLocation instead
     val savedLocations: List<UserLocation> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null,

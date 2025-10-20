@@ -343,6 +343,8 @@ fun ChatScreen(
             savedLocations = locationState.savedLocations,
             isLoading = locationState.isLoading,
             shouldShowSettings = locationState.shouldShowSettings,
+            ipLocation = locationState.ipLocation,
+            gpsLocation = locationState.gpsLocation,
             onShareLocation = {
                 locationViewModel.requestLocationPermission()
             },
