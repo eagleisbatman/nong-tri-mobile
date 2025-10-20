@@ -47,6 +47,46 @@ actual class LocationViewModel actual constructor() : ViewModel() {
 
         // Set up permission result callback
         permissionResultCallback = { granted -> onPermissionResult(granted) }
+
+        // Check initial permission state on startup
+        checkInitialPermissionState()
+    }
+
+    /**
+     * Check permission state when app starts to show correct button immediately
+     */
+    private fun checkInitialPermissionState() {
+        if (hasLocationPermission()) {
+            // Permission already granted, nothing to show
+            return
+        }
+
+        val activity = context as? ComponentActivity ?: return
+        val shouldShowRationale = activity.shouldShowRequestPermissionRationale(
+            Manifest.permission.ACCESS_FINE_LOCATION
+        )
+
+        // Check SharedPreferences to see if we've ever requested permission before
+        val prefs = context.getSharedPreferences("location_prefs", Context.MODE_PRIVATE)
+        val hasEverRequested = prefs.getBoolean("permission_requested", false)
+
+        println("Initial permission check: hasPermission=false, shouldShowRationale=$shouldShowRationale, hasEverRequested=$hasEverRequested")
+
+        // Show "Open Settings" if:
+        // 1. We've requested permission before (hasEverRequested=true), AND
+        // 2. Android says don't show rationale (shouldShowRationale=false)
+        // This means user permanently denied
+
+        if (hasEverRequested && !shouldShowRationale) {
+            println("User has permanently denied permission - showing Settings button")
+            _locationState.update {
+                it.copy(
+                    shouldShowSettings = true,
+                    permissionRequested = true,
+                    error = "Please enable location permission in Settings to share your location"
+                )
+            }
+        }
     }
 
     /**
@@ -128,6 +168,11 @@ actual class LocationViewModel actual constructor() : ViewModel() {
             } else {
                 // Request permission and track the time
                 permissionRequestTime = System.currentTimeMillis()
+
+                // Save to SharedPreferences that we've requested permission
+                val prefs = context.getSharedPreferences("location_prefs", Context.MODE_PRIVATE)
+                prefs.edit().putBoolean("permission_requested", true).apply()
+
                 _locationState.update { it.copy(permissionRequested = true) }
 
                 println("Requesting location permission...")
