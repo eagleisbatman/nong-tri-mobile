@@ -164,7 +164,8 @@ fun MessageBubble(
                                                     text = question,
                                                     style = MaterialTheme.typography.bodyLarge,
                                                     fontWeight = FontWeight.Medium,
-                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    modifier = Modifier.padding(vertical = 6.dp, horizontal = 4.dp)
                                                 )
                                             },
                                             modifier = Modifier.fillMaxWidth()
