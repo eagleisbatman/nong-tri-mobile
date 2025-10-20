@@ -107,12 +107,28 @@ fun MessageBubble(
                 ) {
                     // Use markdown rendering for AI messages, plain text for user messages
                     if (isUser) {
-                        Text(
-                            text = message.content,
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onBackground,
-                            modifier = Modifier.testTag(TestTags.messageText(index))
-                        )
+                        // Check if this is a voice message
+                        if (message.messageType == "voice") {
+                            VoiceMessageBubble(
+                                voiceAudioUrl = message.voiceAudioUrl,
+                                transcription = message.voiceTranscription ?: message.content,
+                                isPlaying = false,  // TODO: Integrate with MediaPlayer
+                                currentPosition = 0f,
+                                duration = 0,
+                                onPlayPause = {
+                                    // TODO: Implement playback
+                                },
+                                modifier = Modifier.testTag(TestTags.messageText(index))
+                            )
+                        } else {
+                            // Regular text message
+                            Text(
+                                text = message.content,
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onBackground,
+                                modifier = Modifier.testTag(TestTags.messageText(index))
+                            )
+                        }
                     } else {
                         // Render markdown for AI responses
                         MarkdownText(
