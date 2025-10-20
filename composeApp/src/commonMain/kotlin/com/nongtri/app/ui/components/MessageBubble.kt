@@ -137,23 +137,39 @@ fun MessageBubble(
 
                         // Follow-up question chips (only for agricultural responses with questions)
                         if (!message.isLoading && !message.isGenericResponse && message.followUpQuestions.isNotEmpty()) {
-                            FlowRow(
+                            Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 8.dp, vertical = 8.dp),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                                    .padding(top = 12.dp)
                             ) {
-                                message.followUpQuestions.forEach { question ->
-                                    SuggestionChip(
-                                        onClick = { onFollowUpClick(question) },
-                                        label = {
-                                            Text(
-                                                text = question,
-                                                style = MaterialTheme.typography.bodySmall
-                                            )
-                                        }
-                                    )
+                                // Section header
+                                Text(
+                                    text = "💡 What's next?",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    modifier = Modifier.padding(bottom = 12.dp)
+                                )
+
+                                FlowRow(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    message.followUpQuestions.forEach { question ->
+                                        SuggestionChip(
+                                            onClick = { onFollowUpClick(question) },
+                                            label = {
+                                                Text(
+                                                    text = question,
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    fontWeight = FontWeight.Medium
+                                                )
+                                            },
+                                            modifier = Modifier
+                                                .defaultMinSize(minHeight = 40.dp)
+                                        )
+                                    }
                                 }
                             }
                         }
