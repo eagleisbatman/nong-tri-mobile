@@ -9,6 +9,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.tooling.preview.Preview
 import com.nongtri.app.data.preferences.UserPreferences
+import com.nongtri.app.platform.AudioRecorder
+import com.nongtri.app.platform.LocalAudioRecorder
 import com.nongtri.app.platform.LocalShareManager
 import com.nongtri.app.platform.LocalTextToSpeechManager
 import com.nongtri.app.platform.ShareManager
@@ -17,6 +19,7 @@ import com.nongtri.app.ui.viewmodel.LocationViewModel
 
 class MainActivity : ComponentActivity() {
     private lateinit var ttsManager: TextToSpeechManager
+    private lateinit var audioRecorder: AudioRecorder
 
     // Location permission launcher
     private val locationPermissionLauncher = registerForActivityResult(
@@ -45,6 +48,7 @@ class MainActivity : ComponentActivity() {
         UserPreferences.initialize(applicationContext)
 
         ttsManager = TextToSpeechManager(applicationContext)
+        audioRecorder = AudioRecorder(applicationContext)
 
         // Set up location permission launcher for LocationViewModel
         LocationViewModel.permissionLauncher = { permissions ->
@@ -54,7 +58,8 @@ class MainActivity : ComponentActivity() {
         setContent {
             CompositionLocalProvider(
                 LocalShareManager provides ShareManager(applicationContext),
-                LocalTextToSpeechManager provides ttsManager
+                LocalTextToSpeechManager provides ttsManager,
+                LocalAudioRecorder provides audioRecorder
             ) {
                 App()
             }
