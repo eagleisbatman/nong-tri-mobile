@@ -1,5 +1,6 @@
 package com.nongtri.app.ui.components
 
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -10,6 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import com.nongtri.app.l10n.Strings
 
@@ -20,6 +22,8 @@ fun WhatsAppStyleInputBar(
     onSend: () -> Unit,
     onImageClick: () -> Unit,
     onVoiceClick: () -> Unit,
+    onVoiceLongPress: () -> Unit = {},      // Start recording
+    onVoiceRelease: () -> Unit = {},        // Stop recording
     strings: Strings,
     isEnabled: Boolean,
     modifier: Modifier = Modifier
@@ -88,16 +92,31 @@ fun WhatsAppStyleInputBar(
                     )
                 }
             } else {
-                // Voice button
-                IconButton(
-                    onClick = onVoiceClick,
-                    enabled = isEnabled
+                // Voice button with long press support
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .pointerInput(Unit) {
+                            detectTapGestures(
+                                onTap = { onVoiceClick() },
+                                onLongPress = { onVoiceLongPress() },
+                                onPress = {
+                                    val pressed = tryAwaitRelease()
+                                    if (!pressed) {
+                                        // User released outside button area - cancel
+                                        onVoiceRelease()
+                                    }
+                                }
+                            )
+                        },
+                    contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.Mic,
-                        contentDescription = "Voice input",
+                        contentDescription = "Voice input (hold to record)",
                         tint = if (isEnabled) MaterialTheme.colorScheme.primary
-                              else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                              else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
+                        modifier = Modifier.size(24.dp)
                     )
                 }
             }

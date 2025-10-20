@@ -50,10 +50,15 @@ class VoiceRecordingViewModel(
 
     /**
      * Stop recording and transcribe
+     * @param userId Device ID for saving voice message
      * @param language Language code for transcription (e.g., "en", "vi")
-     * @param onTranscribed Callback with transcribed text
+     * @param onTranscribed Callback with transcribed text and voice audio URL
      */
-    fun stopRecording(language: String = "en", onTranscribed: (String) -> Unit) {
+    fun stopRecording(
+        userId: String,
+        language: String = "en",
+        onTranscribed: (transcription: String, voiceAudioUrl: String?) -> Unit
+    ) {
         recordingJob?.cancel()
         recordingJob = null
 
@@ -61,7 +66,7 @@ class VoiceRecordingViewModel(
             onSuccess = { audioFile ->
                 println("[VoiceRecording] Stopped recording: ${audioFile.absolutePath} (${audioFile.length()} bytes)")
                 _state.value = VoiceRecordingState.Transcribing
-                transcribeAudio(audioFile, language, onTranscribed)
+                transcribeAndSaveVoiceMessage(userId, audioFile, language, onTranscribed)
             },
             onFailure = { error ->
                 _state.value = VoiceRecordingState.Error(error.message ?: "Failed to stop recording")
@@ -84,18 +89,41 @@ class VoiceRecordingViewModel(
     }
 
     /**
-     * Transcribe audio file using Whisper API
+     * Transcribe audio file and save voice message to backend
      */
-    private fun transcribeAudio(audioFile: File, language: String, onTranscribed: (String) -> Unit) {
+    private fun transcribeAndSaveVoiceMessage(
+        userId: String,
+        audioFile: File,
+        language: String,
+        onTranscribed: (transcription: String, voiceAudioUrl: String?) -> Unit
+    ) {
         viewModelScope.launch {
+            // Step 1: Transcribe audio
             api.transcribeAudio(audioFile, language).fold(
-                onSuccess = { response ->
-                    if (response.success) {
-                        println("[VoiceRecording] Transcription successful: ${response.text}")
-                        onTranscribed(response.text)
-                        _state.value = VoiceRecordingState.Idle
+                onSuccess = { transcriptionResponse ->
+                    if (transcriptionResponse.success) {
+                        val transcription = transcriptionResponse.text
+                        println("[VoiceRecording] Transcription successful: $transcription")
+
+                        // Step 2: Save voice message to backend
+                        viewModelScope.launch {
+                            api.saveVoiceMessage(userId, audioFile, transcription, language).fold(
+                                onSuccess = { voiceMessageResponse ->
+                                    val voiceAudioUrl = voiceMessageResponse.conversation?.voiceAudioUrl
+                                    println("[VoiceRecording] Voice message saved: $voiceAudioUrl")
+                                    onTranscribed(transcription, voiceAudioUrl)
+                                    _state.value = VoiceRecordingState.Idle
+                                },
+                                onFailure = { error ->
+                                    // Still send transcription even if save fails
+                                    println("[VoiceRecording] Failed to save voice message: ${error.message}")
+                                    onTranscribed(transcription, null)
+                                    _state.value = VoiceRecordingState.Idle
+                                }
+                            )
+                        }
                     } else {
-                        _state.value = VoiceRecordingState.Error(response.error ?: "Transcription failed")
+                        _state.value = VoiceRecordingState.Error(transcriptionResponse.error ?: "Transcription failed")
                         resetToIdle()
                     }
                 },

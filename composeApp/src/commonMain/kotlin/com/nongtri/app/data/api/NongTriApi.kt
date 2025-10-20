@@ -239,6 +239,46 @@ class NongTriApi(
     }
 
     /**
+     * Save voice message with transcription to backend
+     * @param userId Device ID
+     * @param audioFile Audio file to upload
+     * @param transcription Transcribed text
+     * @param language Language code (e.g., "en", "vi")
+     * @return Result with VoiceMessageResponse containing conversation ID and audio URL
+     */
+    suspend fun saveVoiceMessage(
+        userId: String,
+        audioFile: java.io.File,
+        transcription: String,
+        language: String
+    ): Result<VoiceMessageResponse> {
+        return try {
+            val response: VoiceMessageResponse = client.submitFormWithBinaryData(
+                url = "$baseUrl/api/conversation/voice-message",
+                formData = io.ktor.client.request.forms.formData {
+                    append("audio", audioFile.readBytes(), io.ktor.http.Headers.build {
+                        append(HttpHeaders.ContentType, "audio/m4a")
+                        append(HttpHeaders.ContentDisposition, "filename=\"${audioFile.name}\"")
+                    })
+                    append("userId", userId)
+                    append("transcription", transcription)
+                    append("language", language)
+                }
+            ).body()
+
+            if (response.success) {
+                Result.success(response)
+            } else {
+                Result.failure(Exception(response.error ?: "Failed to save voice message"))
+            }
+        } catch (e: Exception) {
+            println("[NongTriApi] Save voice message error: ${e.message}")
+            e.printStackTrace()
+            Result.failure(e)
+        }
+    }
+
+    /**
      * Update conversation with TTS audio URL for persistence
      * @param conversationId Backend conversation ID
      * @param audioUrl MinIO audio URL
@@ -350,4 +390,19 @@ data class HistoryMessage(
     val voiceTranscription: String? = null,   // Transcribed text
     val imageUrl: String? = null,             // Image URL
     val language: String? = "en"              // Message language
+)
+
+@kotlinx.serialization.Serializable
+data class VoiceMessageResponse(
+    val success: Boolean,
+    val conversation: VoiceMessageConversation? = null,
+    val error: String? = null
+)
+
+@kotlinx.serialization.Serializable
+data class VoiceMessageConversation(
+    val id: Int,
+    val voiceAudioUrl: String?,
+    val transcription: String,
+    val createdAt: String
 )
