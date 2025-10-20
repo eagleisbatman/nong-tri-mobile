@@ -266,8 +266,8 @@ fun ChatScreen(
                             userId = viewModel.getDeviceId(),
                             language = if (language == Language.VIETNAMESE) "vi" else "en"
                         ) { transcription, voiceAudioUrl ->
-                            // Send transcribed text as a message
-                            viewModel.sendMessage(transcription)
+                            // Send voice message with audio URL
+                            viewModel.sendVoiceMessage(transcription, voiceAudioUrl)
                         }
                     },
                     strings = strings,

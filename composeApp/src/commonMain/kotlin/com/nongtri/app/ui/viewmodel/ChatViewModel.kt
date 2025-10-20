@@ -63,8 +63,11 @@ class ChatViewModel(
                                     conversationId = h.id,
                                     audioUrl = h.audioUrl,
                                     audioVoice = h.ttsVoice,
-                                    language = h.language ?: "en"
-                                    // TODO: Support voice messages (voiceAudioUrl, voiceTranscription)
+                                    language = h.language ?: "en",
+                                    // Voice message fields
+                                    messageType = h.messageType ?: "text",
+                                    voiceAudioUrl = h.voiceAudioUrl,
+                                    voiceTranscription = h.voiceTranscription
                                 )
                             }
                             _uiState.update { it.copy(messages = messages) }
@@ -194,6 +197,112 @@ class ChatViewModel(
                 },
                 onFailure = { error ->
                     // Remove the placeholder message and show error
+                    _uiState.update { state ->
+                        state.copy(
+                            messages = state.messages.filter { it.id != assistantMessageId },
+                            isLoading = false,
+                            error = error.message ?: "Failed to send message"
+                        )
+                    }
+                }
+            )
+        }
+    }
+
+    /**
+     * Send voice message with transcription and audio URL
+     * Voice messages are displayed with audio playback controls
+     * @param transcription Transcribed text from Whisper
+     * @param voiceAudioUrl MinIO URL for voice recording
+     */
+    fun sendVoiceMessage(transcription: String, voiceAudioUrl: String?) {
+        if (transcription.isBlank()) return
+
+        // Add user voice message
+        val userMessage = ChatMessage(
+            role = MessageRole.USER,
+            content = transcription.trim(),
+            timestamp = Clock.System.now(),
+            messageType = "voice",
+            voiceAudioUrl = voiceAudioUrl,
+            voiceTranscription = transcription.trim()
+        )
+
+        _uiState.update { state ->
+            state.copy(
+                messages = state.messages + userMessage,
+                isLoading = true,
+                error = null
+            )
+        }
+
+        // Create placeholder for streaming assistant message
+        val assistantMessageId = Uuid.random().toString()
+        val initialAssistantMessage = ChatMessage(
+            id = assistantMessageId,
+            role = MessageRole.ASSISTANT,
+            content = "",
+            timestamp = Clock.System.now(),
+            isLoading = true  // Mark as loading during streaming
+        )
+
+        _uiState.update { state ->
+            state.copy(messages = state.messages + initialAssistantMessage)
+        }
+
+        // Send transcription to API with streaming (same as sendMessage)
+        viewModelScope.launch {
+            api.sendMessageStream(
+                userId = userId,
+                message = transcription,
+                onChunk = { chunk ->
+                    _uiState.update { state ->
+                        state.copy(
+                            messages = state.messages.map { msg ->
+                                if (msg.id == assistantMessageId) {
+                                    msg.copy(content = msg.content + chunk)
+                                } else {
+                                    msg
+                                }
+                            }
+                        )
+                    }
+                },
+                onMetadata = { metadata ->
+                    _uiState.update { state ->
+                        state.copy(
+                            messages = state.messages.map { msg ->
+                                if (msg.id == assistantMessageId) {
+                                    msg.copy(
+                                        responseType = metadata.responseType,
+                                        followUpQuestions = metadata.followUpQuestions,
+                                        isGenericResponse = metadata.isGenericResponse,
+                                        language = metadata.language,
+                                        conversationId = metadata.conversationId
+                                    )
+                                } else {
+                                    msg
+                                }
+                            }
+                        )
+                    }
+                }
+            ).fold(
+                onSuccess = { fullResponse ->
+                    _uiState.update { state ->
+                        state.copy(
+                            isLoading = false,
+                            messages = state.messages.map { msg ->
+                                if (msg.id == assistantMessageId) {
+                                    msg.copy(isLoading = false)
+                                } else {
+                                    msg
+                                }
+                            }
+                        )
+                    }
+                },
+                onFailure = { error ->
                     _uiState.update { state ->
                         state.copy(
                             messages = state.messages.filter { it.id != assistantMessageId },

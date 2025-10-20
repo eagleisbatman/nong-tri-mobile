@@ -21,9 +21,13 @@ data class ChatMessage(
     val followUpQuestions: List<String> = emptyList(),  // Tappable follow-up questions
     val isGenericResponse: Boolean = false,  // true = greeting/casual, false = agricultural advice
     val language: String = "en",  // "vi" | "en"
-    // TTS audio caching
+    // TTS audio caching (for assistant messages)
     val audioUrl: String? = null,  // Cached TTS audio URL to prevent regeneration
-    val audioVoice: String? = null  // Voice used for TTS (alloy, echo, etc.)
+    val audioVoice: String? = null,  // Voice used for TTS (alloy, echo, etc.)
+    // Voice message fields (for user messages)
+    val messageType: String = "text",  // "text" | "voice" | "image"
+    val voiceAudioUrl: String? = null,  // User voice recording URL (from MinIO)
+    val voiceTranscription: String? = null  // Transcribed text from voice message
 )
 
 @Serializable
