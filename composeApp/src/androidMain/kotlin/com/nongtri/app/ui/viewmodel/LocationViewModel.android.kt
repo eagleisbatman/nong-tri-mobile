@@ -37,6 +37,8 @@ actual class LocationViewModel actual constructor() : ViewModel() {
         var permissionResultCallback: ((Boolean) -> Unit)? = null
     }
 
+    private var permissionRequestTime: Long = 0  // Track when permission was requested
+
     fun initialize(context: Context) {
         this.context = context
         this.fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
@@ -51,19 +53,12 @@ actual class LocationViewModel actual constructor() : ViewModel() {
      * Call this when app resumes from background to check if permission was granted in settings
      */
     fun onResume() {
-        // Check if permission state has changed
-        val shouldShowSettings = shouldShowSettingsButton()
-
-        // Update state if it has changed
-        if (_locationState.value.shouldShowSettings != shouldShowSettings) {
+        // If we were showing settings button but permission is now granted, reset state
+        if (_locationState.value.shouldShowSettings && hasLocationPermission()) {
             _locationState.update {
                 it.copy(
-                    shouldShowSettings = shouldShowSettings,
-                    error = if (shouldShowSettings) {
-                        "Please enable location permission in Settings to share your location"
-                    } else {
-                        null
-                    }
+                    shouldShowSettings = false,
+                    error = null
                 )
             }
         }
@@ -125,13 +120,17 @@ actual class LocationViewModel actual constructor() : ViewModel() {
             // Permission already granted, get location directly
             shareCurrentLocation()
         } else {
-            // Check if Android will show the permission dialog or if user has permanently denied
-            if (shouldShowSettingsButton()) {
-                // User has permanently denied (selected "Don't ask again"), open settings
+            // Check if we should show settings button
+            if (_locationState.value.shouldShowSettings) {
+                // User has permanently denied, open settings
+                println("Opening settings - permission permanently denied")
                 openLocationSettings()
             } else {
-                // Android will show permission dialog, request it
+                // Request permission and track the time
+                permissionRequestTime = System.currentTimeMillis()
                 _locationState.update { it.copy(permissionRequested = true) }
+
+                println("Requesting location permission...")
                 permissionLauncher?.invoke(
                     arrayOf(
                         Manifest.permission.ACCESS_FINE_LOCATION,
@@ -143,24 +142,39 @@ actual class LocationViewModel actual constructor() : ViewModel() {
     }
 
     actual fun onPermissionResult(granted: Boolean) {
+        val responseTime = System.currentTimeMillis() - permissionRequestTime
+        println("Permission result: granted=$granted, responseTime=${responseTime}ms")
+
         if (granted) {
             // Permission granted, reset state and share location
             _locationState.update {
                 it.copy(
                     shouldShowSettings = false,
-                    permissionRequested = false,
+                    permissionRequested = true,  // Keep track that we've requested
                     error = null
                 )
             }
             shareCurrentLocation()
         } else {
-            // Permission denied - check if we should now show settings button
-            val shouldShowSettings = shouldShowSettingsButton()
+            // Permission denied
+            // If response was instant (< 500ms), user didn't see dialog - permission exhausted
+            val wasInstantDenial = responseTime < 500
+
+            // Check Android's rationale API
+            val shouldShowRationale = shouldShowRequestPermissionRationale()
+
+            // Show settings if:
+            // 1. Instant denial (no dialog shown), OR
+            // 2. Android says we shouldn't show rationale AND we've requested before
+            val shouldShowSettings = wasInstantDenial ||
+                                   (!shouldShowRationale && _locationState.value.permissionRequested)
+
+            println("shouldShowRationale=$shouldShowRationale, wasInstantDenial=$wasInstantDenial, shouldShowSettings=$shouldShowSettings")
 
             _locationState.update {
                 it.copy(
                     shouldShowSettings = shouldShowSettings,
-                    permissionRequested = false,
+                    permissionRequested = true,  // Mark that we've requested
                     error = if (shouldShowSettings) {
                         "Please enable location permission in Settings to share your location"
                     } else {
@@ -171,37 +185,13 @@ actual class LocationViewModel actual constructor() : ViewModel() {
         }
     }
 
-    /**
-     * Check if we should show the "Open Settings" button instead of requesting permission
-     * Returns true if user has permanently denied permission (selected "Don't ask again")
-     */
-    private fun shouldShowSettingsButton(): Boolean {
-        // If permission is already granted, no need for settings
-        if (hasLocationPermission()) {
-            return false
-        }
-
-        // Check if we should show rationale for FINE_LOCATION permission
+    private fun shouldShowRequestPermissionRationale(): Boolean {
         val activity = context as? ComponentActivity ?: return false
-
-        // shouldShowRequestPermissionRationale returns:
-        // - false: if user has NEVER been asked OR has selected "Don't ask again"
-        // - true: if user has denied but can still be asked again
-        val shouldShowRationale = activity.shouldShowRequestPermissionRationale(
+        return activity.shouldShowRequestPermissionRationale(
             Manifest.permission.ACCESS_FINE_LOCATION
         )
-
-        // If we have requested permission before (permissionRequested was true at some point)
-        // AND shouldShowRationale is false, it means user selected "Don't ask again"
-        // We need to track if we've ever requested permission
-        val hasEverRequested = _locationState.value.permissionRequested ||
-                               !shouldShowRationale && !hasLocationPermission()
-
-        // Show settings button if:
-        // - We've requested before AND rationale should not be shown
-        // - This means user permanently denied
-        return hasEverRequested && !shouldShowRationale
     }
+
 
     actual fun openLocationSettings() {
         try {
