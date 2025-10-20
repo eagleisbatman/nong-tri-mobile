@@ -27,13 +27,16 @@ expect class TextToSpeechManager {
      * @param language Language code (e.g., "en", "vi")
      * @param voice OpenAI voice (alloy, echo, fable, onyx, nova, shimmer)
      * @param tone Speaking tone (friendly, professional, empathetic, excited, calm, neutral)
+     * @param cachedAudioUrl Optional cached audio URL to skip regeneration
+     * @return The audio URL (for caching)
      */
     suspend fun speak(
         text: String,
         language: String = "en",
         voice: String = "alloy",
-        tone: String = "friendly"
-    )
+        tone: String = "friendly",
+        cachedAudioUrl: String? = null
+    ): String?
 
     /**
      * Stop any ongoing speech

@@ -46,8 +46,9 @@ actual class TextToSpeechManager(private val context: Context) {
         text: String,
         language: String,
         voice: String,
-        tone: String
-    ) = withContext(Dispatchers.IO) {
+        tone: String,
+        cachedAudioUrl: String?
+    ): String? = withContext(Dispatchers.IO) {
         // Prevent multiple simultaneous TTS requests
         if (isProcessing) {
             Log.d(TAG, "TTS: Already processing, ignoring request")
@@ -66,9 +67,21 @@ actual class TextToSpeechManager(private val context: Context) {
             // Stop any current playback
             stopInternal()
 
-            // Request TTS audio from backend
-            Log.d(TAG, "TTS: Requesting audio from backend")
-            val audioFile = requestTTS(text, language, voice, tone)
+            // Use cached audio if available
+            val audioUrl: String
+            val audioFile: File
+
+            if (cachedAudioUrl != null) {
+                Log.d(TAG, "TTS: Using cached audio URL: $cachedAudioUrl")
+                audioUrl = cachedAudioUrl
+                audioFile = downloadAudio(audioUrl)
+            } else {
+                // Request TTS audio from backend
+                Log.d(TAG, "TTS: Requesting audio from backend")
+                val result = requestTTS(text, language, voice, tone)
+                audioUrl = result.first
+                audioFile = result.second
+            }
 
             Log.d(TAG, "TTS: Audio file received, size: ${audioFile.length()} bytes")
             _state.value = TtsState.PLAYING
@@ -109,6 +122,9 @@ actual class TextToSpeechManager(private val context: Context) {
                     Log.d(TAG, "TTS: Playback started with audio attributes and max volume")
                 }
             }
+
+            // Return audio URL for caching
+            return@withContext audioUrl
         } catch (e: Exception) {
             isProcessing = false
             _state.value = TtsState.ERROR
@@ -119,6 +135,7 @@ actual class TextToSpeechManager(private val context: Context) {
             // Reset to IDLE after showing error
             kotlinx.coroutines.delay(3000)
             _state.value = TtsState.IDLE
+            return@withContext null
         }
     }
 
@@ -131,7 +148,7 @@ actual class TextToSpeechManager(private val context: Context) {
         language: String,
         voice: String,
         tone: String
-    ): File = withContext(Dispatchers.IO) {
+    ): Pair<String, File> = withContext(Dispatchers.IO) {
         // Create request body
         val json = JSONObject().apply {
             put("text", text)
@@ -176,6 +193,12 @@ actual class TextToSpeechManager(private val context: Context) {
             url
         }
 
+        // Download audio file and return both URL and File
+        val audioFile = downloadAudio(audioUrl)
+        Pair(audioUrl, audioFile)
+    }
+
+    private suspend fun downloadAudio(audioUrl: String): File = withContext(Dispatchers.IO) {
         // Download audio file from MinIO URL
         Log.d(TAG, "TTS: Downloading from MinIO: $audioUrl")
         val audioRequest = Request.Builder()

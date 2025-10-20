@@ -20,7 +20,10 @@ data class ChatMessage(
     val responseType: String? = null,  // "generic" | "agricultural_weather" | "agricultural_crops" | etc.
     val followUpQuestions: List<String> = emptyList(),  // Tappable follow-up questions
     val isGenericResponse: Boolean = false,  // true = greeting/casual, false = agricultural advice
-    val language: String = "en"  // "vi" | "en"
+    val language: String = "en",  // "vi" | "en"
+    // TTS audio caching
+    val audioUrl: String? = null,  // Cached TTS audio URL to prevent regeneration
+    val audioVoice: String? = null  // Voice used for TTS (alloy, echo, etc.)
 )
 
 @Serializable

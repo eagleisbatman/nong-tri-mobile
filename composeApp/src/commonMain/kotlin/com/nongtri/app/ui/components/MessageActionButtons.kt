@@ -23,10 +23,12 @@ fun MessageActionButtons(
     messageContent: String,
     language: Language,
     isGenericResponse: Boolean = false,  // true = greeting/casual, false = agricultural advice
+    cachedAudioUrl: String? = null,  // Cached TTS audio URL
     onCopy: () -> Unit,
     onShare: () -> Unit,
     onListen: () -> Unit,
     onFeedback: (Boolean) -> Unit,
+    onAudioUrlCached: (String) -> Unit = {},  // Callback when audio URL is generated
     modifier: Modifier = Modifier
 ) {
     val clipboardManager = LocalClipboardManager.current
@@ -87,13 +89,16 @@ fun MessageActionButtons(
                     if (ttsState == TtsState.PLAYING) {
                         ttsManager.stop()
                     } else if (ttsState == TtsState.IDLE) {
-                        // Use OpenAI TTS with tone control
-                        ttsManager.speak(
+                        // Use OpenAI TTS with tone control and caching
+                        val audioUrl = ttsManager.speak(
                             text = messageContent,
                             language = language.code,
                             voice = "alloy", // Options: alloy, echo, fable, onyx, nova, shimmer
-                            tone = "friendly" // friendly, professional, empathetic, excited, calm, neutral
+                            tone = "friendly", // friendly, professional, empathetic, excited, calm, neutral
+                            cachedAudioUrl = cachedAudioUrl  // Use cached if available
                         )
+                        // Cache the audio URL for future use
+                        audioUrl?.let { onAudioUrlCached(it) }
                     }
                     onListen()
                 }
