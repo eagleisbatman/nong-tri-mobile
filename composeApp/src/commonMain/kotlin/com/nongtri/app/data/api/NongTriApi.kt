@@ -209,6 +209,33 @@ class NongTriApi(
         }
     }
 
+    /**
+     * Transcribe audio file to text using Whisper API
+     * @param audioFile Audio file to transcribe
+     * @param language Language code (e.g., "en", "vi")
+     * @return Result with TranscriptionResponse
+     */
+    suspend fun transcribeAudio(audioFile: java.io.File, language: String): Result<TranscriptionResponse> {
+        return try {
+            val response: TranscriptionResponse = client.submitFormWithBinaryData(
+                url = "$baseUrl/api/transcribe",
+                formData = io.ktor.client.request.forms.formData {
+                    append("audio", audioFile.readBytes(), io.ktor.http.Headers.build {
+                        append(HttpHeaders.ContentType, "audio/m4a")
+                        append(HttpHeaders.ContentDisposition, "filename=\"${audioFile.name}\"")
+                    })
+                    append("language", language)
+                }
+            ).body()
+
+            Result.success(response)
+        } catch (e: Exception) {
+            println("[NongTriApi] Transcription error: ${e.message}")
+            e.printStackTrace()
+            Result.failure(e)
+        }
+    }
+
     fun close() {
         client.close()
     }
@@ -226,4 +253,12 @@ data class StarterQuestionsContext(
     val locationName: String?,
     val language: String,
     val personalized: Boolean
+)
+
+@kotlinx.serialization.Serializable
+data class TranscriptionResponse(
+    val success: Boolean,
+    val text: String = "",
+    val language: String = "",
+    val error: String? = null
 )
