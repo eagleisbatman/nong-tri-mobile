@@ -29,14 +29,20 @@ class VoiceRecordingViewModel(
     private val _amplitude = MutableStateFlow(0)
     val amplitude: StateFlow<Int> = _amplitude.asStateFlow()
 
+    // Background transcription state (reactive for UI)
+    private val _isTranscribing = MutableStateFlow(false)
+    val isTranscribing: StateFlow<Boolean> = _isTranscribing.asStateFlow()
+
+    private val _transcriptionText = MutableStateFlow<String?>(null)
+    val transcriptionText: StateFlow<String?> = _transcriptionText.asStateFlow()
+
     private var recordingJob: Job? = null
     private var amplitudeJob: Job? = null
     private var recordingStartTime: Long = 0
 
-    // Background transcription state
+    // Background transcription internal state
     private var backgroundTranscription: String? = null
     private var backgroundVoiceAudioUrl: String? = null
-    private var isTranscribing = false
 
     /**
      * Start recording audio
@@ -147,7 +153,8 @@ class VoiceRecordingViewModel(
      * Start transcription in background (non-blocking)
      */
     private fun startBackgroundTranscription(userId: String, audioFile: File, language: String) {
-        isTranscribing = true
+        _isTranscribing.value = true
+        _transcriptionText.value = null
         backgroundTranscription = null
         backgroundVoiceAudioUrl = null
 
@@ -156,7 +163,8 @@ class VoiceRecordingViewModel(
         transcribeAndSaveVoiceMessage(userId, audioFile, language) { transcription, voiceAudioUrl ->
             backgroundTranscription = transcription
             backgroundVoiceAudioUrl = voiceAudioUrl
-            isTranscribing = false
+            _isTranscribing.value = false
+            _transcriptionText.value = transcription  // Update reactive state for UI
             println("[VoiceRecording] Background transcription complete: $transcription")
             println("[VoiceRecording] Voice file uploaded to MinIO: $voiceAudioUrl")
         }

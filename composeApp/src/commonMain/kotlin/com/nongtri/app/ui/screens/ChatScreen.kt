@@ -56,6 +56,8 @@ fun ChatScreen(
     val voiceRecordingViewModel = remember { VoiceRecordingViewModel(audioRecorder) }
     val voiceRecordingState by voiceRecordingViewModel.state.collectAsState()
     val voiceAmplitude by voiceRecordingViewModel.amplitude.collectAsState()
+    val isTranscribing by voiceRecordingViewModel.isTranscribing.collectAsState()
+    val transcriptionText by voiceRecordingViewModel.transcriptionText.collectAsState()
 
     // Snackbar for error messages (only for non-permission errors)
     val snackbarHostState = remember { SnackbarHostState() }
@@ -293,6 +295,17 @@ fun ChatScreen(
                 }
             }
 
+            // Update Preview state when transcription completes
+            LaunchedEffect(isTranscribing, transcriptionText) {
+                if (voiceRecordingUIState is VoiceRecordingUIState.Preview) {
+                    val currentPreview = voiceRecordingUIState as VoiceRecordingUIState.Preview
+                    voiceRecordingUIState = currentPreview.copy(
+                        transcription = transcriptionText,
+                        isTranscribing = isTranscribing
+                    )
+                }
+            }
+
             Column {
                 when (voiceRecordingUIState) {
                     is VoiceRecordingUIState.Idle -> {
@@ -339,7 +352,9 @@ fun ChatScreen(
                                     recordedAudioFile = audioFile
                                     voiceRecordingUIState = VoiceRecordingUIState.Preview(
                                         durationMs = recordingDuration,
-                                        audioFilePath = audioFile.absolutePath
+                                        audioFilePath = audioFile.absolutePath,
+                                        transcription = transcriptionText,
+                                        isTranscribing = isTranscribing
                                     )
                                 } else {
                                     // Recording was too short or failed - return to idle

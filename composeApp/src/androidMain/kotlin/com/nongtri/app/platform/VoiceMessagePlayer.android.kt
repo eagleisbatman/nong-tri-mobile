@@ -136,13 +136,24 @@ actual class VoiceMessagePlayer(private val context: Context) {
         positionUpdateJob?.cancel()  // Stop position updates when stopping
         mediaPlayer?.let {
             try {
+                // Only stop if actually playing - avoid state errors
+                // MediaPlayer.stop() can only be called from Started, Paused, Prepared, or PlaybackCompleted states
+                // Calling stop() from Idle state causes error -38 (MEDIA_ERROR_NOT_VALID_FOR_PROGRESSIVE_PLAYBACK)
                 if (it.isPlaying) {
                     it.stop()
+                    Log.d(TAG, "Stopped playback")
                 }
-                it.reset()
+                // Don't call reset() - it puts player in idle state, then release() is enough
                 it.release()
+                Log.d(TAG, "Released MediaPlayer")
             } catch (e: Exception) {
                 Log.w(TAG, "Error stopping MediaPlayer: ${e.message}")
+                // Try to release anyway
+                try {
+                    it.release()
+                } catch (releaseError: Exception) {
+                    Log.e(TAG, "Error releasing MediaPlayer: ${releaseError.message}")
+                }
             }
         }
         mediaPlayer = null
