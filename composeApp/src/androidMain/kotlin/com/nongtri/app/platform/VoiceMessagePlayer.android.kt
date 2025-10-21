@@ -4,9 +4,17 @@ import android.content.Context
 import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.util.Log
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 
 /**
  * Manages playback of user voice messages
@@ -14,7 +22,13 @@ import kotlinx.coroutines.flow.asStateFlow
  */
 class VoiceMessagePlayer(private val context: Context) {
     private var mediaPlayer: MediaPlayer? = null
-    private var currentUrl: String? = null
+
+    // CoroutineScope for position updates
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    private var positionUpdateJob: Job? = null
+
+    private val _currentUrl = MutableStateFlow<String?>(null)
+    val currentUrl: StateFlow<String?> = _currentUrl.asStateFlow()
 
     private val _isPlaying = MutableStateFlow(false)
     val isPlaying: StateFlow<Boolean> = _isPlaying.asStateFlow()
@@ -26,15 +40,33 @@ class VoiceMessagePlayer(private val context: Context) {
     val position: StateFlow<Int> = _position.asStateFlow()
 
     /**
+     * Start position update loop - updates position every 100ms during playback
+     */
+    private fun startPositionUpdates() {
+        positionUpdateJob?.cancel()
+        positionUpdateJob = scope.launch {
+            while (isActive && _isPlaying.value) {
+                mediaPlayer?.let { player ->
+                    if (player.isPlaying) {
+                        _position.value = player.currentPosition
+                    }
+                }
+                delay(100) // Update every 100ms for smooth progress
+            }
+        }
+    }
+
+    /**
      * Play or resume voice message from URL
      * @param audioUrl MinIO URL of voice recording
      */
     fun play(audioUrl: String) {
         try {
             // If same URL and paused, resume
-            if (currentUrl == audioUrl && mediaPlayer != null && !_isPlaying.value) {
+            if (_currentUrl.value == audioUrl && mediaPlayer != null && !_isPlaying.value) {
                 mediaPlayer?.start()
                 _isPlaying.value = true
+                startPositionUpdates()  // Start position updates on resume
                 Log.d(TAG, "Resumed playback: $audioUrl")
                 return
             }
@@ -43,7 +75,7 @@ class VoiceMessagePlayer(private val context: Context) {
             stop()
 
             // Create new MediaPlayer
-            currentUrl = audioUrl
+            _currentUrl.value = audioUrl
             mediaPlayer = MediaPlayer().apply {
                 setAudioAttributes(
                     AudioAttributes.Builder()
@@ -55,17 +87,21 @@ class VoiceMessagePlayer(private val context: Context) {
                 setDataSource(audioUrl)
                 setOnPreparedListener { mp ->
                     _duration.value = mp.duration
+                    _position.value = 0  // Reset position for new playback
                     mp.start()
                     _isPlaying.value = true
+                    startPositionUpdates()  // Start position updates on playback
                     Log.d(TAG, "Started playback: $audioUrl (${mp.duration}ms)")
                 }
                 setOnCompletionListener {
+                    positionUpdateJob?.cancel()  // Stop position updates
                     _isPlaying.value = false
                     _position.value = 0
                     Log.d(TAG, "Playback completed")
                 }
                 setOnErrorListener { _, what, extra ->
                     Log.e(TAG, "MediaPlayer error - what: $what, extra: $extra")
+                    positionUpdateJob?.cancel()  // Stop position updates on error
                     stop()
                     true
                 }
@@ -82,6 +118,7 @@ class VoiceMessagePlayer(private val context: Context) {
      * Pause playback
      */
     fun pause() {
+        positionUpdateJob?.cancel()  // Stop position updates when pausing
         mediaPlayer?.let {
             if (it.isPlaying) {
                 it.pause()
@@ -96,6 +133,7 @@ class VoiceMessagePlayer(private val context: Context) {
      * Stop playback and release resources
      */
     fun stop() {
+        positionUpdateJob?.cancel()  // Stop position updates when stopping
         mediaPlayer?.let {
             try {
                 if (it.isPlaying) {
@@ -108,7 +146,7 @@ class VoiceMessagePlayer(private val context: Context) {
             }
         }
         mediaPlayer = null
-        currentUrl = null
+        _currentUrl.value = null
         _isPlaying.value = false
         _position.value = 0
         _duration.value = 0
@@ -127,7 +165,9 @@ class VoiceMessagePlayer(private val context: Context) {
      * Cleanup resources
      */
     fun shutdown() {
+        positionUpdateJob?.cancel()  // Cancel any running position updates
         stop()
+        scope.cancel()  // Cancel the coroutine scope
     }
 
     companion object {

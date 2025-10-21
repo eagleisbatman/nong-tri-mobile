@@ -43,9 +43,16 @@ fun MessageBubble(
 
     // Voice message player for user voice recordings
     val voicePlayer = com.nongtri.app.platform.LocalVoiceMessagePlayer.current
-    val voiceIsPlaying by voicePlayer.isPlaying.collectAsState()
-    val voiceDuration by voicePlayer.duration.collectAsState()
-    val voicePosition by voicePlayer.position.collectAsState()
+    val voicePlayerCurrentUrl by voicePlayer.currentUrl.collectAsState()
+    val voicePlayerIsPlaying by voicePlayer.isPlaying.collectAsState()
+    val voicePlayerDuration by voicePlayer.duration.collectAsState()
+    val voicePlayerPosition by voicePlayer.position.collectAsState()
+
+    // Only show as playing if THIS message's URL is the one currently playing
+    val isThisMessagePlaying = voicePlayerCurrentUrl == message.voiceAudioUrl && voicePlayerIsPlaying
+
+    // TTS manager for stopping TTS when voice message plays
+    val ttsManager = com.nongtri.app.platform.LocalTextToSpeechManager.current
 
     // Entrance animation
     var visible by remember { mutableStateOf(false) }
@@ -115,21 +122,28 @@ fun MessageBubble(
                     if (isUser) {
                         // Check if this is a voice message
                         if (message.messageType == "voice") {
-                            val positionPercent = if (voiceDuration > 0) {
-                                voicePosition.toFloat() / voiceDuration
+                            // Only show position/duration for THIS message when it's playing
+                            val positionPercent = if (isThisMessagePlaying && voicePlayerDuration > 0) {
+                                voicePlayerPosition.toFloat() / voicePlayerDuration
                             } else 0f
+
+                            val displayDuration = if (isThisMessagePlaying) {
+                                voicePlayerDuration / 1000  // Convert ms to seconds
+                            } else 0
 
                             VoiceMessageBubble(
                                 voiceAudioUrl = message.voiceAudioUrl,
                                 transcription = message.voiceTranscription ?: message.content,
-                                isPlaying = voiceIsPlaying,
+                                isPlaying = isThisMessagePlaying,
                                 currentPosition = positionPercent,
-                                duration = voiceDuration / 1000,  // Convert ms to seconds
+                                duration = displayDuration,
                                 onPlayPause = {
                                     message.voiceAudioUrl?.let { url ->
-                                        if (voiceIsPlaying) {
+                                        if (isThisMessagePlaying) {
                                             voicePlayer.pause()
                                         } else {
+                                            // Stop TTS before playing voice message
+                                            ttsManager.stop()
                                             voicePlayer.play(url)
                                         }
                                     }

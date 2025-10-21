@@ -35,6 +35,7 @@ fun MessageActionButtons(
     val shareManager = LocalShareManager.current
     val ttsManager = LocalTextToSpeechManager.current
     val ttsState by ttsManager.state.collectAsState()
+    val voicePlayer = com.nongtri.app.platform.LocalVoiceMessagePlayer.current
     val coroutineScope = rememberCoroutineScope()
     var showCopiedSnackbar by remember { mutableStateOf(false) }
     var feedbackGiven by remember { mutableStateOf<Boolean?>(null) }
@@ -96,6 +97,9 @@ fun MessageActionButtons(
                             ttsManager.resume()
                         }
                         TtsState.IDLE, TtsState.ERROR -> {
+                            // Stop voice message player before starting TTS
+                            voicePlayer.stop()
+
                             // Start new playback with caching
                             val audioUrl = ttsManager.speak(
                                 text = messageContent,
