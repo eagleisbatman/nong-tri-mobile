@@ -57,7 +57,7 @@ actual class TextToSpeechManager(private val context: Context) {
             withContext(Dispatchers.Main) {
                 Toast.makeText(context, "Speech already playing", Toast.LENGTH_SHORT).show()
             }
-            return@withContext
+            return@withContext null  // FIXED: Return null explicitly to avoid implicit Unit return
         }
 
         isProcessing = true

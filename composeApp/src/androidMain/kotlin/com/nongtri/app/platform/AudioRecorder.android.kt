@@ -91,6 +91,41 @@ actual class AudioRecorder(private val context: Context) {
 
     actual fun isRecording(): Boolean = isRecording
 
+    /**
+     * Clean up old voice recording files from cache
+     * Should be called periodically or on app startup
+     */
+    fun cleanupOldRecordings(maxAgeMillis: Long = 24 * 60 * 60 * 1000) {
+        try {
+            val tempDir = File(context.cacheDir, "voice")
+            if (tempDir.exists()) {
+                val now = System.currentTimeMillis()
+                tempDir.listFiles()?.forEach { file ->
+                    if (now - file.lastModified() > maxAgeMillis) {
+                        file.delete()
+                        Log.d(TAG, "Deleted old recording: ${file.name}")
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error cleaning up recordings", e)
+        }
+    }
+
+    /**
+     * Release resources and cleanup
+     */
+    fun shutdown() {
+        cancelRecording()
+        // Clean up all cache files on shutdown
+        try {
+            val tempDir = File(context.cacheDir, "voice")
+            tempDir.listFiles()?.forEach { it.delete() }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error during shutdown cleanup", e)
+        }
+    }
+
     companion object {
         private const val TAG = "AudioRecorder"
     }
