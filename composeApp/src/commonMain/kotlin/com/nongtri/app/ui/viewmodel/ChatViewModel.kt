@@ -261,6 +261,18 @@ class ChatViewModel(
     }
 
     /**
+     * Remove failed voice message
+     * Called when recording or transcription fails
+     */
+    fun removeVoiceMessage(messageId: String) {
+        _uiState.update { state ->
+            state.copy(
+                messages = state.messages.filter { it.id != messageId }
+            )
+        }
+    }
+
+    /**
      * Send voice message with transcription and audio URL
      * Voice messages are displayed with audio playback controls
      * @param transcription Transcribed text from Whisper

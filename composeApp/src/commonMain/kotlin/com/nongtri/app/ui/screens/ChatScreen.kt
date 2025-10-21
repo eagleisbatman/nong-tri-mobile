@@ -50,6 +50,29 @@ fun ChatScreen(
     val voiceRecordingViewModel = remember { VoiceRecordingViewModel(audioRecorder) }
     val voiceRecordingState by voiceRecordingViewModel.state.collectAsState()
 
+    // Snackbar for error messages
+    val snackbarHostState = remember { SnackbarHostState() }
+    var currentOptimisticMessageId by remember { mutableStateOf<String?>(null) }
+
+    // Handle voice recording errors - remove optimistic message and show error
+    LaunchedEffect(voiceRecordingState) {
+        if (voiceRecordingState is VoiceRecordingState.Error) {
+            val errorMessage = (voiceRecordingState as VoiceRecordingState.Error).message
+
+            // Remove the optimistic message if it exists
+            currentOptimisticMessageId?.let { messageId ->
+                viewModel.removeVoiceMessage(messageId)
+                currentOptimisticMessageId = null
+            }
+
+            // Show error message to user
+            snackbarHostState.showSnackbar(
+                message = errorMessage,
+                duration = SnackbarDuration.Short
+            )
+        }
+    }
+
     // Check if user has scrolled up
     val isScrolledToBottom by remember {
         derivedStateOf {
@@ -76,6 +99,9 @@ fun ChatScreen(
         modifier = modifier
             .fillMaxSize()
             .testTag(TestTags.CHAT_SCREEN),
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
+        },
         topBar = {
             TopAppBar(
                 title = {
@@ -263,6 +289,7 @@ fun ChatScreen(
                     onVoiceRelease = {
                         // ✅ OPTIMISTIC UI: Show voice bubble INSTANTLY with "..." placeholder
                         val optimisticMessageId = viewModel.showOptimisticVoiceMessage()
+                        currentOptimisticMessageId = optimisticMessageId
 
                         // Stop recording and transcribe in background
                         voiceRecordingViewModel.stopRecording(
@@ -271,6 +298,7 @@ fun ChatScreen(
                         ) { transcription, voiceAudioUrl ->
                             // ✅ Update optimistic message with actual transcription
                             viewModel.updateVoiceMessage(optimisticMessageId, transcription, voiceAudioUrl)
+                            currentOptimisticMessageId = null
 
                             // ✅ Then send to AI for response
                             viewModel.sendVoiceMessage(transcription, voiceAudioUrl)
