@@ -8,7 +8,7 @@ import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.outlined.CameraAlt
 import androidx.compose.material.icons.outlined.Mic
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
@@ -95,25 +95,36 @@ fun WhatsAppStyleInputBar(
             } else {
                 // Voice button with hold-to-record (WhatsApp style)
                 // Long press to start, release to send, slide away to cancel
+                var isRecording by remember { mutableStateOf(false) }
+
                 Box(
                     modifier = Modifier
                         .size(48.dp)
                         .pointerInput(Unit) {
                             detectTapGestures(
-                                onTap = { onVoiceClick() },
+                                onTap = {
+                                    // Simple tap - do nothing, just vibrate or show hint
+                                    onVoiceClick()
+                                },
                                 onLongPress = {
                                     // Start recording on long press
+                                    isRecording = true
                                     onVoiceLongPress()
                                 },
                                 onPress = {
-                                    // Detect if user releases inside or outside button
+                                    // Wait for release
                                     val release = tryAwaitRelease()
-                                    if (release) {
-                                        // Released inside button - send voice message
-                                        onVoiceRelease()
-                                    } else {
-                                        // Dragged outside button - cancel recording
-                                        onVoiceCancel()
+
+                                    // Only process release if we were actually recording
+                                    if (isRecording) {
+                                        if (release) {
+                                            // Released inside button - send voice message
+                                            onVoiceRelease()
+                                        } else {
+                                            // Dragged outside button - cancel recording
+                                            onVoiceCancel()
+                                        }
+                                        isRecording = false
                                     }
                                 }
                             )
