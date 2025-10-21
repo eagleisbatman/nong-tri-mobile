@@ -40,6 +40,26 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    // Audio recording permission launcher
+    private val recordAudioPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        audioPermissionResultCallback?.invoke(granted)
+
+        if (granted) {
+            println("RECORD_AUDIO permission granted")
+        } else {
+            println("RECORD_AUDIO permission denied - voice input disabled")
+        }
+    }
+
+    companion object {
+        // Callback for audio permission result
+        var audioPermissionResultCallback: ((Boolean) -> Unit)? = null
+        // Launcher for requesting audio permission
+        var audioPermissionLauncher: (() -> Unit)? = null
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -53,6 +73,11 @@ class MainActivity : ComponentActivity() {
         // Set up location permission launcher for LocationViewModel
         LocationViewModel.permissionLauncher = { permissions ->
             locationPermissionLauncher.launch(permissions)
+        }
+
+        // Set up audio recording permission launcher
+        audioPermissionLauncher = {
+            recordAudioPermissionLauncher.launch(android.Manifest.permission.RECORD_AUDIO)
         }
 
         setContent {
@@ -69,6 +94,7 @@ class MainActivity : ComponentActivity() {
     override fun onDestroy() {
         super.onDestroy()
         ttsManager.shutdown()
+        audioRecorder.shutdown()
     }
 }
 

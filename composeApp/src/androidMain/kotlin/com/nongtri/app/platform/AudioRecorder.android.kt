@@ -1,9 +1,12 @@
 package com.nongtri.app.platform
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import android.media.MediaRecorder
 import android.os.Build
 import android.util.Log
+import androidx.core.content.ContextCompat
 import java.io.File
 import java.io.IOException
 
@@ -13,6 +16,13 @@ actual class AudioRecorder(private val context: Context) {
     private var isRecording = false
 
     actual fun startRecording(): Result<String> {
+        // Check RECORD_AUDIO permission first
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO)
+            != PackageManager.PERMISSION_GRANTED) {
+            Log.e(TAG, "RECORD_AUDIO permission not granted")
+            return Result.failure(SecurityException("Microphone permission not granted. Please enable it in settings."))
+        }
+
         return try {
             // Create temp file for recording
             val tempDir = File(context.cacheDir, "voice")
