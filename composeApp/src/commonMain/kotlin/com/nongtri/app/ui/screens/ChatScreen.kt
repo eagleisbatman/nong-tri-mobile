@@ -55,6 +55,7 @@ fun ChatScreen(
     val audioRecorder = com.nongtri.app.platform.LocalAudioRecorder.current
     val voiceRecordingViewModel = remember { VoiceRecordingViewModel(audioRecorder) }
     val voiceRecordingState by voiceRecordingViewModel.state.collectAsState()
+    val voiceAmplitude by voiceRecordingViewModel.amplitude.collectAsState()
 
     // Snackbar for error messages (only for non-permission errors)
     val snackbarHostState = remember { SnackbarHostState() }
@@ -320,6 +321,7 @@ fun ChatScreen(
                         // Recording UI
                         VoiceRecordingUI(
                             state = voiceRecordingUIState,
+                            amplitude = voiceAmplitude,
                             onStopRecording = {
                                 // Stop recording, save for preview, and START TRANSCRIPTION IN BACKGROUND
                                 recordingDuration = (voiceRecordingUIState as VoiceRecordingUIState.Recording).durationMs

@@ -102,6 +102,23 @@ actual class AudioRecorder(private val context: Context) {
     actual fun isRecording(): Boolean = isRecording
 
     /**
+     * Get current recording amplitude (0-32767)
+     * Returns 0 if not recording
+     */
+    actual fun getMaxAmplitude(): Int {
+        return try {
+            if (isRecording && mediaRecorder != null) {
+                mediaRecorder?.maxAmplitude ?: 0
+            } else {
+                0
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error getting amplitude", e)
+            0
+        }
+    }
+
+    /**
      * Clean up old voice recording files from cache
      * Should be called periodically or on app startup
      */

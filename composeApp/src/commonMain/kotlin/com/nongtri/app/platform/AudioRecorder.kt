@@ -28,4 +28,10 @@ expect class AudioRecorder {
      * Check if currently recording
      */
     fun isRecording(): Boolean
+
+    /**
+     * Get current recording amplitude (0-32767)
+     * Returns 0 if not recording
+     */
+    fun getMaxAmplitude(): Int
 }

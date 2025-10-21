@@ -39,6 +39,7 @@ fun VoiceRecordingUI(
     onReject: () -> Unit,
     onPlayPause: () -> Unit,
     isPlaying: Boolean = false,
+    amplitude: Int = 0,
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -50,6 +51,7 @@ fun VoiceRecordingUI(
             is VoiceRecordingUIState.Recording -> {
                 RecordingActiveUI(
                     durationMs = state.durationMs,
+                    amplitude = amplitude,
                     onStop = onStopRecording,
                     modifier = Modifier.padding(16.dp)
                 )
@@ -78,6 +80,7 @@ fun VoiceRecordingUI(
 @Composable
 private fun RecordingActiveUI(
     durationMs: Long,
+    amplitude: Int,
     onStop: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -148,7 +151,8 @@ private fun RecordingActiveUI(
         }
 
         // Waveform visualization
-        AnimatedWaveform(
+        RealTimeWaveform(
+            amplitude = amplitude,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(48.dp)
@@ -157,26 +161,47 @@ private fun RecordingActiveUI(
 }
 
 /**
- * Simple flat waveform bars during recording
- * TODO: Replace with real audio amplitude visualization from AudioRecorder
+ * Real-time waveform visualization based on actual audio amplitude
+ * Amplitude ranges from 0-32767 (MediaRecorder.getMaxAmplitude())
  */
 @Composable
-private fun AnimatedWaveform(
+private fun RealTimeWaveform(
+    amplitude: Int,
     modifier: Modifier = Modifier
 ) {
-    // Show 40 flat bars at medium height to indicate recording is active
+    // Keep rolling window of last 40 amplitude values
+    var amplitudes by remember { mutableStateOf(List(40) { 0 }) }
+
+    LaunchedEffect(amplitude) {
+        // Update the amplitude list - drop first, add new at end
+        amplitudes = amplitudes.drop(1) + amplitude
+    }
+
     Row(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(2.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        repeat(40) {
+        amplitudes.forEach { amp ->
+            // Normalize amplitude (0-32767) to height (2-48dp)
+            // Using log scale for better visualization
+            val normalizedHeight = if (amp > 0) {
+                val logAmp = kotlin.math.ln(amp.toFloat() + 1) / kotlin.math.ln(32768f)
+                (logAmp * 46 + 2).coerceIn(2f, 48f)
+            } else {
+                2f // Minimum height when silent
+            }
+
             Surface(
                 modifier = Modifier
                     .width(4.dp)
-                    .height(20.dp), // Fixed medium height
+                    .height(normalizedHeight.dp),
                 shape = RoundedCornerShape(2.dp),
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
+                color = if (amp > 1000) {
+                    MaterialTheme.colorScheme.primary // Active voice
+                } else {
+                    MaterialTheme.colorScheme.primary.copy(alpha = 0.3f) // Silent/quiet
+                }
             ) {}
         }
     }

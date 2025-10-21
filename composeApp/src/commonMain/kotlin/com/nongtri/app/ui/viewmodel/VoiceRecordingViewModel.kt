@@ -25,7 +25,12 @@ class VoiceRecordingViewModel(
     private val _state = MutableStateFlow<VoiceRecordingState>(VoiceRecordingState.Idle)
     val state: StateFlow<VoiceRecordingState> = _state.asStateFlow()
 
+    // Real-time amplitude for waveform visualization (0-32767)
+    private val _amplitude = MutableStateFlow(0)
+    val amplitude: StateFlow<Int> = _amplitude.asStateFlow()
+
     private var recordingJob: Job? = null
+    private var amplitudeJob: Job? = null
     private var recordingStartTime: Long = 0
 
     // Background transcription state
@@ -44,6 +49,7 @@ class VoiceRecordingViewModel(
                 recordingStartTime = System.currentTimeMillis()
                 _state.value = VoiceRecordingState.Recording()
                 startRecordingTimer()
+                startAmplitudePolling()
                 println("[VoiceRecording] Started recording: $filePath")
             },
             onFailure = { error ->
@@ -109,6 +115,7 @@ class VoiceRecordingViewModel(
     fun stopForPreview(userId: String, language: String = "en"): File? {
         recordingJob?.cancel()
         recordingJob = null
+        stopAmplitudePolling()
 
         var savedFile: File? = null
         audioRecorder.stopRecording().fold(
@@ -208,6 +215,7 @@ class VoiceRecordingViewModel(
     fun cancelRecording() {
         recordingJob?.cancel()
         recordingJob = null
+        stopAmplitudePolling()
         audioRecorder.cancelRecording()
         _state.value = VoiceRecordingState.Cancelled
         println("[VoiceRecording] Cancelled recording")
@@ -281,6 +289,29 @@ class VoiceRecordingViewModel(
                 }
             }
         }
+    }
+
+    /**
+     * Poll audio amplitude for real-time waveform visualization
+     */
+    private fun startAmplitudePolling() {
+        amplitudeJob = viewModelScope.launch {
+            while (isActive && audioRecorder.isRecording()) {
+                val amplitude = audioRecorder.getMaxAmplitude()
+                _amplitude.value = amplitude
+                delay(50) // Poll every 50ms for smooth visualization
+            }
+            _amplitude.value = 0 // Reset when stopped
+        }
+    }
+
+    /**
+     * Stop amplitude polling
+     */
+    private fun stopAmplitudePolling() {
+        amplitudeJob?.cancel()
+        amplitudeJob = null
+        _amplitude.value = 0
     }
 
     /**
