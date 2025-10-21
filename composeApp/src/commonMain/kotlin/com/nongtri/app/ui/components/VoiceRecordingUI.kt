@@ -136,6 +136,12 @@ fun VoiceRecordingUI(
  * Beautiful real-time waveform visualization - Material Design 3
  * Properly centered with smooth, rounded bars
  * Amplitude ranges from 0-32767 (MediaRecorder.getMaxAmplitude())
+ *
+ * Visual scaling: Uses square root for more dramatic height differences
+ * - Silent (0-100): Very short bars (2-8dp)
+ * - Quiet (100-1000): Short bars (8-20dp)
+ * - Medium (1000-10000): Medium bars (20-45dp)
+ * - Loud (10000+): Tall bars (45-64dp)
  */
 @Composable
 private fun RealTimeWaveform(
@@ -153,36 +159,42 @@ private fun RealTimeWaveform(
     // Properly centered container
     Box(
         modifier = modifier,
-        contentAlignment = Alignment.Center // FIX: Center the waveform vertically
+        contentAlignment = Alignment.Center
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(3.dp, Alignment.CenterHorizontally),
-            verticalAlignment = Alignment.CenterVertically // FIX: Align bars from center
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            amplitudes.forEach { amp ->
-                // Normalize amplitude with log scale for better visualization
+            amplitudes.forEachIndexed { index, amp ->
+                // Use square root scaling for more dramatic height differences
+                // This makes quiet sounds much shorter and loud sounds much taller
                 val normalizedHeight = if (amp > 0) {
-                    val logAmp = kotlin.math.ln(amp.toFloat() + 1) / kotlin.math.ln(32768f)
-                    // Map to 4dp (min) to full height (max) range
-                    val maxHeight = 64.dp.value
-                    (logAmp * (maxHeight - 4f) + 4f).coerceIn(4f, maxHeight)
+                    val sqrtAmp = kotlin.math.sqrt(amp.toFloat()) / kotlin.math.sqrt(32768f)
+                    val maxHeight = 64f
+                    val minHeight = 2f
+                    (sqrtAmp * (maxHeight - minHeight) + minHeight).coerceIn(minHeight, maxHeight)
                 } else {
-                    4f // Minimum height when silent
+                    2f // Very short bars when silent
                 }
 
-                // Beautiful rounded bars with theme colors
+                // Smooth animation between height changes
+                val animatedHeight by androidx.compose.animation.core.animateFloatAsState(
+                    targetValue = normalizedHeight,
+                    animationSpec = androidx.compose.animation.core.spring(
+                        dampingRatio = androidx.compose.animation.core.Spring.DampingRatioMediumBouncy,
+                        stiffness = androidx.compose.animation.core.Spring.StiffnessHigh
+                    ),
+                    label = "waveform_height_$index"
+                )
+
+                // Beautiful rounded bars - solid color, height shows amplitude
                 Surface(
                     modifier = Modifier
-                        .width(3.dp)  // Sleeker bars
-                        .height(normalizedHeight.dp),
-                    shape = RoundedCornerShape(1.5.dp),  // Fully rounded ends
-                    color = when {
-                        amp > 5000 -> MaterialTheme.colorScheme.primary // Strong signal
-                        amp > 1000 -> MaterialTheme.colorScheme.primary.copy(alpha = 0.7f) // Medium
-                        amp > 100 -> MaterialTheme.colorScheme.primary.copy(alpha = 0.4f) // Weak
-                        else -> MaterialTheme.colorScheme.primary.copy(alpha = 0.2f) // Silent
-                    }
+                        .width(3.dp)
+                        .height(animatedHeight.dp),
+                    shape = RoundedCornerShape(1.5.dp),
+                    color = MaterialTheme.colorScheme.primary  // Solid color, no alpha
                 ) {}
             }
         }
