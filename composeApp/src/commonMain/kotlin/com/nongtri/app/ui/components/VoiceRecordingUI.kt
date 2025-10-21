@@ -1,9 +1,11 @@
 package com.nongtri.app.ui.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -23,131 +25,116 @@ sealed class VoiceRecordingUIState {
 }
 
 /**
- * Simplified voice recording UI
+ * Beautiful Material Design 3 voice recording UI
+ * Shown as a bottom sheet modal with smooth waveform visualization
  *
  * Flow:
- * 1. Tap mic → Start recording immediately
- * 2. Show timer + stop button while recording
- * 3. Stop → Transcribe in background, populate input box
- * 4. User manually sends
+ * 1. Tap mic → Bottom sheet slides up, recording starts
+ * 2. Show centered waveform, timer, cancel (X) and send (↑) buttons
+ * 3. Tap send → Transcribe in background, populate input box
+ * 4. Tap cancel → Discard recording
  */
 @Composable
 fun VoiceRecordingUI(
     state: VoiceRecordingUIState,
     onStopRecording: () -> Unit,
+    onCancel: () -> Unit = {},
     amplitude: Int = 0,
     modifier: Modifier = Modifier
 ) {
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 3.dp
-    ) {
-        when (state) {
-            is VoiceRecordingUIState.Recording -> {
-                RecordingActiveUI(
-                    durationMs = state.durationMs,
-                    amplitude = amplitude,
-                    onStop = onStopRecording,
-                    modifier = Modifier.padding(16.dp)
-                )
-            }
-            else -> {
-                // Should never reach here - parent handles Idle state
-            }
-        }
-    }
-}
-
-/**
- * UI shown while actively recording
- * Shows: Animated mic icon, waveform, timer, stop button
- */
-@Composable
-private fun RecordingActiveUI(
-    durationMs: Long,
-    amplitude: Int,
-    onStop: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            // Animated recording indicator
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+    when (state) {
+        is VoiceRecordingUIState.Recording -> {
+            // Beautiful bottom sheet with gradient background
+            Surface(
+                modifier = modifier.fillMaxWidth(),
+                color = MaterialTheme.colorScheme.surface,
+                tonalElevation = 0.dp
             ) {
-                // Pulsing red dot
-                var isPulsing by remember { mutableStateOf(true) }
-                LaunchedEffect(Unit) {
-                    while (true) {
-                        isPulsing = !isPulsing
-                        delay(500)
+                // Gradient background using theme colors
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            androidx.compose.ui.graphics.Brush.verticalGradient(
+                                colors = listOf(
+                                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
+                                    MaterialTheme.colorScheme.surface
+                                )
+                            )
+                        )
+                        .padding(24.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(24.dp)
+                    ) {
+                        // Timer at top
+                        Text(
+                            text = formatDuration(state.durationMs),
+                            style = MaterialTheme.typography.headlineMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+
+                        // Centered waveform visualization
+                        RealTimeWaveform(
+                            amplitude = amplitude,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(80.dp)
+                        )
+
+                        // Action buttons row: Cancel (X) and Send (↑)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceEvenly,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // Cancel button
+                            FilledTonalIconButton(
+                                onClick = onCancel,
+                                modifier = Modifier.size(64.dp),
+                                colors = IconButtonDefaults.filledTonalIconButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                                    contentColor = MaterialTheme.colorScheme.onErrorContainer
+                                )
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Cancel recording",
+                                    modifier = Modifier.size(32.dp)
+                                )
+                            }
+
+                            // Send button (stop and transcribe)
+                            FilledIconButton(
+                                onClick = onStopRecording,
+                                modifier = Modifier.size(64.dp),
+                                colors = IconButtonDefaults.filledIconButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.primary,
+                                    contentColor = MaterialTheme.colorScheme.onPrimary
+                                )
+                            ) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.Send,
+                                    contentDescription = "Send recording",
+                                    modifier = Modifier.size(32.dp)
+                                )
+                            }
+                        }
                     }
                 }
-
-                Box(
-                    modifier = Modifier.size(12.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Surface(
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.size(if (isPulsing) 12.dp else 10.dp)
-                    ) {}
-                }
-
-                // Mic icon
-                Icon(
-                    imageVector = Icons.Default.Mic,
-                    contentDescription = "Recording",
-                    tint = MaterialTheme.colorScheme.error
-                )
-
-                // Timer
-                Text(
-                    text = formatDuration(durationMs),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }
-
-            // Stop button
-            FilledTonalButton(
-                onClick = onStop,
-                colors = ButtonDefaults.filledTonalButtonColors(
-                    containerColor = MaterialTheme.colorScheme.errorContainer,
-                    contentColor = MaterialTheme.colorScheme.onErrorContainer
-                )
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Stop,
-                    contentDescription = "Stop recording"
-                )
-                Spacer(Modifier.width(8.dp))
-                Text("Stop")
             }
         }
-
-        // Waveform visualization
-        RealTimeWaveform(
-            amplitude = amplitude,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp)
-        )
+        else -> {
+            // Idle state - should not show anything
+        }
     }
 }
 
 /**
- * Real-time waveform visualization based on actual audio amplitude
+ * Beautiful real-time waveform visualization - Material Design 3
+ * Properly centered with smooth, rounded bars
  * Amplitude ranges from 0-32767 (MediaRecorder.getMaxAmplitude())
  */
 @Composable
@@ -155,40 +142,49 @@ private fun RealTimeWaveform(
     amplitude: Int,
     modifier: Modifier = Modifier
 ) {
-    // Keep rolling window of last 40 amplitude values
-    var amplitudes by remember { mutableStateOf(List(40) { 0 }) }
+    // Keep rolling window of amplitude values (60 bars for smooth visualization)
+    var amplitudes by remember { mutableStateOf(List(60) { 0 }) }
 
     LaunchedEffect(amplitude) {
         // Update the amplitude list - drop first, add new at end
         amplitudes = amplitudes.drop(1) + amplitude
     }
 
-    Row(
+    // Properly centered container
+    Box(
         modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(2.dp),
-        verticalAlignment = Alignment.CenterVertically
+        contentAlignment = Alignment.Center // FIX: Center the waveform vertically
     ) {
-        amplitudes.forEach { amp ->
-            // Normalize amplitude (0-32767) to height (2-48dp)
-            // Using log scale for better visualization
-            val normalizedHeight = if (amp > 0) {
-                val logAmp = kotlin.math.ln(amp.toFloat() + 1) / kotlin.math.ln(32768f)
-                (logAmp * 46 + 2).coerceIn(2f, 48f)
-            } else {
-                2f // Minimum height when silent
-            }
-
-            Surface(
-                modifier = Modifier
-                    .width(4.dp)
-                    .height(normalizedHeight.dp),
-                shape = RoundedCornerShape(2.dp),
-                color = if (amp > 1000) {
-                    MaterialTheme.colorScheme.primary // Active voice
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(3.dp, Alignment.CenterHorizontally),
+            verticalAlignment = Alignment.CenterVertically // FIX: Align bars from center
+        ) {
+            amplitudes.forEach { amp ->
+                // Normalize amplitude with log scale for better visualization
+                val normalizedHeight = if (amp > 0) {
+                    val logAmp = kotlin.math.ln(amp.toFloat() + 1) / kotlin.math.ln(32768f)
+                    // Map to 4dp (min) to full height (max) range
+                    val maxHeight = 64.dp.value
+                    (logAmp * (maxHeight - 4f) + 4f).coerceIn(4f, maxHeight)
                 } else {
-                    MaterialTheme.colorScheme.primary.copy(alpha = 0.3f) // Silent/quiet
+                    4f // Minimum height when silent
                 }
-            ) {}
+
+                // Beautiful rounded bars with theme colors
+                Surface(
+                    modifier = Modifier
+                        .width(3.dp)  // Sleeker bars
+                        .height(normalizedHeight.dp),
+                    shape = RoundedCornerShape(1.5.dp),  // Fully rounded ends
+                    color = when {
+                        amp > 5000 -> MaterialTheme.colorScheme.primary // Strong signal
+                        amp > 1000 -> MaterialTheme.colorScheme.primary.copy(alpha = 0.7f) // Medium
+                        amp > 100 -> MaterialTheme.colorScheme.primary.copy(alpha = 0.4f) // Weak
+                        else -> MaterialTheme.colorScheme.primary.copy(alpha = 0.2f) // Silent
+                    }
+                ) {}
+            }
         }
     }
 }

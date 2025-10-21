@@ -352,6 +352,14 @@ fun ChatScreen(
                                     println("[ChatScreen] Recording failed or too short")
                                     voiceRecordingUIState = VoiceRecordingUIState.Idle
                                 }
+                            },
+                            onCancel = {
+                                // Cancel recording and clean up
+                                println("[ChatScreen] Recording cancelled by user")
+                                voiceRecordingViewModel.cancelRecording()
+                                recordedAudioFile?.delete()
+                                recordedAudioFile = null
+                                voiceRecordingUIState = VoiceRecordingUIState.Idle
                             }
                         )
                     }
