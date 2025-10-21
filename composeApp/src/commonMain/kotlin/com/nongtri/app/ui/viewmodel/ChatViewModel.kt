@@ -41,8 +41,9 @@ class ChatViewModel(
     private val locationRepository by lazy { LocationRepository.getInstance() }
 
     init {
-        // Load or create active thread and load its messages
-        loadActiveThread()
+        // Initialize location for first message
+        // DO NOT load previous messages - start with blank screen
+        // User can view history via Conversations menu
         initializeLocation()
     }
 
