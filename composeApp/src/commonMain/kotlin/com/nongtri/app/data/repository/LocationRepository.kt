@@ -1,9 +1,9 @@
 package com.nongtri.app.data.repository
 
 import com.nongtri.app.data.api.ApiClient
-import com.nongtri.app.data.preferences.Language
 import com.nongtri.app.data.preferences.ThemeMode
 import com.nongtri.app.data.preferences.UserPreferences
+import com.nongtri.app.l10n.Language
 import com.nongtri.app.ui.components.UserLocation
 import io.ktor.client.call.*
 import io.ktor.client.request.*
