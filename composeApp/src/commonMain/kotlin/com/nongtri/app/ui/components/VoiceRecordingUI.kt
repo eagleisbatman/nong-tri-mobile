@@ -1,6 +1,5 @@
 package com.nongtri.app.ui.components
 
-import androidx.compose.animation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -158,34 +157,26 @@ private fun RecordingActiveUI(
 }
 
 /**
- * Animated waveform visualization
+ * Simple flat waveform bars during recording
+ * TODO: Replace with real audio amplitude visualization from AudioRecorder
  */
 @Composable
 private fun AnimatedWaveform(
     modifier: Modifier = Modifier
 ) {
-    // Generate random waveform amplitudes
-    var amplitudes by remember { mutableStateOf(List(40) { kotlin.random.Random.nextFloat() * 0.5f + 0.3f }) }
-
-    LaunchedEffect(Unit) {
-        while (true) {
-            delay(100) // Update every 100ms
-            amplitudes = amplitudes.drop(1) + kotlin.random.Random.nextFloat() * 0.5f + 0.3f
-        }
-    }
-
+    // Show 40 flat bars at medium height to indicate recording is active
     Row(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(2.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        amplitudes.forEach { amplitude ->
+        repeat(40) {
             Surface(
                 modifier = Modifier
                     .width(4.dp)
-                    .height((amplitude * 48).dp),
+                    .height(20.dp), // Fixed medium height
                 shape = RoundedCornerShape(2.dp),
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
             ) {}
         }
     }
