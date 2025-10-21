@@ -265,70 +265,123 @@ fun ChatScreen(
             )
         },
         bottomBar = {
-            Column {
-                // Voice recording bar (shown when recording)
-                if (voiceRecordingState !is VoiceRecordingState.Idle && voiceRecordingState !is VoiceRecordingState.Cancelled) {
-                    VoiceRecordingBar(
-                        recordingState = voiceRecordingState,
-                        onCancel = {
-                            voiceRecordingViewModel.cancelRecording()
+            // Track voice recording UI state locally
+            var voiceRecordingUIState by remember { mutableStateOf<VoiceRecordingUIState>(VoiceRecordingUIState.Idle) }
+            var recordedAudioFile by remember { mutableStateOf<java.io.File?>(null) }
+            var recordingDuration by remember { mutableStateOf(0L) }
+
+            // Update voice recording UI state based on VoiceRecordingViewModel state
+            LaunchedEffect(voiceRecordingState) {
+                when (voiceRecordingState) {
+                    is VoiceRecordingState.Recording -> {
+                        voiceRecordingUIState = VoiceRecordingUIState.Recording(
+                            durationMs = (voiceRecordingState as VoiceRecordingState.Recording).durationMs
+                        )
+                    }
+                    is VoiceRecordingState.Idle,
+                    is VoiceRecordingState.Cancelled -> {
+                        if (voiceRecordingUIState !is VoiceRecordingUIState.Idle) {
+                            voiceRecordingUIState = VoiceRecordingUIState.Idle
                         }
-                    )
+                    }
+                    else -> {}
                 }
+            }
 
-                // Input bar
-                WhatsAppStyleInputBar(
-                    value = uiState.currentMessage,
-                    onValueChange = viewModel::updateMessage,
-                    onSend = {
-                        viewModel.sendMessage(uiState.currentMessage)
-                    },
-                    onImageClick = {
-                        // TODO: Handle image selection
-                    },
-                    onVoiceClick = {
-                        // Short tap - show hint to user about long press
-                        coroutineScope.launch {
-                            snackbarHostState.showSnackbar(
-                                message = "Hold mic button to record voice message",
-                                duration = SnackbarDuration.Short
-                            )
-                        }
-                    },
-                    onVoiceLongPress = {
-                        // Check permission first, then start recording
-                        if (voicePermissionState.hasPermission) {
-                            voiceRecordingViewModel.startRecording()
-                        } else {
-                            // Show permission bottom sheet
-                            showVoicePermissionBottomSheet = true
-                        }
-                    },
-                    onVoiceRelease = {
-                        // ✅ OPTIMISTIC UI: Show voice bubble INSTANTLY with "..." placeholder
-                        val optimisticMessageId = viewModel.showOptimisticVoiceMessage()
-                        currentOptimisticMessageId = optimisticMessageId
+            Column {
+                when (voiceRecordingUIState) {
+                    is VoiceRecordingUIState.Idle -> {
+                        // Normal input bar
+                        WhatsAppStyleInputBar(
+                            value = uiState.currentMessage,
+                            onValueChange = viewModel::updateMessage,
+                            onSend = {
+                                viewModel.sendMessage(uiState.currentMessage)
+                            },
+                            onImageClick = {
+                                // TODO: Handle image selection
+                            },
+                            onVoiceClick = {
+                                // Single tap - check permission and start recording
+                                if (voicePermissionState.hasPermission) {
+                                    voiceRecordingViewModel.startRecording()
+                                } else {
+                                    showVoicePermissionBottomSheet = true
+                                }
+                            },
+                            onVoiceLongPress = {}, // Not used anymore
+                            onVoiceRelease = {},   // Not used anymore
+                            onVoiceCancel = {},    // Not used anymore
+                            strings = strings,
+                            isEnabled = !uiState.isLoading
+                        )
+                    }
+                    is VoiceRecordingUIState.Recording -> {
+                        // Recording UI
+                        VoiceRecordingUI(
+                            state = voiceRecordingUIState,
+                            onStopRecording = {
+                                // Stop recording and save file for preview
+                                recordingDuration = (voiceRecordingUIState as VoiceRecordingUIState.Recording).durationMs
+                                val audioFile = voiceRecordingViewModel.stopForPreview()
 
-                        // Stop recording and transcribe in background
-                        voiceRecordingViewModel.stopRecording(
-                            userId = viewModel.getDeviceId(),
-                            language = if (language == Language.VIETNAMESE) "vi" else "en"
-                        ) { transcription, voiceAudioUrl ->
-                            // ✅ Update optimistic message with actual transcription
-                            viewModel.updateVoiceMessage(optimisticMessageId, transcription, voiceAudioUrl)
-                            currentOptimisticMessageId = null
+                                if (audioFile != null) {
+                                    // Move to preview state
+                                    recordedAudioFile = audioFile
+                                    voiceRecordingUIState = VoiceRecordingUIState.Preview(
+                                        durationMs = recordingDuration,
+                                        audioFilePath = audioFile.absolutePath
+                                    )
+                                } else {
+                                    // Recording was too short or failed - return to idle
+                                    voiceRecordingUIState = VoiceRecordingUIState.Idle
+                                }
+                            },
+                            onAccept = {}, // Not used in Recording state
+                            onReject = {}, // Not used in Recording state
+                            onPlayPause = {} // Not used in Recording state
+                        )
+                    }
+                    is VoiceRecordingUIState.Preview -> {
+                        // Preview UI
+                        VoiceRecordingUI(
+                            state = voiceRecordingUIState,
+                            onStopRecording = {}, // Not used in Preview state
+                            onAccept = {
+                                // Accept recording - transcribe and send
+                                recordedAudioFile?.let { audioFile ->
+                                    // Show optimistic message
+                                    val optimisticMessageId = viewModel.showOptimisticVoiceMessage()
+                                    currentOptimisticMessageId = optimisticMessageId
 
-                            // ✅ Then send to AI for response
-                            viewModel.sendVoiceMessage(transcription, voiceAudioUrl)
-                        }
-                    },
-                    onVoiceCancel = {
-                        // User dragged finger off button - cancel recording
-                        voiceRecordingViewModel.cancelRecording()
-                    },
-                    strings = strings,
-                    isEnabled = !uiState.isLoading
-                )
+                                    // Transcribe the saved audio file
+                                    voiceRecordingViewModel.transcribeFile(
+                                        audioFile = audioFile,
+                                        userId = viewModel.getDeviceId(),
+                                        language = if (language == Language.VIETNAMESE) "vi" else "en"
+                                    ) { transcription, voiceAudioUrl ->
+                                        viewModel.updateVoiceMessage(optimisticMessageId, transcription, voiceAudioUrl)
+                                        currentOptimisticMessageId = null
+                                        viewModel.sendVoiceMessage(transcription, voiceAudioUrl)
+                                    }
+                                }
+
+                                // Return to idle
+                                voiceRecordingUIState = VoiceRecordingUIState.Idle
+                                recordedAudioFile = null
+                            },
+                            onReject = {
+                                // Reject recording - delete file and return to input
+                                recordedAudioFile?.delete()
+                                recordedAudioFile = null
+                                voiceRecordingUIState = VoiceRecordingUIState.Idle
+                            },
+                            onPlayPause = {
+                                // TODO: Play/pause audio preview
+                            }
+                        )
+                    }
+                }
             }
         },
         floatingActionButton = {

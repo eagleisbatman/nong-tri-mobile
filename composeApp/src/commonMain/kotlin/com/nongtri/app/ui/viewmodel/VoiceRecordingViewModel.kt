@@ -98,6 +98,67 @@ class VoiceRecordingViewModel(
     }
 
     /**
+     * Stop recording and save file for preview (don't transcribe yet)
+     * Returns the audio file path if successful
+     */
+    fun stopForPreview(): File? {
+        recordingJob?.cancel()
+        recordingJob = null
+
+        var savedFile: File? = null
+        audioRecorder.stopRecording().fold(
+            onSuccess = { audioFile ->
+                println("[VoiceRecording] Stopped for preview: ${audioFile.absolutePath} (${audioFile.length()} bytes)")
+
+                // Validation: Check recording duration (minimum 0.5 seconds)
+                val durationMs = System.currentTimeMillis() - recordingStartTime
+                if (durationMs < 500) {
+                    _state.value = VoiceRecordingState.Error("Recording too short. Please record longer.")
+                    println("[VoiceRecording] Recording too short: ${durationMs}ms")
+                    audioFile.delete()
+                    resetToIdle()
+                    return null
+                }
+
+                // Validation: Check file size (minimum 1KB)
+                if (audioFile.length() < 1000) {
+                    _state.value = VoiceRecordingState.Error("Recording is empty. Please try again.")
+                    println("[VoiceRecording] File too small: ${audioFile.length()} bytes")
+                    audioFile.delete()
+                    resetToIdle()
+                    return null
+                }
+
+                // Save file for preview
+                savedFile = audioFile
+                _state.value = VoiceRecordingState.Idle
+                println("[VoiceRecording] File saved for preview")
+            },
+            onFailure = { error ->
+                _state.value = VoiceRecordingState.Error(error.message ?: "Failed to stop recording")
+                println("[VoiceRecording] Error stopping recording: ${error.message}")
+                resetToIdle()
+            }
+        )
+
+        return savedFile
+    }
+
+    /**
+     * Transcribe a saved audio file
+     * Use this after stopForPreview() when user accepts the recording
+     */
+    fun transcribeFile(
+        audioFile: File,
+        userId: String,
+        language: String = "en",
+        onTranscribed: (transcription: String, voiceAudioUrl: String?) -> Unit
+    ) {
+        _state.value = VoiceRecordingState.Transcribing
+        transcribeAndSaveVoiceMessage(userId, audioFile, language, onTranscribed)
+    }
+
+    /**
      * Cancel recording
      */
     fun cancelRecording() {
