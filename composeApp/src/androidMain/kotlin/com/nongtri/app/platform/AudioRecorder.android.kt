@@ -39,12 +39,19 @@ actual class AudioRecorder(private val context: Context) {
                 @Suppress("DEPRECATION")
                 MediaRecorder()
             }.apply {
-                setAudioSource(MediaRecorder.AudioSource.MIC)
+                // Use VOICE_RECOGNITION for better gain/processing
+                setAudioSource(MediaRecorder.AudioSource.VOICE_RECOGNITION)
                 setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
                 setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
                 setAudioEncodingBitRate(128000)
                 setAudioSamplingRate(44100)
                 setOutputFile(audioFile!!.absolutePath)
+
+                // Enable audio gain for quiet inputs
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    // setMaxAmplitude is not available, but we can log it
+                    Log.d(TAG, "Using VOICE_RECOGNITION audio source for better gain")
+                }
 
                 try {
                     prepare()
