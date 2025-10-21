@@ -52,7 +52,7 @@ fun WhatsAppStyleInputBar(
                 )
             }
 
-            // Text input field
+            // Text input field - expandable based on content
             OutlinedTextField(
                 value = value,
                 onValueChange = onValueChange,
@@ -70,7 +70,8 @@ fun WhatsAppStyleInputBar(
                     unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
                 ),
                 textStyle = MaterialTheme.typography.bodyLarge,
-                maxLines = 5
+                minLines = 1,  // Start with 1 line
+                maxLines = 6   // Expand up to 6 lines, then scroll
             )
 
             // Send or Voice button

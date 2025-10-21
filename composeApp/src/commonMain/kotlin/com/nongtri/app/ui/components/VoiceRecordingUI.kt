@@ -14,36 +14,27 @@ import kotlinx.coroutines.delay
 
 /**
  * Voice recording UI states
+ * Simplified: Only Idle and Recording - no Preview UI
+ * Transcription populates input box directly
  */
 sealed class VoiceRecordingUIState {
     object Idle : VoiceRecordingUIState()
     data class Recording(val durationMs: Long = 0) : VoiceRecordingUIState()
-    data class Preview(
-        val durationMs: Long,
-        val audioFilePath: String,
-        val transcription: String? = null,  // null = transcribing, empty = error, non-empty = success
-        val isTranscribing: Boolean = false
-    ) : VoiceRecordingUIState()
 }
 
 /**
- * Complete voice recording UI that replaces the input bar
+ * Simplified voice recording UI
  *
  * Flow:
  * 1. Tap mic → Start recording immediately
  * 2. Show timer + stop button while recording
- * 3. Stop → Show preview with play, accept (✓), reject (✗)
- * 4. Accept → Transcribe and send
- * 5. Reject → Discard and restore input
+ * 3. Stop → Transcribe in background, populate input box
+ * 4. User manually sends
  */
 @Composable
 fun VoiceRecordingUI(
     state: VoiceRecordingUIState,
     onStopRecording: () -> Unit,
-    onAccept: () -> Unit,
-    onReject: () -> Unit,
-    onPlayPause: () -> Unit,
-    isPlaying: Boolean = false,
     amplitude: Int = 0,
     modifier: Modifier = Modifier
 ) {
@@ -58,18 +49,6 @@ fun VoiceRecordingUI(
                     durationMs = state.durationMs,
                     amplitude = amplitude,
                     onStop = onStopRecording,
-                    modifier = Modifier.padding(16.dp)
-                )
-            }
-            is VoiceRecordingUIState.Preview -> {
-                RecordingPreviewUI(
-                    durationMs = state.durationMs,
-                    isPlaying = isPlaying,
-                    transcription = state.transcription,
-                    isTranscribing = state.isTranscribing,
-                    onPlayPause = onPlayPause,
-                    onAccept = onAccept,
-                    onReject = onReject,
                     modifier = Modifier.padding(16.dp)
                 )
             }
@@ -210,131 +189,6 @@ private fun RealTimeWaveform(
                     MaterialTheme.colorScheme.primary.copy(alpha = 0.3f) // Silent/quiet
                 }
             ) {}
-        }
-    }
-}
-
-/**
- * UI shown after recording stops
- * Shows: Play button, duration, transcription status/text, accept (✓), reject (✗)
- */
-@Composable
-private fun RecordingPreviewUI(
-    durationMs: Long,
-    isPlaying: Boolean,
-    transcription: String?,
-    isTranscribing: Boolean,
-    onPlayPause: () -> Unit,
-    onAccept: () -> Unit,
-    onReject: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        // Play/Pause button + duration + transcription status
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.weight(1f)
-            ) {
-                IconButton(onClick = onPlayPause) {
-                    Icon(
-                        imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                        contentDescription = if (isPlaying) "Pause" else "Play",
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
-
-                Column(modifier = Modifier.weight(1f)) {
-                    // Transcription status or text
-                    when {
-                        isTranscribing -> {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(16.dp),
-                                    strokeWidth = 2.dp,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                                Text(
-                                    text = "Transcribing...",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-                        transcription != null && transcription.isNotEmpty() -> {
-                            Text(
-                                text = transcription,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurface,
-                                maxLines = 2
-                            )
-                        }
-                        transcription == "" -> {
-                            Text(
-                                text = "Unable to transcribe",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.error
-                            )
-                        }
-                        else -> {
-                            Text(
-                                text = "Voice message",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                    Text(
-                        text = formatDuration(durationMs),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-
-            // Accept / Reject buttons
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                // Reject (✗)
-                FilledTonalIconButton(
-                    onClick = onReject,
-                    colors = IconButtonDefaults.filledTonalIconButtonColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer,
-                        contentColor = MaterialTheme.colorScheme.onErrorContainer
-                    )
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = "Reject recording"
-                    )
-                }
-
-                // Accept (✓)
-                FilledIconButton(
-                    onClick = onAccept,
-                    colors = IconButtonDefaults.filledIconButtonColors(
-                        containerColor = MaterialTheme.colorScheme.primary
-                    )
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Check,
-                        contentDescription = "Accept recording",
-                        tint = MaterialTheme.colorScheme.onPrimary
-                    )
-                }
-            }
         }
     }
 }

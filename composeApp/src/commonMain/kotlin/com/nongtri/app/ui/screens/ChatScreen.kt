@@ -271,11 +271,6 @@ fun ChatScreen(
             // Track voice recording UI state locally
             var voiceRecordingUIState by remember { mutableStateOf<VoiceRecordingUIState>(VoiceRecordingUIState.Idle) }
             var recordedAudioFile by remember { mutableStateOf<java.io.File?>(null) }
-            var recordingDuration by remember { mutableStateOf(0L) }
-            var isPreviewPlaying by remember { mutableStateOf(false) }
-
-            // Voice message player for preview playback
-            val voiceMessagePlayer = com.nongtri.app.platform.LocalVoiceMessagePlayer.current
 
             // Update voice recording UI state based on VoiceRecordingViewModel state
             LaunchedEffect(voiceRecordingState) {
@@ -295,14 +290,15 @@ fun ChatScreen(
                 }
             }
 
-            // Update Preview state when transcription completes
+            // Populate input box when transcription completes
             LaunchedEffect(isTranscribing, transcriptionText) {
-                if (voiceRecordingUIState is VoiceRecordingUIState.Preview) {
-                    val currentPreview = voiceRecordingUIState as VoiceRecordingUIState.Preview
-                    voiceRecordingUIState = currentPreview.copy(
-                        transcription = transcriptionText,
-                        isTranscribing = isTranscribing
-                    )
+                // When transcription completes and we have text, populate the input box
+                if (!isTranscribing && transcriptionText != null && transcriptionText.isNotEmpty() && recordedAudioFile != null) {
+                    println("[ChatScreen] Transcription complete: $transcriptionText")
+                    viewModel.updateMessage(transcriptionText)
+                    // Clean up audio file
+                    recordedAudioFile?.delete()
+                    recordedAudioFile = null
                 }
             }
 
@@ -335,113 +331,25 @@ fun ChatScreen(
                         )
                     }
                     is VoiceRecordingUIState.Recording -> {
-                        // Recording UI
+                        // Recording UI - simplified flow
                         VoiceRecordingUI(
                             state = voiceRecordingUIState,
                             amplitude = voiceAmplitude,
                             onStopRecording = {
-                                // Stop recording, save for preview, and START TRANSCRIPTION IN BACKGROUND
-                                recordingDuration = (voiceRecordingUIState as VoiceRecordingUIState.Recording).durationMs
+                                // Stop recording and start transcription in background
                                 val audioFile = voiceRecordingViewModel.stopForPreview(
                                     userId = viewModel.getDeviceId(),
                                     language = if (language == Language.VIETNAMESE) "vi" else "en"
                                 )
 
                                 if (audioFile != null) {
-                                    // Move to preview state (transcription happening in background)
+                                    println("[ChatScreen] Recording stopped, transcription started in background")
                                     recordedAudioFile = audioFile
-                                    voiceRecordingUIState = VoiceRecordingUIState.Preview(
-                                        durationMs = recordingDuration,
-                                        audioFilePath = audioFile.absolutePath,
-                                        transcription = transcriptionText,
-                                        isTranscribing = isTranscribing
-                                    )
-                                } else {
-                                    // Recording was too short or failed - return to idle
+                                    // Return to Idle immediately - transcription will populate input box
                                     voiceRecordingUIState = VoiceRecordingUIState.Idle
-                                }
-                            },
-                            onAccept = {}, // Not used in Recording state
-                            onReject = {}, // Not used in Recording state
-                            onPlayPause = {} // Not used in Recording state
-                        )
-                    }
-                    is VoiceRecordingUIState.Preview -> {
-                        // Preview UI
-                        VoiceRecordingUI(
-                            state = voiceRecordingUIState,
-                            isPlaying = isPreviewPlaying,
-                            onStopRecording = {}, // Not used in Preview state
-                            onAccept = {
-                                // Stop playback if playing
-                                voiceMessagePlayer.stop()
-                                isPreviewPlaying = false
-
-                                // Check if transcription failed
-                                if (voiceRecordingState is VoiceRecordingState.Error) {
-                                    // Don't send - just show error was already shown in toast
-                                    println("[ChatScreen] Cannot accept - transcription failed")
-                                    voiceRecordingUIState = VoiceRecordingUIState.Idle
-                                    recordedAudioFile?.delete()
-                                    recordedAudioFile = null
-                                    return@VoiceRecordingUI
-                                }
-
-                                // Accept recording - use background transcription if ready
-                                val transcriptionResult = voiceRecordingViewModel.getTranscriptionResult()
-
-                                if (transcriptionResult != null) {
-                                    // Transcription is ready! Use it immediately
-                                    val (transcription, voiceAudioUrl) = transcriptionResult
-                                    println("[ChatScreen] Using background transcription: $transcription")
-
-                                    // Show optimistic message
-                                    val optimisticMessageId = viewModel.showOptimisticVoiceMessage()
-                                    viewModel.updateVoiceMessage(optimisticMessageId, transcription, voiceAudioUrl)
-                                    viewModel.sendVoiceMessage(transcription, voiceAudioUrl)
                                 } else {
-                                    // Still transcribing - wait for it
-                                    println("[ChatScreen] Transcription still in progress, waiting...")
-                                    val optimisticMessageId = viewModel.showOptimisticVoiceMessage()
-                                    currentOptimisticMessageId = optimisticMessageId
-
-                                    // Use the old transcribeFile as fallback (shouldn't happen often)
-                                    recordedAudioFile?.let { audioFile ->
-                                        voiceRecordingViewModel.transcribeFile(
-                                            audioFile = audioFile,
-                                            userId = viewModel.getDeviceId(),
-                                            language = if (language == Language.VIETNAMESE) "vi" else "en"
-                                        ) { transcription, voiceAudioUrl ->
-                                            viewModel.updateVoiceMessage(optimisticMessageId, transcription, voiceAudioUrl)
-                                            currentOptimisticMessageId = null
-                                            viewModel.sendVoiceMessage(transcription, voiceAudioUrl)
-                                        }
-                                    }
-                                }
-
-                                // Return to idle
-                                voiceRecordingUIState = VoiceRecordingUIState.Idle
-                                recordedAudioFile = null
-                            },
-                            onReject = {
-                                // Reject recording - delete file and return to input
-                                voiceMessagePlayer.stop()
-                                isPreviewPlaying = false
-                                recordedAudioFile?.delete()
-                                recordedAudioFile = null
-                                voiceRecordingUIState = VoiceRecordingUIState.Idle
-                            },
-                            onPlayPause = {
-                                // Play/pause audio preview
-                                recordedAudioFile?.let { audioFile ->
-                                    if (isPreviewPlaying) {
-                                        voiceMessagePlayer.stop()
-                                        isPreviewPlaying = false
-                                    } else {
-                                        // Use file:// URL for local file playback
-                                        voiceMessagePlayer.play("file://${audioFile.absolutePath}")
-                                        isPreviewPlaying = true
-                                    }
+                                    println("[ChatScreen] Recording failed or too short")
+                                    voiceRecordingUIState = VoiceRecordingUIState.Idle
                                 }
                             }
                         )
