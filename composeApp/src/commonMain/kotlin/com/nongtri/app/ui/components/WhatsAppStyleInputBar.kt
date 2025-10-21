@@ -25,6 +25,7 @@ fun WhatsAppStyleInputBar(
     onVoiceCancel: () -> Unit = {},         // Cancel recording (dragged off button)
     strings: Strings,
     isEnabled: Boolean,
+    isTranscribing: Boolean = false,        // Show transcribing feedback
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -59,11 +60,20 @@ fun WhatsAppStyleInputBar(
                 modifier = Modifier.weight(1f),
                 placeholder = {
                     Text(
-                        text = strings.typeMessage,
+                        text = if (isTranscribing) "Transcribing..." else strings.typeMessage,
                         style = MaterialTheme.typography.bodyLarge
                     )
                 },
-                enabled = isEnabled,
+                trailingIcon = {
+                    if (isTranscribing) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                },
+                enabled = isEnabled && !isTranscribing,
                 shape = RoundedCornerShape(24.dp),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = MaterialTheme.colorScheme.primary,

@@ -337,7 +337,8 @@ fun ChatScreen(
                             onVoiceRelease = {},   // Not used anymore
                             onVoiceCancel = {},    // Not used anymore
                             strings = strings,
-                            isEnabled = !uiState.isLoading
+                            isEnabled = !uiState.isLoading,
+                            isTranscribing = isTranscribing  // Show transcribing feedback
                         )
                     }
                     is VoiceRecordingUIState.Recording -> {
