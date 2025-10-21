@@ -279,7 +279,13 @@ fun ChatScreen(
                         // TODO: Handle image selection
                     },
                     onVoiceClick = {
-                        // Short click - do nothing for now
+                        // Short tap - show hint to user about long press
+                        coroutineScope.launch {
+                            snackbarHostState.showSnackbar(
+                                message = "Hold mic button to record voice message",
+                                duration = SnackbarDuration.Short
+                            )
+                        }
                     },
                     onVoiceLongPress = {
                         // Start recording

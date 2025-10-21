@@ -18,6 +18,7 @@ import com.nongtri.app.platform.ShareManager
 import com.nongtri.app.platform.TextToSpeechManager
 import com.nongtri.app.platform.VoiceMessagePlayer
 import com.nongtri.app.ui.viewmodel.LocationViewModel
+import com.nongtri.app.ui.viewmodel.VoicePermissionViewModel
 
 class MainActivity : ComponentActivity() {
     private lateinit var ttsManager: TextToSpeechManager
@@ -47,19 +48,19 @@ class MainActivity : ComponentActivity() {
     private val recordAudioPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
-        audioPermissionResultCallback?.invoke(granted)
+        // Notify VoicePermissionViewModel about permission result
+        VoicePermissionViewModel.permissionResultCallback?.invoke(granted)
 
         if (granted) {
             println("RECORD_AUDIO permission granted")
         } else {
-            println("RECORD_AUDIO permission denied - voice input disabled")
+            println("RECORD_AUDIO permission denied")
         }
     }
 
     companion object {
-        // Callback for audio permission result
+        // Deprecated: Use VoicePermissionViewModel instead
         var audioPermissionResultCallback: ((Boolean) -> Unit)? = null
-        // Launcher for requesting audio permission
         var audioPermissionLauncher: (() -> Unit)? = null
     }
 
@@ -79,7 +80,12 @@ class MainActivity : ComponentActivity() {
             locationPermissionLauncher.launch(permissions)
         }
 
-        // Set up audio recording permission launcher
+        // Set up voice permission launcher for VoicePermissionViewModel
+        VoicePermissionViewModel.permissionLauncher = {
+            recordAudioPermissionLauncher.launch(android.Manifest.permission.RECORD_AUDIO)
+        }
+
+        // Deprecated: Keep for backward compatibility
         audioPermissionLauncher = {
             recordAudioPermissionLauncher.launch(android.Manifest.permission.RECORD_AUDIO)
         }
