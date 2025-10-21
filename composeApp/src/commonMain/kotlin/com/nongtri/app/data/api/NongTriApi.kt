@@ -219,6 +219,9 @@ class NongTriApi(
      */
     suspend fun transcribeAudio(audioFile: java.io.File, language: String): Result<TranscriptionResponse> {
         return try {
+            println("[NongTriApi] Starting transcription for file: ${audioFile.name}, size: ${audioFile.length()} bytes, language: $language")
+            println("[NongTriApi] Transcription URL: $baseUrl/api/transcribe")
+
             val response: TranscriptionResponse = client.post("$baseUrl/api/transcribe") {
                 setBody(io.ktor.client.request.forms.MultiPartFormDataContent(
                     io.ktor.client.request.forms.formData {
@@ -231,9 +234,11 @@ class NongTriApi(
                 ))
             }.body()
 
+            println("[NongTriApi] Transcription response: success=${response.success}, text=${response.text}, error=${response.error}")
             Result.success(response)
         } catch (e: Exception) {
             println("[NongTriApi] Transcription error: ${e.message}")
+            println("[NongTriApi] Error type: ${e::class.simpleName}")
             e.printStackTrace()
             Result.failure(e)
         }
