@@ -120,28 +120,11 @@ class VoiceRecordingViewModel(
         var savedFile: File? = null
         audioRecorder.stopRecording().fold(
             onSuccess = { audioFile ->
-                println("[VoiceRecording] Stopped for preview: ${audioFile.absolutePath} (${audioFile.length()} bytes)")
-
-                // Validation: Check recording duration (minimum 0.5 seconds)
                 val durationMs = System.currentTimeMillis() - recordingStartTime
-                if (durationMs < 500) {
-                    _state.value = VoiceRecordingState.Error("Recording too short. Please record longer.")
-                    println("[VoiceRecording] Recording too short: ${durationMs}ms")
-                    audioFile.delete()
-                    resetToIdle()
-                    return null
-                }
+                println("[VoiceRecording] Stopped for preview: ${audioFile.absolutePath} (${audioFile.length()} bytes, ${durationMs}ms)")
 
-                // Validation: Check file size (minimum 1KB)
-                if (audioFile.length() < 1000) {
-                    _state.value = VoiceRecordingState.Error("Recording is empty. Please try again.")
-                    println("[VoiceRecording] File too small: ${audioFile.length()} bytes")
-                    audioFile.delete()
-                    resetToIdle()
-                    return null
-                }
-
-                // Save file for preview
+                // ALWAYS return the file for preview - let user decide whether to accept/reject
+                // Don't validate here - user should see the preview UI regardless
                 savedFile = audioFile
                 _state.value = VoiceRecordingState.Idle
 
@@ -152,6 +135,7 @@ class VoiceRecordingViewModel(
             onFailure = { error ->
                 _state.value = VoiceRecordingState.Error(error.message ?: "Failed to stop recording")
                 println("[VoiceRecording] Error stopping recording: ${error.message}")
+                error.printStackTrace()
                 resetToIdle()
             }
         )
@@ -295,12 +279,22 @@ class VoiceRecordingViewModel(
      * Poll audio amplitude for real-time waveform visualization
      */
     private fun startAmplitudePolling() {
+        println("[VoiceRecording] Starting amplitude polling...")
         amplitudeJob = viewModelScope.launch {
+            var sampleCount = 0
             while (isActive && audioRecorder.isRecording()) {
                 val amplitude = audioRecorder.getMaxAmplitude()
                 _amplitude.value = amplitude
+
+                // Log every 10th sample to avoid spam
+                if (sampleCount % 10 == 0) {
+                    println("[VoiceRecording] Amplitude: $amplitude (isRecording: ${audioRecorder.isRecording()})")
+                }
+                sampleCount++
+
                 delay(50) // Poll every 50ms for smooth visualization
             }
+            println("[VoiceRecording] Amplitude polling stopped")
             _amplitude.value = 0 // Reset when stopped
         }
     }

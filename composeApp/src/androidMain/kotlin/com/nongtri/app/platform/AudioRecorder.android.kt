@@ -46,8 +46,14 @@ actual class AudioRecorder(private val context: Context) {
                 setAudioSamplingRate(44100)
                 setOutputFile(audioFile!!.absolutePath)
 
-                prepare()
-                start()
+                try {
+                    prepare()
+                    start()
+                    Log.d(TAG, "MediaRecorder prepared and started successfully")
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error preparing/starting MediaRecorder", e)
+                    throw e
+                }
             }
 
             isRecording = true
@@ -61,21 +67,54 @@ actual class AudioRecorder(private val context: Context) {
 
     actual fun stopRecording(): Result<File> {
         return try {
-            if (!isRecording || mediaRecorder == null || audioFile == null) {
+            if (!isRecording) {
+                Log.e(TAG, "stopRecording called but not recording")
                 return Result.failure(IllegalStateException("Not currently recording"))
             }
 
-            mediaRecorder?.apply {
-                stop()
-                release()
+            if (mediaRecorder == null) {
+                Log.e(TAG, "stopRecording called but mediaRecorder is null")
+                isRecording = false
+                return Result.failure(IllegalStateException("MediaRecorder is null"))
             }
-            mediaRecorder = null
-            isRecording = false
 
-            Log.d(TAG, "Recording stopped: ${audioFile!!.absolutePath} (${audioFile!!.length()} bytes)")
-            Result.success(audioFile!!)
+            if (audioFile == null) {
+                Log.e(TAG, "stopRecording called but audioFile is null")
+                isRecording = false
+                mediaRecorder = null
+                return Result.failure(IllegalStateException("Audio file is null"))
+            }
+
+            Log.d(TAG, "Stopping recording...")
+            val fileToReturn = audioFile!!
+            val recorderToStop = mediaRecorder
+
+            // Mark as not recording FIRST to prevent concurrent access
+            isRecording = false
+            mediaRecorder = null
+
+            // Now stop and release the MediaRecorder
+            try {
+                recorderToStop?.stop()
+                Log.d(TAG, "MediaRecorder stopped successfully")
+            } catch (e: Exception) {
+                Log.e(TAG, "Error stopping MediaRecorder (might be already stopped)", e)
+                // Continue anyway - file might still be valid
+            }
+
+            try {
+                recorderToStop?.release()
+                Log.d(TAG, "MediaRecorder released successfully")
+            } catch (e: Exception) {
+                Log.e(TAG, "Error releasing MediaRecorder", e)
+            }
+
+            Log.d(TAG, "Recording stopped: ${fileToReturn.absolutePath} (${fileToReturn.length()} bytes)")
+            Result.success(fileToReturn)
         } catch (e: Exception) {
             Log.e(TAG, "Failed to stop recording", e)
+            isRecording = false
+            mediaRecorder = null
             Result.failure(e)
         }
     }
@@ -107,11 +146,12 @@ actual class AudioRecorder(private val context: Context) {
      */
     actual fun getMaxAmplitude(): Int {
         return try {
-            if (isRecording && mediaRecorder != null) {
-                mediaRecorder?.maxAmplitude ?: 0
-            } else {
-                0
+            if (!isRecording || mediaRecorder == null) {
+                return 0
             }
+
+            val amplitude = mediaRecorder?.maxAmplitude ?: 0
+            amplitude
         } catch (e: Exception) {
             Log.e(TAG, "Error getting amplitude", e)
             0
