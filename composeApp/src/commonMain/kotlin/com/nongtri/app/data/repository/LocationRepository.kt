@@ -1,6 +1,8 @@
 package com.nongtri.app.data.repository
 
 import com.nongtri.app.data.api.ApiClient
+import com.nongtri.app.data.preferences.Language
+import com.nongtri.app.data.preferences.ThemeMode
 import com.nongtri.app.data.preferences.UserPreferences
 import com.nongtri.app.ui.components.UserLocation
 import io.ktor.client.call.*
@@ -57,6 +59,36 @@ class LocationRepository private constructor() {
 
             if (response.status.isSuccess()) {
                 val body = response.body<LocationResponse>()
+
+                // Save preferences from backend if provided
+                body.preferences?.let { prefs ->
+                    println("[LocationRepository] Received preferences from backend: language=${prefs.language}, onboarding=${prefs.onboardingCompleted}")
+
+                    prefs.language?.let { lang ->
+                        val language = when (lang) {
+                            "vi" -> Language.VIETNAMESE
+                            else -> Language.ENGLISH
+                        }
+                        userPreferences.setLanguage(language)
+                    }
+
+                    prefs.themeMode?.let { theme ->
+                        val themeMode = when (theme) {
+                            "light" -> ThemeMode.LIGHT
+                            "dark" -> ThemeMode.DARK
+                            else -> ThemeMode.SYSTEM
+                        }
+                        userPreferences.setThemeMode(themeMode)
+                    }
+
+                    prefs.onboardingCompleted?.let { completed ->
+                        if (completed) {
+                            userPreferences.completeOnboarding()
+                            println("[LocationRepository] Onboarding already completed, skipping language selection")
+                        }
+                    }
+                }
+
                 if (body.success && body.location != null) {
                     Result.success(body.location.toUserLocation())
                 } else {
@@ -292,9 +324,17 @@ data class LocationDTO(
 )
 
 @Serializable
+data class UserPreferencesDTO(
+    val language: String? = null,
+    val themeMode: String? = null,
+    val onboardingCompleted: Boolean? = null
+)
+
+@Serializable
 data class LocationResponse(
     val success: Boolean,
-    val location: LocationDTO? = null
+    val location: LocationDTO? = null,
+    val preferences: UserPreferencesDTO? = null
 )
 
 @Serializable
