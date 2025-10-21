@@ -185,7 +185,7 @@ class VoiceRecordingViewModel(
     /**
      * Check if transcription is still in progress
      */
-    fun isTranscriptionInProgress(): Boolean = isTranscribing
+    fun isTranscriptionInProgress(): Boolean = _isTranscribing.value
 
     /**
      * Transcribe a saved audio file
