@@ -321,6 +321,10 @@ class VoiceRecordingViewModel(
      */
     private fun resetToIdle() {
         viewModelScope.launch {
+            // Reset transcription state immediately
+            _isTranscribing.value = false
+            _transcriptionText.value = null
+
             delay(2000)
             if (_state.value !is VoiceRecordingState.Recording) {
                 _state.value = VoiceRecordingState.Idle

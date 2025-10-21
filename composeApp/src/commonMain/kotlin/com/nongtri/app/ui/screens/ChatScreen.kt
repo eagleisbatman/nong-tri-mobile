@@ -290,7 +290,7 @@ fun ChatScreen(
                 }
             }
 
-            // Populate input box when transcription completes
+            // Populate input box when transcription completes successfully
             LaunchedEffect(isTranscribing, transcriptionText) {
                 // When transcription completes and we have text, populate the input box
                 val text = transcriptionText
@@ -298,6 +298,15 @@ fun ChatScreen(
                     println("[ChatScreen] Transcription complete: $text")
                     viewModel.updateMessage(text)
                     // Clean up audio file
+                    recordedAudioFile?.delete()
+                    recordedAudioFile = null
+                }
+            }
+
+            // Clean up audio file when transcription fails
+            LaunchedEffect(voiceRecordingState) {
+                if (voiceRecordingState is VoiceRecordingState.Error && recordedAudioFile != null) {
+                    println("[ChatScreen] Transcription failed, cleaning up audio file")
                     recordedAudioFile?.delete()
                     recordedAudioFile = null
                 }
