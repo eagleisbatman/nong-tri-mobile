@@ -13,13 +13,16 @@ import com.nongtri.app.platform.AudioRecorder
 import com.nongtri.app.platform.LocalAudioRecorder
 import com.nongtri.app.platform.LocalShareManager
 import com.nongtri.app.platform.LocalTextToSpeechManager
+import com.nongtri.app.platform.LocalVoiceMessagePlayer
 import com.nongtri.app.platform.ShareManager
 import com.nongtri.app.platform.TextToSpeechManager
+import com.nongtri.app.platform.VoiceMessagePlayer
 import com.nongtri.app.ui.viewmodel.LocationViewModel
 
 class MainActivity : ComponentActivity() {
     private lateinit var ttsManager: TextToSpeechManager
     private lateinit var audioRecorder: AudioRecorder
+    private lateinit var voiceMessagePlayer: VoiceMessagePlayer
 
     // Location permission launcher
     private val locationPermissionLauncher = registerForActivityResult(
@@ -69,6 +72,7 @@ class MainActivity : ComponentActivity() {
 
         ttsManager = TextToSpeechManager(applicationContext)
         audioRecorder = AudioRecorder(applicationContext)
+        voiceMessagePlayer = VoiceMessagePlayer(applicationContext)
 
         // Set up location permission launcher for LocationViewModel
         LocationViewModel.permissionLauncher = { permissions ->
@@ -84,7 +88,8 @@ class MainActivity : ComponentActivity() {
             CompositionLocalProvider(
                 LocalShareManager provides ShareManager(applicationContext),
                 LocalTextToSpeechManager provides ttsManager,
-                LocalAudioRecorder provides audioRecorder
+                LocalAudioRecorder provides audioRecorder,
+                LocalVoiceMessagePlayer provides voiceMessagePlayer
             ) {
                 App()
             }
@@ -95,6 +100,7 @@ class MainActivity : ComponentActivity() {
         super.onDestroy()
         ttsManager.shutdown()
         audioRecorder.shutdown()
+        voiceMessagePlayer.shutdown()
     }
 }
 

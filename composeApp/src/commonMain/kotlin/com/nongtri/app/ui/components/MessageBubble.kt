@@ -41,6 +41,12 @@ fun MessageBubble(
 ) {
     val isUser = message.role == MessageRole.USER
 
+    // Voice message player for user voice recordings
+    val voicePlayer = com.nongtri.app.platform.LocalVoiceMessagePlayer.current
+    val voiceIsPlaying by voicePlayer.isPlaying.collectAsState()
+    val voiceDuration by voicePlayer.duration.collectAsState()
+    val voicePosition by voicePlayer.position.collectAsState()
+
     // Entrance animation
     var visible by remember { mutableStateOf(false) }
     LaunchedEffect(message.id) {
@@ -109,14 +115,24 @@ fun MessageBubble(
                     if (isUser) {
                         // Check if this is a voice message
                         if (message.messageType == "voice") {
+                            val positionPercent = if (voiceDuration > 0) {
+                                voicePosition.toFloat() / voiceDuration
+                            } else 0f
+
                             VoiceMessageBubble(
                                 voiceAudioUrl = message.voiceAudioUrl,
                                 transcription = message.voiceTranscription ?: message.content,
-                                isPlaying = false,  // TODO: Integrate with MediaPlayer
-                                currentPosition = 0f,
-                                duration = 0,
+                                isPlaying = voiceIsPlaying,
+                                currentPosition = positionPercent,
+                                duration = voiceDuration / 1000,  // Convert ms to seconds
                                 onPlayPause = {
-                                    // TODO: Implement playback
+                                    message.voiceAudioUrl?.let { url ->
+                                        if (voiceIsPlaying) {
+                                            voicePlayer.pause()
+                                        } else {
+                                            voicePlayer.play(url)
+                                        }
+                                    }
                                 },
                                 modifier = Modifier.testTag(TestTags.messageText(index))
                             )
