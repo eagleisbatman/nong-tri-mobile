@@ -321,12 +321,15 @@ fun ChatScreen(
                         VoiceRecordingUI(
                             state = voiceRecordingUIState,
                             onStopRecording = {
-                                // Stop recording and save file for preview
+                                // Stop recording, save for preview, and START TRANSCRIPTION IN BACKGROUND
                                 recordingDuration = (voiceRecordingUIState as VoiceRecordingUIState.Recording).durationMs
-                                val audioFile = voiceRecordingViewModel.stopForPreview()
+                                val audioFile = voiceRecordingViewModel.stopForPreview(
+                                    userId = viewModel.getDeviceId(),
+                                    language = if (language == Language.VIETNAMESE) "vi" else "en"
+                                )
 
                                 if (audioFile != null) {
-                                    // Move to preview state
+                                    // Move to preview state (transcription happening in background)
                                     recordedAudioFile = audioFile
                                     voiceRecordingUIState = VoiceRecordingUIState.Preview(
                                         durationMs = recordingDuration,
@@ -348,21 +351,35 @@ fun ChatScreen(
                             state = voiceRecordingUIState,
                             onStopRecording = {}, // Not used in Preview state
                             onAccept = {
-                                // Accept recording - transcribe and send
-                                recordedAudioFile?.let { audioFile ->
+                                // Accept recording - use background transcription if ready
+                                val transcriptionResult = voiceRecordingViewModel.getTranscriptionResult()
+
+                                if (transcriptionResult != null) {
+                                    // Transcription is ready! Use it immediately
+                                    val (transcription, voiceAudioUrl) = transcriptionResult
+                                    println("[ChatScreen] Using background transcription: $transcription")
+
                                     // Show optimistic message
+                                    val optimisticMessageId = viewModel.showOptimisticVoiceMessage()
+                                    viewModel.updateVoiceMessage(optimisticMessageId, transcription, voiceAudioUrl)
+                                    viewModel.sendVoiceMessage(transcription, voiceAudioUrl)
+                                } else {
+                                    // Still transcribing - wait for it
+                                    println("[ChatScreen] Transcription still in progress, waiting...")
                                     val optimisticMessageId = viewModel.showOptimisticVoiceMessage()
                                     currentOptimisticMessageId = optimisticMessageId
 
-                                    // Transcribe the saved audio file
-                                    voiceRecordingViewModel.transcribeFile(
-                                        audioFile = audioFile,
-                                        userId = viewModel.getDeviceId(),
-                                        language = if (language == Language.VIETNAMESE) "vi" else "en"
-                                    ) { transcription, voiceAudioUrl ->
-                                        viewModel.updateVoiceMessage(optimisticMessageId, transcription, voiceAudioUrl)
-                                        currentOptimisticMessageId = null
-                                        viewModel.sendVoiceMessage(transcription, voiceAudioUrl)
+                                    // Use the old transcribeFile as fallback (shouldn't happen often)
+                                    recordedAudioFile?.let { audioFile ->
+                                        voiceRecordingViewModel.transcribeFile(
+                                            audioFile = audioFile,
+                                            userId = viewModel.getDeviceId(),
+                                            language = if (language == Language.VIETNAMESE) "vi" else "en"
+                                        ) { transcription, voiceAudioUrl ->
+                                            viewModel.updateVoiceMessage(optimisticMessageId, transcription, voiceAudioUrl)
+                                            currentOptimisticMessageId = null
+                                            viewModel.sendVoiceMessage(transcription, voiceAudioUrl)
+                                        }
                                     }
                                 }
 

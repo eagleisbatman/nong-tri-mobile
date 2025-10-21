@@ -28,6 +28,11 @@ class VoiceRecordingViewModel(
     private var recordingJob: Job? = null
     private var recordingStartTime: Long = 0
 
+    // Background transcription state
+    private var backgroundTranscription: String? = null
+    private var backgroundVoiceAudioUrl: String? = null
+    private var isTranscribing = false
+
     /**
      * Start recording audio
      */
@@ -98,10 +103,10 @@ class VoiceRecordingViewModel(
     }
 
     /**
-     * Stop recording and save file for preview (don't transcribe yet)
+     * Stop recording, save file for preview, and start transcription in background
      * Returns the audio file path if successful
      */
-    fun stopForPreview(): File? {
+    fun stopForPreview(userId: String, language: String = "en"): File? {
         recordingJob?.cancel()
         recordingJob = null
 
@@ -132,7 +137,10 @@ class VoiceRecordingViewModel(
                 // Save file for preview
                 savedFile = audioFile
                 _state.value = VoiceRecordingState.Idle
-                println("[VoiceRecording] File saved for preview")
+
+                // ✅ START TRANSCRIPTION IN BACKGROUND IMMEDIATELY
+                println("[VoiceRecording] Starting background transcription...")
+                startBackgroundTranscription(userId, audioFile, language)
             },
             onFailure = { error ->
                 _state.value = VoiceRecordingState.Error(error.message ?: "Failed to stop recording")
@@ -143,6 +151,42 @@ class VoiceRecordingViewModel(
 
         return savedFile
     }
+
+    /**
+     * Start transcription in background (non-blocking)
+     */
+    private fun startBackgroundTranscription(userId: String, audioFile: File, language: String) {
+        isTranscribing = true
+        backgroundTranscription = null
+        backgroundVoiceAudioUrl = null
+
+        viewModelScope.launch {
+            println("[VoiceRecording] Background transcription started")
+            transcribeAndSaveVoiceMessage(userId, audioFile, language) { transcription, voiceAudioUrl ->
+                backgroundTranscription = transcription
+                backgroundVoiceAudioUrl = voiceAudioUrl
+                isTranscribing = false
+                println("[VoiceRecording] Background transcription complete: $transcription")
+            }
+        }
+    }
+
+    /**
+     * Get transcription result (may be null if still transcribing)
+     * Returns: Pair(transcription, voiceAudioUrl) or null if not ready
+     */
+    fun getTranscriptionResult(): Pair<String, String?>? {
+        return if (backgroundTranscription != null) {
+            Pair(backgroundTranscription!!, backgroundVoiceAudioUrl)
+        } else {
+            null
+        }
+    }
+
+    /**
+     * Check if transcription is still in progress
+     */
+    fun isTranscriptionInProgress(): Boolean = isTranscribing
 
     /**
      * Transcribe a saved audio file

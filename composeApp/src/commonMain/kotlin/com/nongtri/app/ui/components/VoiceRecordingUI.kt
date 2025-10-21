@@ -73,7 +73,7 @@ fun VoiceRecordingUI(
 
 /**
  * UI shown while actively recording
- * Shows: Animated mic icon, timer, stop button
+ * Shows: Animated mic icon, waveform, timer, stop button
  */
 @Composable
 private fun RecordingActiveUI(
@@ -81,65 +81,111 @@ private fun RecordingActiveUI(
     onStop: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Row(
+    Column(
         modifier = modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // Animated recording indicator
         Row(
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            // Pulsing red dot
-            var isPulsing by remember { mutableStateOf(true) }
-            LaunchedEffect(Unit) {
-                while (true) {
-                    isPulsing = !isPulsing
-                    delay(500)
-                }
-            }
-
-            Box(
-                modifier = Modifier.size(12.dp),
-                contentAlignment = Alignment.Center
+            // Animated recording indicator
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Surface(
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.size(if (isPulsing) 12.dp else 10.dp)
-                ) {}
+                // Pulsing red dot
+                var isPulsing by remember { mutableStateOf(true) }
+                LaunchedEffect(Unit) {
+                    while (true) {
+                        isPulsing = !isPulsing
+                        delay(500)
+                    }
+                }
+
+                Box(
+                    modifier = Modifier.size(12.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Surface(
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.size(if (isPulsing) 12.dp else 10.dp)
+                    ) {}
+                }
+
+                // Mic icon
+                Icon(
+                    imageVector = Icons.Default.Mic,
+                    contentDescription = "Recording",
+                    tint = MaterialTheme.colorScheme.error
+                )
+
+                // Timer
+                Text(
+                    text = formatDuration(durationMs),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
             }
 
-            // Mic icon
-            Icon(
-                imageVector = Icons.Default.Mic,
-                contentDescription = "Recording",
-                tint = MaterialTheme.colorScheme.error
-            )
-
-            // Timer
-            Text(
-                text = formatDuration(durationMs),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
+            // Stop button
+            FilledTonalButton(
+                onClick = onStop,
+                colors = ButtonDefaults.filledTonalButtonColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                    contentColor = MaterialTheme.colorScheme.onErrorContainer
+                )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Stop,
+                    contentDescription = "Stop recording"
+                )
+                Spacer(Modifier.width(8.dp))
+                Text("Stop")
+            }
         }
 
-        // Stop button
-        FilledTonalButton(
-            onClick = onStop,
-            colors = ButtonDefaults.filledTonalButtonColors(
-                containerColor = MaterialTheme.colorScheme.errorContainer,
-                contentColor = MaterialTheme.colorScheme.onErrorContainer
-            )
-        ) {
-            Icon(
-                imageVector = Icons.Default.Stop,
-                contentDescription = "Stop recording"
-            )
-            Spacer(Modifier.width(8.dp))
-            Text("Stop")
+        // Waveform visualization
+        AnimatedWaveform(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp)
+        )
+    }
+}
+
+/**
+ * Animated waveform visualization
+ */
+@Composable
+private fun AnimatedWaveform(
+    modifier: Modifier = Modifier
+) {
+    // Generate random waveform amplitudes
+    var amplitudes by remember { mutableStateOf(List(40) { kotlin.random.Random.nextFloat() * 0.5f + 0.3f }) }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(100) // Update every 100ms
+            amplitudes = amplitudes.drop(1) + kotlin.random.Random.nextFloat() * 0.5f + 0.3f
+        }
+    }
+
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(2.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        amplitudes.forEach { amplitude ->
+            Surface(
+                modifier = Modifier
+                    .width(4.dp)
+                    .height((amplitude * 48).dp),
+                shape = RoundedCornerShape(2.dp),
+                color = MaterialTheme.colorScheme.primary
+            ) {}
         }
     }
 }
