@@ -29,6 +29,7 @@ kotlin {
             implementation("com.google.android.gms:play-services-location:21.1.0")
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
             implementation("com.github.3llomi:RecordView:3.1.3")
+            implementation("androidx.appcompat:appcompat:1.6.1")
         }
         commonMain.dependencies {
             implementation(compose.runtime)

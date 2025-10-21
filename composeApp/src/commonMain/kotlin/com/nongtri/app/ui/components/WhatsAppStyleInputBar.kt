@@ -140,7 +140,7 @@ private fun VoiceRecordButton(
 
                 awaitEachGesture {
                     // Wait for initial press
-                    val down = awaitFirstDown(requireUnconditional = false)
+                    val down = awaitFirstDown()
                     initialPosition = down.position
 
                     // Start long press timeout

@@ -89,6 +89,11 @@ fun WhatsAppRecordButton(
                         println("[RecordButton] Recording too short (< 1 second)")
                         onRecordingCancel()
                     }
+
+                    override fun onLock() {
+                        println("[RecordButton] Recording locked")
+                        onRecordingLocked()
+                    }
                 })
 
                 setOnBasketAnimationEndListener {
@@ -97,22 +102,19 @@ fun WhatsAppRecordButton(
             }
 
             // Create RecordButton (mic icon button)
-            val recordButton = RecordButton(ctx).apply {
-                id = View.generateViewId()
-                layoutParams = FrameLayout.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT
-                ).apply {
-                    gravity = android.view.Gravity.END or android.view.Gravity.CENTER_VERTICAL
-                }
-
-                // Use default mic icon
-                setImageResource(android.R.drawable.ic_btn_speak_now)
+            val recordButton = RecordButton(ctx)
+            recordButton.id = View.generateViewId()
+            recordButton.layoutParams = FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            ).apply {
+                gravity = android.view.Gravity.END or android.view.Gravity.CENTER_VERTICAL
             }
+            recordButton.setImageResource(android.R.drawable.ic_btn_speak_now)
 
             // Add views to container
             container.addView(recordView)
-            container.addView(recordButton)
+            container.addView(recordButton as android.view.View)
 
             // Link RecordButton to RecordView (CRITICAL - must be done AFTER adding to container)
             // This makes the hold-to-record gestures work
