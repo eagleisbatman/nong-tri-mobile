@@ -300,10 +300,10 @@ class NongTriApi(
         return try {
             val response: UpdateAudioResponse = client.post("$baseUrl/api/conversation/update-audio") {
                 contentType(ContentType.Application.Json)
-                setBody(mapOf(
-                    "conversationId" to conversationId,
-                    "audioUrl" to audioUrl,
-                    "ttsVoice" to ttsVoice
+                setBody(UpdateAudioRequest(
+                    conversationId = conversationId,
+                    audioUrl = audioUrl,
+                    ttsVoice = ttsVoice
                 ))
             }.body()
 
@@ -523,6 +523,13 @@ data class TranscriptionResponse(
     val text: String = "",
     val language: String = "",
     val error: String? = null
+)
+
+@kotlinx.serialization.Serializable
+data class UpdateAudioRequest(
+    val conversationId: Int,
+    val audioUrl: String,
+    val ttsVoice: String
 )
 
 @kotlinx.serialization.Serializable

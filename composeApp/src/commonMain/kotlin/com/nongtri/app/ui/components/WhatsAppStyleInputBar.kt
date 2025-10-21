@@ -40,17 +40,21 @@ fun WhatsAppStyleInputBar(
             verticalAlignment = Alignment.Bottom,
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // Image button
-            IconButton(
-                onClick = onImageClick,
-                enabled = isEnabled
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.CameraAlt,
-                    contentDescription = "Attach image",
-                    tint = if (isEnabled) MaterialTheme.colorScheme.primary
-                          else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-                )
+            // Image button - hide when text is present to save space
+            if (value.isBlank()) {
+                IconButton(
+                    onClick = onImageClick,
+                    enabled = isEnabled,
+                    modifier = Modifier.size(40.dp)  // Smaller icon
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.CameraAlt,
+                        contentDescription = "Attach image",
+                        modifier = Modifier.size(24.dp),
+                        tint = if (isEnabled) MaterialTheme.colorScheme.primary
+                              else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                    )
+                }
             }
 
             // Text input field - expandable based on content
@@ -61,7 +65,7 @@ fun WhatsAppStyleInputBar(
                 placeholder = {
                     Text(
                         text = if (isTranscribing) "Transcribing..." else strings.typeMessage,
-                        style = MaterialTheme.typography.bodyLarge
+                        style = MaterialTheme.typography.bodyMedium  // Smaller font
                     )
                 },
                 trailingIcon = {
@@ -79,9 +83,11 @@ fun WhatsAppStyleInputBar(
                     focusedBorderColor = MaterialTheme.colorScheme.primary,
                     unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
                 ),
-                textStyle = MaterialTheme.typography.bodyLarge,
+                textStyle = MaterialTheme.typography.bodyMedium.copy(
+                    lineHeight = androidx.compose.ui.unit.TextUnit(22f, androidx.compose.ui.unit.TextUnitType.Sp)  // Better line spacing
+                ),
                 minLines = 1,  // Start with 1 line
-                maxLines = 6   // Expand up to 6 lines, then scroll
+                maxLines = 4   // Reduced from 6 to 4 to prevent too-tall box
             )
 
             // Send or Voice button
@@ -93,11 +99,12 @@ fun WhatsAppStyleInputBar(
                     colors = IconButtonDefaults.filledIconButtonColors(
                         containerColor = MaterialTheme.colorScheme.primary
                     ),
-                    modifier = Modifier.size(48.dp)
+                    modifier = Modifier.size(44.dp)  // Slightly smaller
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.Send,
                         contentDescription = strings.send,
+                        modifier = Modifier.size(22.dp),
                         tint = MaterialTheme.colorScheme.onPrimary
                     )
                 }
@@ -106,11 +113,12 @@ fun WhatsAppStyleInputBar(
                 IconButton(
                     onClick = onVoiceClick,
                     enabled = isEnabled,
-                    modifier = Modifier.size(48.dp)
+                    modifier = Modifier.size(44.dp)  // Slightly smaller
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.Mic,
                         contentDescription = "Voice input",
+                        modifier = Modifier.size(24.dp),
                         tint = if (isEnabled) MaterialTheme.colorScheme.primary
                               else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                     )
