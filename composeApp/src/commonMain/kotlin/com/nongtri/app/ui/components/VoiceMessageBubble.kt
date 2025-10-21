@@ -129,8 +129,7 @@ fun VoiceMessageBubble(
                         Text(
                             text = "Transcribing...",
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                            fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                         )
                     }
                 } else {
