@@ -261,12 +261,18 @@ fun ChatScreen(
                         voiceRecordingViewModel.startRecording()
                     },
                     onVoiceRelease = {
-                        // Stop recording and transcribe
+                        // ✅ OPTIMISTIC UI: Show voice bubble INSTANTLY with "..." placeholder
+                        val optimisticMessageId = viewModel.showOptimisticVoiceMessage()
+
+                        // Stop recording and transcribe in background
                         voiceRecordingViewModel.stopRecording(
                             userId = viewModel.getDeviceId(),
                             language = if (language == Language.VIETNAMESE) "vi" else "en"
                         ) { transcription, voiceAudioUrl ->
-                            // Send voice message with audio URL
+                            // ✅ Update optimistic message with actual transcription
+                            viewModel.updateVoiceMessage(optimisticMessageId, transcription, voiceAudioUrl)
+
+                            // ✅ Then send to AI for response
                             viewModel.sendVoiceMessage(transcription, voiceAudioUrl)
                         }
                     },

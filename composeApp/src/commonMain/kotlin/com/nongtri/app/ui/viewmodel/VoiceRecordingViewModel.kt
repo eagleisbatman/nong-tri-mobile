@@ -65,6 +65,27 @@ class VoiceRecordingViewModel(
         audioRecorder.stopRecording().fold(
             onSuccess = { audioFile ->
                 println("[VoiceRecording] Stopped recording: ${audioFile.absolutePath} (${audioFile.length()} bytes)")
+
+                // ✅ VALIDATION #1: Check recording duration (minimum 0.5 seconds)
+                val durationMs = System.currentTimeMillis() - recordingStartTime
+                if (durationMs < 500) {
+                    _state.value = VoiceRecordingState.Error("Recording too short. Please hold longer.")
+                    println("[VoiceRecording] Recording too short: ${durationMs}ms")
+                    audioFile.delete()
+                    resetToIdle()
+                    return
+                }
+
+                // ✅ VALIDATION #2: Check file size (minimum 1KB)
+                if (audioFile.length() < 1000) {
+                    _state.value = VoiceRecordingState.Error("Recording is empty. Please try again.")
+                    println("[VoiceRecording] File too small: ${audioFile.length()} bytes")
+                    audioFile.delete()
+                    resetToIdle()
+                    return
+                }
+
+                // ✅ VALIDATIONS PASSED - Proceed with transcription
                 _state.value = VoiceRecordingState.Transcribing
                 transcribeAndSaveVoiceMessage(userId, audioFile, language, onTranscribed)
             },

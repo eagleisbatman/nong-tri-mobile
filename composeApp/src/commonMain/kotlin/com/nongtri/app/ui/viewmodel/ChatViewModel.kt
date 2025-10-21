@@ -210,6 +210,57 @@ class ChatViewModel(
     }
 
     /**
+     * Show optimistic voice message bubble immediately (with placeholder)
+     * This provides instant feedback while transcription is in progress
+     * @return Message ID for updating later
+     */
+    fun showOptimisticVoiceMessage(): String {
+        val messageId = Uuid.random().toString()
+        val optimisticMessage = ChatMessage(
+            id = messageId,
+            role = MessageRole.USER,
+            content = "...",  // Placeholder text
+            timestamp = Clock.System.now(),
+            messageType = "voice",
+            voiceAudioUrl = null,  // Will be filled when transcription completes
+            voiceTranscription = null,
+            isLoading = true  // Show as loading
+        )
+
+        _uiState.update { state ->
+            state.copy(
+                messages = state.messages + optimisticMessage,
+                error = null
+            )
+        }
+
+        return messageId
+    }
+
+    /**
+     * Update optimistic voice message with actual transcription
+     * Called when transcription completes
+     */
+    fun updateVoiceMessage(messageId: String, transcription: String, voiceAudioUrl: String?) {
+        _uiState.update { state ->
+            state.copy(
+                messages = state.messages.map { msg ->
+                    if (msg.id == messageId) {
+                        msg.copy(
+                            content = transcription.trim(),
+                            voiceAudioUrl = voiceAudioUrl,
+                            voiceTranscription = transcription.trim(),
+                            isLoading = false
+                        )
+                    } else {
+                        msg
+                    }
+                }
+            )
+        }
+    }
+
+    /**
      * Send voice message with transcription and audio URL
      * Voice messages are displayed with audio playback controls
      * @param transcription Transcribed text from Whisper
@@ -218,19 +269,11 @@ class ChatViewModel(
     fun sendVoiceMessage(transcription: String, voiceAudioUrl: String?) {
         if (transcription.isBlank()) return
 
-        // Add user voice message
-        val userMessage = ChatMessage(
-            role = MessageRole.USER,
-            content = transcription.trim(),
-            timestamp = Clock.System.now(),
-            messageType = "voice",
-            voiceAudioUrl = voiceAudioUrl,
-            voiceTranscription = transcription.trim()
-        )
+        // Note: This method is now called AFTER optimistic message is shown
+        // The optimistic message is already in the UI, we just need to trigger AI response
 
         _uiState.update { state ->
             state.copy(
-                messages = state.messages + userMessage,
                 isLoading = true,
                 error = null
             )
