@@ -211,20 +211,6 @@ fun ChatScreen(
 
                             HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
 
-                            // 4. Conversation History
-                            DropdownMenuItem(
-                                text = { Text("Conversation History") },
-                                leadingIcon = {
-                                    Icon(Icons.AutoMirrored.Filled.List, contentDescription = null)
-                                },
-                                onClick = {
-                                    // TODO: Navigate to history screen
-                                    showMenu = false
-                                }
-                            )
-
-                            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-
                             // 5. Theme (at bottom)
                             Text(
                                 text = "Theme",

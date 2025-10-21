@@ -49,6 +49,7 @@ class ChatViewModel(
     /**
      * Load or create the active conversation thread
      * This ensures we always have a thread to work with
+     * Falls back to old history API if threads not available yet
      */
     private fun loadActiveThread() {
         viewModelScope.launch {
@@ -68,11 +69,53 @@ class ChatViewModel(
                     },
                     onFailure = { error ->
                         println("⚠ Failed to load active thread: ${error.message}")
-                        // Don't block app if thread loading fails
+                        // Fallback to old history API (for backward compatibility)
+                        loadConversationHistoryFallback()
                     }
                 )
             } catch (e: Exception) {
                 println("⚠ Error loading active thread: ${e.message}")
+                // Fallback to old history API
+                loadConversationHistoryFallback()
+            }
+        }
+    }
+
+    /**
+     * Fallback: Load conversation history using old API
+     * Used when thread endpoints are not available yet
+     */
+    private fun loadConversationHistoryFallback() {
+        viewModelScope.launch {
+            try {
+                api.getConversationHistory(userId, limit = 20).fold(
+                    onSuccess = { history ->
+                        if (history.isNotEmpty()) {
+                            val messages = history.map { h ->
+                                ChatMessage(
+                                    id = h.id.toString(),
+                                    role = if (h.role == "user") MessageRole.USER else MessageRole.ASSISTANT,
+                                    content = h.content,
+                                    timestamp = kotlinx.datetime.Instant.parse(h.timestamp),
+                                    conversationId = h.id,
+                                    audioUrl = h.audioUrl,
+                                    audioVoice = h.ttsVoice,
+                                    language = h.language ?: "en",
+                                    messageType = h.messageType ?: "text",
+                                    voiceAudioUrl = h.voiceAudioUrl,
+                                    voiceTranscription = h.voiceTranscription
+                                )
+                            }
+                            _uiState.update { it.copy(messages = messages) }
+                            println("✓ Loaded ${messages.size} messages from history (fallback mode)")
+                        }
+                    },
+                    onFailure = { error ->
+                        println("⚠ Failed to load history: ${error.message}")
+                    }
+                )
+            } catch (e: Exception) {
+                println("⚠ Error loading history: ${e.message}")
             }
         }
     }
@@ -133,6 +176,7 @@ class ChatViewModel(
 
     /**
      * Create a new conversation thread and switch to it
+     * Falls back to clearing messages if threads not available
      * @param title Optional title for the new thread
      */
     fun createNewThread(title: String? = null) {
@@ -144,12 +188,15 @@ class ChatViewModel(
                         switchToThread(thread.id, thread.title)
                     },
                     onFailure = { error ->
-                        println("⚠ Failed to create thread: ${error.message}")
-                        _uiState.update { it.copy(error = "Failed to create new conversation") }
+                        println("⚠ Failed to create thread (fallback to clear): ${error.message}")
+                        // Fallback: Just clear current messages
+                        _uiState.update { it.copy(messages = emptyList()) }
                     }
                 )
             } catch (e: Exception) {
-                println("⚠ Error creating thread: ${e.message}")
+                println("⚠ Error creating thread (fallback to clear): ${e.message}")
+                // Fallback: Just clear current messages
+                _uiState.update { it.copy(messages = emptyList()) }
             }
         }
     }
