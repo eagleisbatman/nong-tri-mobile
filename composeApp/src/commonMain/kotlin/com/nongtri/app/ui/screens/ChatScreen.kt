@@ -270,6 +270,10 @@ fun ChatScreen(
                             viewModel.sendVoiceMessage(transcription, voiceAudioUrl)
                         }
                     },
+                    onVoiceCancel = {
+                        // User dragged finger off button - cancel recording
+                        voiceRecordingViewModel.cancelRecording()
+                    },
                     strings = strings,
                     isEnabled = !uiState.isLoading
                 )

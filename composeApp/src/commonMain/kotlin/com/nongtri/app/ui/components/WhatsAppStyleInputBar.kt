@@ -23,7 +23,8 @@ fun WhatsAppStyleInputBar(
     onImageClick: () -> Unit,
     onVoiceClick: () -> Unit,
     onVoiceLongPress: () -> Unit = {},      // Start recording
-    onVoiceRelease: () -> Unit = {},        // Stop recording
+    onVoiceRelease: () -> Unit = {},        // Stop recording and send
+    onVoiceCancel: () -> Unit = {},         // Cancel recording (dragged off button)
     strings: Strings,
     isEnabled: Boolean,
     modifier: Modifier = Modifier
@@ -92,24 +93,32 @@ fun WhatsAppStyleInputBar(
                     )
                 }
             } else {
-                // Voice button with long press support
+                // Voice button with hold-to-record (WhatsApp style)
+                // Long press to start, release to send, slide away to cancel
                 Box(
                     modifier = Modifier
                         .size(48.dp)
                         .pointerInput(Unit) {
                             detectTapGestures(
                                 onTap = { onVoiceClick() },
-                                onLongPress = { onVoiceLongPress() },
+                                onLongPress = {
+                                    // Start recording on long press
+                                    onVoiceLongPress()
+                                },
                                 onPress = {
-                                    val pressed = tryAwaitRelease()
-                                    if (!pressed) {
-                                        // User released outside button area - cancel
+                                    // Detect if user releases inside or outside button
+                                    val release = tryAwaitRelease()
+                                    if (release) {
+                                        // Released inside button - send voice message
                                         onVoiceRelease()
+                                    } else {
+                                        // Dragged outside button - cancel recording
+                                        onVoiceCancel()
                                     }
                                 }
                             )
                         },
-                    contentAlignment = Alignment.Center
+                        contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.Mic,
