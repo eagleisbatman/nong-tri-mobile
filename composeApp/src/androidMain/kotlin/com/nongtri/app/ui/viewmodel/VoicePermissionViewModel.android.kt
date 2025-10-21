@@ -4,6 +4,9 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import androidx.activity.ComponentActivity
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -188,4 +191,21 @@ actual class VoicePermissionViewModel actual constructor() : ViewModel() {
             Manifest.permission.RECORD_AUDIO
         ) == PackageManager.PERMISSION_GRANTED
     }
+}
+
+/**
+ * Remember and initialize VoicePermissionViewModel
+ */
+@Composable
+actual fun rememberVoicePermissionViewModel(): VoicePermissionViewModel {
+    val context = LocalContext.current
+    val viewModel = remember { VoicePermissionViewModel() }
+
+    // Initialize on first composition
+    remember {
+        viewModel.initialize(context)
+        viewModel
+    }
+
+    return viewModel
 }

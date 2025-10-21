@@ -46,16 +46,22 @@ fun ChatScreen(
     val locationViewModel = rememberLocationViewModel()
     val locationState by locationViewModel.locationState.collectAsState()
 
+    // Voice permission state
+    var showVoicePermissionBottomSheet by remember { mutableStateOf(false) }
+    val voicePermissionViewModel = rememberVoicePermissionViewModel()
+    val voicePermissionState by voicePermissionViewModel.permissionState.collectAsState()
+
     // Voice recording state
     val audioRecorder = com.nongtri.app.platform.LocalAudioRecorder.current
     val voiceRecordingViewModel = remember { VoiceRecordingViewModel(audioRecorder) }
     val voiceRecordingState by voiceRecordingViewModel.state.collectAsState()
 
-    // Snackbar for error messages
+    // Snackbar for error messages (only for non-permission errors)
     val snackbarHostState = remember { SnackbarHostState() }
     var currentOptimisticMessageId by remember { mutableStateOf<String?>(null) }
 
-    // Handle voice recording errors - remove optimistic message and show error
+    // Handle voice recording errors - remove optimistic message
+    // Permission errors are handled via bottom sheet, not Snackbar
     LaunchedEffect(voiceRecordingState) {
         if (voiceRecordingState is VoiceRecordingState.Error) {
             val errorMessage = (voiceRecordingState as VoiceRecordingState.Error).message
@@ -66,11 +72,13 @@ fun ChatScreen(
                 currentOptimisticMessageId = null
             }
 
-            // Show error message to user
-            snackbarHostState.showSnackbar(
-                message = errorMessage,
-                duration = SnackbarDuration.Short
-            )
+            // Only show Snackbar for NON-permission errors
+            if (!errorMessage.contains("permission", ignoreCase = true)) {
+                snackbarHostState.showSnackbar(
+                    message = errorMessage,
+                    duration = SnackbarDuration.Short
+                )
+            }
         }
     }
 
@@ -288,8 +296,13 @@ fun ChatScreen(
                         }
                     },
                     onVoiceLongPress = {
-                        // Start recording
-                        voiceRecordingViewModel.startRecording()
+                        // Check permission first, then start recording
+                        if (voicePermissionState.hasPermission) {
+                            voiceRecordingViewModel.startRecording()
+                        } else {
+                            // Show permission bottom sheet
+                            showVoicePermissionBottomSheet = true
+                        }
                     },
                     onVoiceRelease = {
                         // ✅ OPTIMISTIC UI: Show voice bubble INSTANTLY with "..." placeholder
@@ -448,6 +461,27 @@ fun ChatScreen(
             },
             onDismiss = {
                 showLocationBottomSheet = false
+            }
+        )
+    }
+
+    // Voice Permission Bottom Sheet
+    if (showVoicePermissionBottomSheet) {
+        // Check permission state when bottom sheet is shown
+        // This handles the case when user returns from settings with permission granted
+        LaunchedEffect(showVoicePermissionBottomSheet) {
+            voicePermissionViewModel.checkPermissionState()
+        }
+
+        VoicePermissionBottomSheet(
+            shouldShowSettings = voicePermissionState.shouldShowSettings,
+            onRequestPermission = {
+                voicePermissionViewModel.requestPermission()
+            },
+            onDismiss = {
+                showVoicePermissionBottomSheet = false
+                // Check permission after dismissing in case user granted it
+                voicePermissionViewModel.checkPermissionState()
             }
         )
     }

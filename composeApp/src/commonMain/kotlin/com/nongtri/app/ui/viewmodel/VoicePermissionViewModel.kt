@@ -1,5 +1,6 @@
 package com.nongtri.app.ui.viewmodel
 
+import androidx.compose.runtime.Composable
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -50,3 +51,9 @@ expect class VoicePermissionViewModel() : ViewModel {
      */
     fun checkPermissionState()
 }
+
+/**
+ * Remember and initialize VoicePermissionViewModel
+ */
+@Composable
+expect fun rememberVoicePermissionViewModel(): VoicePermissionViewModel
