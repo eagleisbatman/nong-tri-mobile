@@ -270,6 +270,10 @@ fun ChatScreen(
             var voiceRecordingUIState by remember { mutableStateOf<VoiceRecordingUIState>(VoiceRecordingUIState.Idle) }
             var recordedAudioFile by remember { mutableStateOf<java.io.File?>(null) }
             var recordingDuration by remember { mutableStateOf(0L) }
+            var isPreviewPlaying by remember { mutableStateOf(false) }
+
+            // Voice message player for preview playback
+            val voiceMessagePlayer = remember { com.nongtri.app.platform.VoiceMessagePlayer() }
 
             // Update voice recording UI state based on VoiceRecordingViewModel state
             LaunchedEffect(voiceRecordingState) {
@@ -279,12 +283,12 @@ fun ChatScreen(
                             durationMs = (voiceRecordingState as VoiceRecordingState.Recording).durationMs
                         )
                     }
-                    is VoiceRecordingState.Idle,
                     is VoiceRecordingState.Cancelled -> {
-                        if (voiceRecordingUIState !is VoiceRecordingUIState.Idle) {
-                            voiceRecordingUIState = VoiceRecordingUIState.Idle
-                        }
+                        // Only go back to Idle if user cancelled
+                        voiceRecordingUIState = VoiceRecordingUIState.Idle
                     }
+                    // DON'T reset to Idle on VoiceRecordingState.Idle - we might be in Preview!
+                    // The UI state is managed independently by onStopRecording/onAccept/onReject
                     else -> {}
                 }
             }
@@ -351,8 +355,23 @@ fun ChatScreen(
                         // Preview UI
                         VoiceRecordingUI(
                             state = voiceRecordingUIState,
+                            isPlaying = isPreviewPlaying,
                             onStopRecording = {}, // Not used in Preview state
                             onAccept = {
+                                // Stop playback if playing
+                                voiceMessagePlayer.stop()
+                                isPreviewPlaying = false
+
+                                // Check if transcription failed
+                                if (voiceRecordingState is VoiceRecordingState.Error) {
+                                    // Don't send - just show error was already shown in toast
+                                    println("[ChatScreen] Cannot accept - transcription failed")
+                                    voiceRecordingUIState = VoiceRecordingUIState.Idle
+                                    recordedAudioFile?.delete()
+                                    recordedAudioFile = null
+                                    return@VoiceRecordingUI
+                                }
+
                                 // Accept recording - use background transcription if ready
                                 val transcriptionResult = voiceRecordingViewModel.getTranscriptionResult()
 
@@ -391,12 +410,28 @@ fun ChatScreen(
                             },
                             onReject = {
                                 // Reject recording - delete file and return to input
+                                voiceMessagePlayer.stop()
+                                isPreviewPlaying = false
                                 recordedAudioFile?.delete()
                                 recordedAudioFile = null
                                 voiceRecordingUIState = VoiceRecordingUIState.Idle
                             },
                             onPlayPause = {
-                                // TODO: Play/pause audio preview
+                                // Play/pause audio preview
+                                recordedAudioFile?.let { audioFile ->
+                                    if (isPreviewPlaying) {
+                                        voiceMessagePlayer.stop()
+                                        isPreviewPlaying = false
+                                    } else {
+                                        voiceMessagePlayer.play(
+                                            filePath = audioFile.absolutePath,
+                                            onComplete = {
+                                                isPreviewPlaying = false
+                                            }
+                                        )
+                                        isPreviewPlaying = true
+                                    }
+                                }
                             }
                         )
                     }
