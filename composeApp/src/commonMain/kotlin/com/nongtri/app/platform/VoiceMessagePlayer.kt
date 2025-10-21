@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.StateFlow
  * Expect/actual pattern for platform-specific MediaPlayer
  */
 expect class VoiceMessagePlayer {
+    val currentUrl: StateFlow<String?>  // Currently playing URL (for multi-message state management)
     val isPlaying: StateFlow<Boolean>
     val duration: StateFlow<Int>  // milliseconds
     val position: StateFlow<Int>  // milliseconds

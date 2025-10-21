@@ -20,7 +20,7 @@ import kotlinx.coroutines.launch
  * Manages playback of user voice messages
  * Simpler than TTS - just plays audio URLs directly
  */
-class VoiceMessagePlayer(private val context: Context) {
+actual class VoiceMessagePlayer(private val context: Context) {
     private var mediaPlayer: MediaPlayer? = null
 
     // CoroutineScope for position updates
@@ -28,16 +28,16 @@ class VoiceMessagePlayer(private val context: Context) {
     private var positionUpdateJob: Job? = null
 
     private val _currentUrl = MutableStateFlow<String?>(null)
-    val currentUrl: StateFlow<String?> = _currentUrl.asStateFlow()
+    actual val currentUrl: StateFlow<String?> = _currentUrl.asStateFlow()
 
     private val _isPlaying = MutableStateFlow(false)
-    val isPlaying: StateFlow<Boolean> = _isPlaying.asStateFlow()
+    actual val isPlaying: StateFlow<Boolean> = _isPlaying.asStateFlow()
 
     private val _duration = MutableStateFlow(0) // milliseconds
-    val duration: StateFlow<Int> = _duration.asStateFlow()
+    actual val duration: StateFlow<Int> = _duration.asStateFlow()
 
     private val _position = MutableStateFlow(0) // milliseconds
-    val position: StateFlow<Int> = _position.asStateFlow()
+    actual val position: StateFlow<Int> = _position.asStateFlow()
 
     /**
      * Start position update loop - updates position every 100ms during playback
@@ -60,7 +60,7 @@ class VoiceMessagePlayer(private val context: Context) {
      * Play or resume voice message from URL
      * @param audioUrl MinIO URL of voice recording
      */
-    fun play(audioUrl: String) {
+    actual fun play(audioUrl: String) {
         try {
             // If same URL and paused, resume
             if (_currentUrl.value == audioUrl && mediaPlayer != null && !_isPlaying.value) {
@@ -117,7 +117,7 @@ class VoiceMessagePlayer(private val context: Context) {
     /**
      * Pause playback
      */
-    fun pause() {
+    actual fun pause() {
         positionUpdateJob?.cancel()  // Stop position updates when pausing
         mediaPlayer?.let {
             if (it.isPlaying) {
@@ -132,7 +132,7 @@ class VoiceMessagePlayer(private val context: Context) {
     /**
      * Stop playback and release resources
      */
-    fun stop() {
+    actual fun stop() {
         positionUpdateJob?.cancel()  // Stop position updates when stopping
         mediaPlayer?.let {
             try {
@@ -155,7 +155,7 @@ class VoiceMessagePlayer(private val context: Context) {
     /**
      * Get current playback position as percentage (0.0 to 1.0)
      */
-    fun getPositionPercent(): Float {
+    actual fun getPositionPercent(): Float {
         val dur = _duration.value
         val pos = mediaPlayer?.currentPosition ?: 0
         return if (dur > 0) pos.toFloat() / dur else 0f
@@ -164,7 +164,7 @@ class VoiceMessagePlayer(private val context: Context) {
     /**
      * Cleanup resources
      */
-    fun shutdown() {
+    actual fun shutdown() {
         positionUpdateJob?.cancel()  // Cancel any running position updates
         stop()
         scope.cancel()  // Cancel the coroutine scope

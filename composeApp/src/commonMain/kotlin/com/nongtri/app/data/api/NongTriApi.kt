@@ -219,16 +219,17 @@ class NongTriApi(
      */
     suspend fun transcribeAudio(audioFile: java.io.File, language: String): Result<TranscriptionResponse> {
         return try {
-            val response: TranscriptionResponse = client.submitFormWithBinaryData(
-                url = "$baseUrl/api/transcribe",
-                formData = io.ktor.client.request.forms.formData {
-                    append("audio", audioFile.readBytes(), io.ktor.http.Headers.build {
-                        append(HttpHeaders.ContentType, "audio/m4a")
-                        append(HttpHeaders.ContentDisposition, "filename=\"${audioFile.name}\"")
-                    })
-                    append("language", language)
-                }
-            ).body()
+            val response: TranscriptionResponse = client.post("$baseUrl/api/transcribe") {
+                setBody(io.ktor.client.request.forms.MultiPartFormDataContent(
+                    io.ktor.client.request.forms.formData {
+                        append("audio", audioFile.readBytes(), io.ktor.http.Headers.build {
+                            append(HttpHeaders.ContentType, "audio/m4a")
+                            append(HttpHeaders.ContentDisposition, "filename=\"${audioFile.name}\"")
+                        })
+                        append("language", language)
+                    }
+                ))
+            }.body()
 
             Result.success(response)
         } catch (e: Exception) {
@@ -253,18 +254,19 @@ class NongTriApi(
         language: String
     ): Result<VoiceMessageResponse> {
         return try {
-            val response: VoiceMessageResponse = client.submitFormWithBinaryData(
-                url = "$baseUrl/api/conversation/voice-message",
-                formData = io.ktor.client.request.forms.formData {
-                    append("audio", audioFile.readBytes(), io.ktor.http.Headers.build {
-                        append(HttpHeaders.ContentType, "audio/m4a")
-                        append(HttpHeaders.ContentDisposition, "filename=\"${audioFile.name}\"")
-                    })
-                    append("userId", userId)
-                    append("transcription", transcription)
-                    append("language", language)
-                }
-            ).body()
+            val response: VoiceMessageResponse = client.post("$baseUrl/api/conversation/voice-message") {
+                setBody(io.ktor.client.request.forms.MultiPartFormDataContent(
+                    io.ktor.client.request.forms.formData {
+                        append("audio", audioFile.readBytes(), io.ktor.http.Headers.build {
+                            append(HttpHeaders.ContentType, "audio/m4a")
+                            append(HttpHeaders.ContentDisposition, "filename=\"${audioFile.name}\"")
+                        })
+                        append("userId", userId)
+                        append("transcription", transcription)
+                        append("language", language)
+                    }
+                ))
+            }.body()
 
             if (response.success) {
                 Result.success(response)
