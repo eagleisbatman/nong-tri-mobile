@@ -467,10 +467,20 @@ fun ChatScreen(
 
     // Voice Permission Bottom Sheet
     if (showVoicePermissionBottomSheet) {
-        // Check permission state when bottom sheet is shown
-        // This handles the case when user returns from settings with permission granted
+        // Continuously check permission state while bottom sheet is visible
+        // This handles the case when user goes to Settings and grants permission
         LaunchedEffect(showVoicePermissionBottomSheet) {
-            voicePermissionViewModel.checkPermissionState()
+            while (true) {
+                voicePermissionViewModel.checkPermissionState()
+                kotlinx.coroutines.delay(500) // Check every 500ms
+            }
+        }
+
+        // Auto-dismiss if permission was granted
+        LaunchedEffect(voicePermissionState.hasPermission) {
+            if (voicePermissionState.hasPermission) {
+                showVoicePermissionBottomSheet = false
+            }
         }
 
         VoicePermissionBottomSheet(
