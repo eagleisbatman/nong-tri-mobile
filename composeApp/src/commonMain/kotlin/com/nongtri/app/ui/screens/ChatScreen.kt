@@ -273,7 +273,7 @@ fun ChatScreen(
             var isPreviewPlaying by remember { mutableStateOf(false) }
 
             // Voice message player for preview playback
-            val voiceMessagePlayer = remember { com.nongtri.app.platform.VoiceMessagePlayer() }
+            val voiceMessagePlayer = com.nongtri.app.platform.LocalVoiceMessagePlayer.current
 
             // Update voice recording UI state based on VoiceRecordingViewModel state
             LaunchedEffect(voiceRecordingState) {
@@ -423,12 +423,8 @@ fun ChatScreen(
                                         voiceMessagePlayer.stop()
                                         isPreviewPlaying = false
                                     } else {
-                                        voiceMessagePlayer.play(
-                                            filePath = audioFile.absolutePath,
-                                            onComplete = {
-                                                isPreviewPlaying = false
-                                            }
-                                        )
+                                        // Use file:// URL for local file playback
+                                        voiceMessagePlayer.play("file://${audioFile.absolutePath}")
                                         isPreviewPlaying = true
                                     }
                                 }
