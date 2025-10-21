@@ -29,6 +29,7 @@ fun ChatScreen(
     language: Language,
     onLanguageChange: (Language) -> Unit,
     onClearHistory: () -> Unit,
+    onViewConversations: () -> Unit,
     onThemeModeChange: (com.nongtri.app.data.preferences.ThemeMode) -> Unit,
     currentThemeMode: com.nongtri.app.data.preferences.ThemeMode,
     modifier: Modifier = Modifier
@@ -127,21 +128,33 @@ fun ChatScreen(
                             expanded = showMenu,
                             onDismissRequest = { showMenu = false }
                         ) {
-                            // 1. New Chat (top priority)
+                            // 1. View Conversations (top priority)
+                            DropdownMenuItem(
+                                text = { Text("Conversations") },
+                                leadingIcon = {
+                                    Icon(Icons.AutoMirrored.Filled.List, contentDescription = null)
+                                },
+                                onClick = {
+                                    onViewConversations()
+                                    showMenu = false
+                                }
+                            )
+
+                            // 2. New Chat
                             DropdownMenuItem(
                                 text = { Text("New Chat") },
                                 leadingIcon = {
                                     Icon(Icons.Default.Add, contentDescription = null)
                                 },
                                 onClick = {
-                                    onClearHistory()
+                                    viewModel.createNewThread()
                                     showMenu = false
                                 }
                             )
 
                             HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
 
-                            // 2. Share Location
+                            // 3. Share Location
                             DropdownMenuItem(
                                 text = { Text("Share Location") },
                                 leadingIcon = {

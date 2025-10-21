@@ -339,6 +339,160 @@ class NongTriApi(
         }
     }
 
+    // ========================================================================
+    // CONVERSATION THREADS API
+    // ========================================================================
+
+    /**
+     * Get all conversation threads for user
+     * @param userId Device ID
+     * @param includeInactive Include archived threads
+     * @return Result with list of threads
+     */
+    suspend fun getThreads(userId: String, includeInactive: Boolean = false): Result<List<com.nongtri.app.data.model.ConversationThread>> {
+        return try {
+            val response: com.nongtri.app.data.model.ThreadsResponse = client.get("$baseUrl/api/threads/$userId") {
+                parameter("includeInactive", includeInactive)
+            }.body()
+
+            if (response.success) {
+                Result.success(response.threads)
+            } else {
+                Result.failure(Exception(response.error ?: "Failed to load threads"))
+            }
+        } catch (e: Exception) {
+            println("[NongTriApi] Get threads error: ${e.message}")
+            e.printStackTrace()
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Create a new conversation thread
+     * @param userId Device ID
+     * @param title Optional thread title
+     * @return Result with created thread
+     */
+    suspend fun createThread(userId: String, title: String? = null): Result<com.nongtri.app.data.model.ConversationThread> {
+        return try {
+            val response: com.nongtri.app.data.model.ThreadResponse = client.post("$baseUrl/api/threads/$userId") {
+                contentType(ContentType.Application.Json)
+                setBody(com.nongtri.app.data.model.ThreadUpdateRequest(title = title))
+            }.body()
+
+            if (response.success && response.thread != null) {
+                Result.success(response.thread)
+            } else {
+                Result.failure(Exception(response.error ?: "Failed to create thread"))
+            }
+        } catch (e: Exception) {
+            println("[NongTriApi] Create thread error: ${e.message}")
+            e.printStackTrace()
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Get or create active thread for user
+     * @param userId Device ID
+     * @return Result with active thread
+     */
+    suspend fun getActiveThread(userId: String): Result<com.nongtri.app.data.model.ConversationThread> {
+        return try {
+            val response: com.nongtri.app.data.model.ThreadResponse = client.get("$baseUrl/api/threads/$userId/active").body()
+
+            if (response.success && response.thread != null) {
+                Result.success(response.thread)
+            } else {
+                Result.failure(Exception(response.error ?: "Failed to get active thread"))
+            }
+        } catch (e: Exception) {
+            println("[NongTriApi] Get active thread error: ${e.message}")
+            e.printStackTrace()
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Get messages for a specific thread
+     * @param userId Device ID
+     * @param threadId Thread ID
+     * @param limit Number of messages to load
+     * @return Result with list of messages
+     */
+    suspend fun getThreadMessages(userId: String, threadId: Int, limit: Int = 100): Result<List<HistoryMessage>> {
+        return try {
+            val response: com.nongtri.app.data.model.ThreadMessagesResponse =
+                client.get("$baseUrl/api/threads/$userId/$threadId/messages") {
+                    parameter("limit", limit)
+                }.body()
+
+            if (response.success) {
+                Result.success(response.messages)
+            } else {
+                Result.failure(Exception(response.error ?: "Failed to load thread messages"))
+            }
+        } catch (e: Exception) {
+            println("[NongTriApi] Get thread messages error: ${e.message}")
+            e.printStackTrace()
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Update thread (title or archive status)
+     * @param userId Device ID
+     * @param threadId Thread ID
+     * @param title New title (optional)
+     * @param isActive Active status (optional)
+     * @return Result with updated thread
+     */
+    suspend fun updateThread(
+        userId: String,
+        threadId: Int,
+        title: String? = null,
+        isActive: Boolean? = null
+    ): Result<com.nongtri.app.data.model.ConversationThread> {
+        return try {
+            val response: com.nongtri.app.data.model.ThreadResponse = client.patch("$baseUrl/api/threads/$userId/$threadId") {
+                contentType(ContentType.Application.Json)
+                setBody(com.nongtri.app.data.model.ThreadUpdateRequest(title = title, isActive = isActive))
+            }.body()
+
+            if (response.success && response.thread != null) {
+                Result.success(response.thread)
+            } else {
+                Result.failure(Exception(response.error ?: "Failed to update thread"))
+            }
+        } catch (e: Exception) {
+            println("[NongTriApi] Update thread error: ${e.message}")
+            e.printStackTrace()
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Delete a thread and all its messages
+     * @param userId Device ID
+     * @param threadId Thread ID
+     * @return Result indicating success/failure
+     */
+    suspend fun deleteThread(userId: String, threadId: Int): Result<Unit> {
+        return try {
+            val response: com.nongtri.app.data.model.ThreadResponse = client.delete("$baseUrl/api/threads/$userId/$threadId").body()
+
+            if (response.success) {
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception(response.error ?: "Failed to delete thread"))
+            }
+        } catch (e: Exception) {
+            println("[NongTriApi] Delete thread error: ${e.message}")
+            e.printStackTrace()
+            Result.failure(e)
+        }
+    }
+
     fun close() {
         client.close()
     }

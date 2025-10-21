@@ -5,9 +5,11 @@ import androidx.compose.runtime.*
 import com.nongtri.app.data.preferences.ThemeMode
 import com.nongtri.app.data.preferences.UserPreferences
 import com.nongtri.app.ui.screens.ChatScreen
+import com.nongtri.app.ui.screens.ConversationListScreen
 import com.nongtri.app.ui.screens.LanguageSelectionScreen
 import com.nongtri.app.ui.theme.NongTriTheme
 import com.nongtri.app.ui.viewmodel.ChatViewModel
+import com.nongtri.app.ui.viewmodel.ConversationListViewModel
 
 @Composable
 fun App() {
@@ -32,22 +34,46 @@ fun App() {
                 }
             )
         } else {
-            // After onboarding - show chat
+            // After onboarding - navigation between chat and conversation list
+            var showConversationList by remember { mutableStateOf(false) }
             val chatViewModel = remember { ChatViewModel() }
-            ChatScreen(
-                viewModel = chatViewModel,
-                language = selectedLanguage,
-                onLanguageChange = { language ->
-                    userPreferences.setLanguage(language)
-                },
-                onClearHistory = {
-                    chatViewModel.clearHistory()
-                },
-                onThemeModeChange = { mode ->
-                    userPreferences.setThemeMode(mode)
-                },
-                currentThemeMode = themeMode
-            )
+            val conversationListViewModel = remember { ConversationListViewModel() }
+
+            if (showConversationList) {
+                ConversationListScreen(
+                    viewModel = conversationListViewModel,
+                    onThreadSelected = { threadId, threadTitle ->
+                        chatViewModel.switchToThread(threadId, threadTitle)
+                        showConversationList = false
+                    },
+                    onNavigateBack = {
+                        showConversationList = false
+                    },
+                    onNewConversation = { threadId ->
+                        // Thread already switched in ViewModel
+                        showConversationList = false
+                    }
+                )
+            } else {
+                ChatScreen(
+                    viewModel = chatViewModel,
+                    language = selectedLanguage,
+                    onLanguageChange = { language ->
+                        userPreferences.setLanguage(language)
+                    },
+                    onClearHistory = {
+                        chatViewModel.clearHistory()
+                    },
+                    onViewConversations = {
+                        conversationListViewModel.loadThreads()
+                        showConversationList = true
+                    },
+                    onThemeModeChange = { mode ->
+                        userPreferences.setThemeMode(mode)
+                    },
+                    currentThemeMode = themeMode
+                )
+            }
         }
     }
 }

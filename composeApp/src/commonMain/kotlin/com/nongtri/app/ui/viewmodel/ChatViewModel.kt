@@ -20,7 +20,9 @@ data class ChatUiState(
     val messages: List<ChatMessage> = emptyList(),
     val currentMessage: String = "",
     val isLoading: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    val currentThreadId: Int? = null,
+    val currentThreadTitle: String? = null
 )
 
 @OptIn(ExperimentalUuidApi::class)
@@ -39,48 +41,115 @@ class ChatViewModel(
     private val locationRepository by lazy { LocationRepository.getInstance() }
 
     init {
-        // Load conversation history to restore TTS audio URLs and voice messages
-        loadConversationHistory()
+        // Load or create active thread and load its messages
+        loadActiveThread()
         initializeLocation()
     }
 
     /**
-     * Load conversation history from backend
-     * Restores messages with TTS audio URLs for offline playback
+     * Load or create the active conversation thread
+     * This ensures we always have a thread to work with
      */
-    private fun loadConversationHistory() {
+    private fun loadActiveThread() {
         viewModelScope.launch {
             try {
-                api.getConversationHistory(userId, limit = 20).fold(
-                    onSuccess = { history ->
-                        if (history.isNotEmpty()) {
-                            val messages = history.map { h ->
-                                ChatMessage(
-                                    id = h.id.toString(), // Use conversation ID as message ID
-                                    role = if (h.role == "user") MessageRole.USER else MessageRole.ASSISTANT,
-                                    content = h.content,
-                                    timestamp = kotlinx.datetime.Instant.parse(h.timestamp),
-                                    conversationId = h.id,
-                                    audioUrl = h.audioUrl,
-                                    audioVoice = h.ttsVoice,
-                                    language = h.language ?: "en",
-                                    // Voice message fields
-                                    messageType = h.messageType ?: "text",
-                                    voiceAudioUrl = h.voiceAudioUrl,
-                                    voiceTranscription = h.voiceTranscription
-                                )
-                            }
-                            _uiState.update { it.copy(messages = messages) }
-                            println("✓ Loaded ${messages.size} messages from history with audio URLs")
+                api.getActiveThread(userId).fold(
+                    onSuccess = { thread ->
+                        _uiState.update {
+                            it.copy(
+                                currentThreadId = thread.id,
+                                currentThreadTitle = thread.title
+                            )
                         }
+                        println("✓ Loaded active thread: ${thread.id} - ${thread.title}")
+
+                        // Load messages for this thread
+                        loadThreadMessages(thread.id)
                     },
                     onFailure = { error ->
-                        println("⚠ Failed to load history: ${error.message}")
-                        // Don't block app if history fails
+                        println("⚠ Failed to load active thread: ${error.message}")
+                        // Don't block app if thread loading fails
                     }
                 )
             } catch (e: Exception) {
-                println("⚠ Error loading history: ${e.message}")
+                println("⚠ Error loading active thread: ${e.message}")
+            }
+        }
+    }
+
+    /**
+     * Load messages for a specific thread
+     * @param threadId Thread ID to load messages from
+     */
+    private fun loadThreadMessages(threadId: Int) {
+        viewModelScope.launch {
+            try {
+                api.getThreadMessages(userId, threadId, limit = 100).fold(
+                    onSuccess = { history ->
+                        val messages = history.map { h ->
+                            ChatMessage(
+                                id = h.id.toString(),
+                                role = if (h.role == "user") MessageRole.USER else MessageRole.ASSISTANT,
+                                content = h.content,
+                                timestamp = kotlinx.datetime.Instant.parse(h.timestamp),
+                                conversationId = h.id,
+                                audioUrl = h.audioUrl,
+                                audioVoice = h.ttsVoice,
+                                language = h.language ?: "en",
+                                messageType = h.messageType ?: "text",
+                                voiceAudioUrl = h.voiceAudioUrl,
+                                voiceTranscription = h.voiceTranscription
+                            )
+                        }
+                        _uiState.update { it.copy(messages = messages) }
+                        println("✓ Loaded ${messages.size} messages for thread $threadId")
+                    },
+                    onFailure = { error ->
+                        println("⚠ Failed to load thread messages: ${error.message}")
+                    }
+                )
+            } catch (e: Exception) {
+                println("⚠ Error loading thread messages: ${e.message}")
+            }
+        }
+    }
+
+    /**
+     * Switch to a different conversation thread
+     * @param threadId Thread ID to switch to
+     */
+    fun switchToThread(threadId: Int, threadTitle: String? = null) {
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    currentThreadId = threadId,
+                    currentThreadTitle = threadTitle,
+                    messages = emptyList() // Clear current messages
+                )
+            }
+            loadThreadMessages(threadId)
+        }
+    }
+
+    /**
+     * Create a new conversation thread and switch to it
+     * @param title Optional title for the new thread
+     */
+    fun createNewThread(title: String? = null) {
+        viewModelScope.launch {
+            try {
+                api.createThread(userId, title).fold(
+                    onSuccess = { thread ->
+                        println("✓ Created new thread: ${thread.id}")
+                        switchToThread(thread.id, thread.title)
+                    },
+                    onFailure = { error ->
+                        println("⚠ Failed to create thread: ${error.message}")
+                        _uiState.update { it.copy(error = "Failed to create new conversation") }
+                    }
+                )
+            } catch (e: Exception) {
+                println("⚠ Error creating thread: ${e.message}")
             }
         }
     }
