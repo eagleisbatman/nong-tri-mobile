@@ -160,14 +160,14 @@ class VoiceRecordingViewModel(
         backgroundTranscription = null
         backgroundVoiceAudioUrl = null
 
-        viewModelScope.launch {
-            println("[VoiceRecording] Background transcription started")
-            transcribeAndSaveVoiceMessage(userId, audioFile, language) { transcription, voiceAudioUrl ->
-                backgroundTranscription = transcription
-                backgroundVoiceAudioUrl = voiceAudioUrl
-                isTranscribing = false
-                println("[VoiceRecording] Background transcription complete: $transcription")
-            }
+        println("[VoiceRecording] Background transcription started")
+        // transcribeAndSaveVoiceMessage already launches its own coroutine
+        transcribeAndSaveVoiceMessage(userId, audioFile, language) { transcription, voiceAudioUrl ->
+            backgroundTranscription = transcription
+            backgroundVoiceAudioUrl = voiceAudioUrl
+            isTranscribing = false
+            println("[VoiceRecording] Background transcription complete: $transcription")
+            println("[VoiceRecording] Voice file uploaded to MinIO: $voiceAudioUrl")
         }
     }
 
