@@ -636,7 +636,7 @@ class ChatViewModel(
                 },
                 onMetadata = { metadata ->
                     // Update the assistant message with metadata (diagnosis data, conversation ID, etc.)
-                    println("[ImageDiagnosis] Metadata received: conversationId=${metadata.conversationId}")
+                    println("[ImageDiagnosis] Metadata received: conversationId=${metadata.conversationId}, hasDiagnosisData=${metadata.diagnosisData != null}")
                     _uiState.update { state ->
                         state.copy(
                             messages = state.messages.map { msg ->
@@ -646,8 +646,8 @@ class ChatViewModel(
                                         followUpQuestions = metadata.followUpQuestions,
                                         isGenericResponse = metadata.isGenericResponse,
                                         language = metadata.language,
-                                        conversationId = metadata.conversationId
-                                        // TODO: Extract diagnosisData from metadata if backend sends it
+                                        conversationId = metadata.conversationId,
+                                        diagnosisData = metadata.diagnosisData  // ✅ Store diagnosis data
                                     )
                                 } else {
                                     msg

@@ -15,13 +15,15 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
+import com.nongtri.app.data.model.DiagnosisData
 
 data class StreamMetadata(
     val responseType: String = "generic",
     val followUpQuestions: List<String> = emptyList(),
     val isGenericResponse: Boolean = false,
     val language: String = "en",
-    val conversationId: Int? = null  // Backend conversation ID for TTS audio URL caching
+    val conversationId: Int? = null,  // Backend conversation ID for TTS audio URL caching
+    val diagnosisData: DiagnosisData? = null  // Plant diagnosis data from AgriVision MCP
 )
 
 class NongTriApi(
@@ -232,12 +234,31 @@ class NongTriApi(
                                     emptyList()
                                 }
 
+                                // Parse diagnosisData if present
+                                val diagnosisData = try {
+                                    val diagnosisElement = parsed["diagnosisData"]
+                                    if (diagnosisElement != null && diagnosisElement.toString() != "null") {
+                                        val diagnosisJson = if (diagnosisElement is kotlinx.serialization.json.JsonObject) {
+                                            diagnosisElement.toString()
+                                        } else {
+                                            diagnosisElement.toString().trim('"')
+                                        }
+                                        Json.decodeFromString<DiagnosisData>(diagnosisJson)
+                                    } else {
+                                        null
+                                    }
+                                } catch (e: Exception) {
+                                    println("[ImageDiagnosis] Error parsing diagnosisData: ${e.message}")
+                                    null
+                                }
+
                                 val metadata = StreamMetadata(
                                     responseType = parsed["responseType"]?.toString()?.trim('"') ?: "image_diagnosis",
                                     followUpQuestions = followUpQuestions,
                                     isGenericResponse = false,  // Diagnosis is never generic
                                     language = parsed["language"]?.toString()?.trim('"') ?: "en",
-                                    conversationId = parsed["conversationId"]?.toString()?.toIntOrNull()
+                                    conversationId = parsed["conversationId"]?.toString()?.toIntOrNull(),
+                                    diagnosisData = diagnosisData
                                 )
 
                                 println("[ImageDiagnosis] Metadata received: conversationId=${metadata.conversationId}, questions=${metadata.followUpQuestions.size}")

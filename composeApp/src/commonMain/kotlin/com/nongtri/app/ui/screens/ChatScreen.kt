@@ -650,13 +650,19 @@ fun ChatScreen(
                 println("[ChatScreen] Launching camera...")
 
                 imagePicker.launchCamera { result ->
-                    if (result != null) {
+                    if (result != null && result.base64Data != null) {
                         println("[ChatScreen] Camera image captured: ${result.width}x${result.height}, ${result.sizeBytes / 1024}KB")
                         selectedImageUri = result.uri
                         selectedImageBase64 = result.base64Data
                         showImagePreviewDialog = true
                     } else {
-                        println("[ChatScreen] Camera capture cancelled or failed")
+                        println("[ChatScreen] Camera capture cancelled or failed: base64Data=${result?.base64Data != null}")
+                        coroutineScope.launch {
+                            snackbarHostState.showSnackbar(
+                                message = "Failed to process image. Please try again.",
+                                duration = SnackbarDuration.Short
+                            )
+                        }
                     }
                 }
             },
@@ -665,13 +671,22 @@ fun ChatScreen(
                 println("[ChatScreen] Launching gallery...")
 
                 imagePicker.launchGallery { result ->
-                    if (result != null) {
+                    if (result != null && result.base64Data != null) {
                         println("[ChatScreen] Gallery image selected: ${result.width}x${result.height}, ${result.sizeBytes / 1024}KB")
                         selectedImageUri = result.uri
                         selectedImageBase64 = result.base64Data
                         showImagePreviewDialog = true
                     } else {
-                        println("[ChatScreen] Gallery selection cancelled")
+                        println("[ChatScreen] Gallery selection cancelled or failed: base64Data=${result?.base64Data != null}")
+                        if (result != null && result.base64Data == null) {
+                            // Image was selected but failed to process
+                            coroutineScope.launch {
+                                snackbarHostState.showSnackbar(
+                                    message = "Failed to process image. Please try again.",
+                                    duration = SnackbarDuration.Short
+                                )
+                            }
+                        }
                     }
                 }
             },
@@ -691,11 +706,34 @@ fun ChatScreen(
                 selectedImageBase64 = null
             },
             onConfirm = { question ->
+                // Validate that we have the base64 data
+                val base64Data = selectedImageBase64
+                if (base64Data == null) {
+                    println("[ChatScreen] Error: base64Data is null, cannot send image")
+                    coroutineScope.launch {
+                        snackbarHostState.showSnackbar(
+                            message = "Failed to process image. Please try again.",
+                            duration = SnackbarDuration.Short
+                        )
+                    }
+                    showImagePreviewDialog = false
+                    selectedImageUri = null
+                    selectedImageBase64 = null
+                    return@ImagePreviewDialog
+                }
+
                 println("[ChatScreen] Sending image for diagnosis: $question")
+
+                // Show optimistic user message with image immediately
+                val messageId = viewModel.showOptimisticImageMessage(
+                    imageData = selectedImageUri!!,  // Use URI for local preview
+                    question = question
+                )
+                currentImageMessageId = messageId
 
                 // Send image to backend for diagnosis
                 viewModel.sendImageDiagnosis(
-                    imageData = selectedImageBase64!!,
+                    imageData = base64Data,  // Use base64 for upload
                     question = question
                 )
 
