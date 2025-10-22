@@ -17,6 +17,8 @@ import kotlinx.coroutines.tasks.await
 class FCMService(private val context: Context) {
     private val tag = "FCMService"
     private val scope = CoroutineScope(Dispatchers.IO)
+    private val api = NongTriApi()
+    private val userPreferences = UserPreferences.getInstance()
 
     /**
      * Initialize FCM and register token with backend
@@ -29,7 +31,7 @@ class FCMService(private val context: Context) {
                 Log.d(tag, "FCM token obtained: ${token.take(20)}...")
 
                 // Get device ID from UserPreferences
-                val deviceId = UserPreferences.getDeviceInfo().deviceId
+                val deviceId = userPreferences.getDeviceInfo().deviceId
 
                 // Register with backend
                 registerToken(deviceId, token)
@@ -44,9 +46,9 @@ class FCMService(private val context: Context) {
      */
     private suspend fun registerToken(deviceId: String, fcmToken: String) {
         try {
-            val deviceInfo = UserPreferences.getDeviceInfo()
+            val deviceInfo = userPreferences.getDeviceInfo()
 
-            NongTriApi.registerFCMToken(
+            api.registerFCMToken(
                 deviceId = deviceId,
                 fcmToken = fcmToken,
                 platform = "android",
@@ -67,7 +69,7 @@ class FCMService(private val context: Context) {
     fun onTokenRefresh(newToken: String) {
         scope.launch {
             try {
-                val deviceId = UserPreferences.getDeviceInfo().deviceId
+                val deviceId = userPreferences.getDeviceInfo().deviceId
                 registerToken(deviceId, newToken)
                 Log.d(tag, "FCM token refreshed and registered")
             } catch (e: Exception) {
