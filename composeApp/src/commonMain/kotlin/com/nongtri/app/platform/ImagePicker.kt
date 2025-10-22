@@ -11,7 +11,8 @@ data class ImagePickerResult(
     val sizeBytes: Long,
     val width: Int,
     val height: Int,
-    val mimeType: String?
+    val mimeType: String?,
+    val error: String? = null  // Error message if processing failed
 )
 
 /**

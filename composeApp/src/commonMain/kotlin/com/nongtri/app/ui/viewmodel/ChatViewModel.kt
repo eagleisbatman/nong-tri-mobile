@@ -586,9 +586,25 @@ class ChatViewModel(
             return
         }
 
+        // Validate image size (max 5MB for low connectivity areas)
+        val estimatedSizeBytes = (imageData.length * 3L / 4)  // base64 to bytes
+        val estimatedSizeMB = estimatedSizeBytes / (1024.0 * 1024.0)
+        val maxSizeMB = 5.0
+
+        if (estimatedSizeMB > maxSizeMB) {
+            println("[ImageDiagnosis] ✗ Image too large: ${String.format("%.2f", estimatedSizeMB)}MB (max ${maxSizeMB}MB)")
+            _uiState.update { state ->
+                state.copy(
+                    error = "Image is too large (${String.format("%.1f", estimatedSizeMB)}MB). Please try a smaller image.",
+                    isLoading = false
+                )
+            }
+            return
+        }
+
         println("[ImageDiagnosis] Starting diagnosis upload...")
         println("[ImageDiagnosis] Question: $question")
-        println("[ImageDiagnosis] Image data length: ${imageData.length}")
+        println("[ImageDiagnosis] Image size: ${String.format("%.2f", estimatedSizeMB)}MB")
 
         // Note: Optimistic message should already be shown by caller
         // We just need to set loading state and trigger AI response

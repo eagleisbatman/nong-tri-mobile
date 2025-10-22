@@ -137,14 +137,33 @@ actual class ImagePicker(private val context: Context) {
         try {
             // Load bitmap
             val inputStream = context.contentResolver.openInputStream(uri)
-                ?: return null
-            
+            if (inputStream == null) {
+                println("[ImagePicker] Failed to open input stream")
+                return ImagePickerResult(
+                    uri = uri.toString(),
+                    base64Data = null,
+                    sizeBytes = 0,
+                    width = 0,
+                    height = 0,
+                    mimeType = null,
+                    error = "Cannot access image file. Please try another image."
+                )
+            }
+
             var bitmap = BitmapFactory.decodeStream(inputStream)
             inputStream.close()
-            
+
             if (bitmap == null) {
                 println("[ImagePicker] Failed to decode bitmap from URI")
-                return null
+                return ImagePickerResult(
+                    uri = uri.toString(),
+                    base64Data = null,
+                    sizeBytes = 0,
+                    width = 0,
+                    height = 0,
+                    mimeType = null,
+                    error = "Cannot read image. The file may be corrupted or in an unsupported format."
+                )
             }
             
             println("[ImagePicker] Original bitmap: ${bitmap.width}x${bitmap.height}")
@@ -191,39 +210,48 @@ actual class ImagePicker(private val context: Context) {
      * Returns (compressedBitmap, quality)
      */
     private fun compressBitmapIfNeeded(bitmap: Bitmap): Pair<Bitmap, Int> {
-        // First, check if dimensions are too large
-        val maxDimension = 2048
         var scaledBitmap = bitmap
-        
-        if (bitmap.width > maxDimension || bitmap.height > maxDimension) {
-            val scale = maxDimension.toFloat() / maxOf(bitmap.width, bitmap.height)
-            val newWidth = (bitmap.width * scale).toInt()
-            val newHeight = (bitmap.height * scale).toInt()
-            
-            println("[ImagePicker] Scaling down from ${bitmap.width}x${bitmap.height} to ${newWidth}x${newHeight}")
-            scaledBitmap = Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true)
-        }
-        
-        // Try different quality levels to find optimal compression
-        val targetSize = 2 * 1024 * 1024 // 2MB target
-        var quality = 90
-        var outputStream: ByteArrayOutputStream
-        
-        do {
-            outputStream = ByteArrayOutputStream()
-            scaledBitmap.compress(Bitmap.CompressFormat.JPEG, quality, outputStream)
-            val size = outputStream.size()
-            
-            println("[ImagePicker] Quality $quality%: ${size / 1024}KB")
-            
-            if (size <= targetSize || quality <= 50) {
-                break
+
+        try {
+            // First, check if dimensions are too large
+            val maxDimension = 2048
+
+            if (bitmap.width > maxDimension || bitmap.height > maxDimension) {
+                val scale = maxDimension.toFloat() / maxOf(bitmap.width, bitmap.height)
+                val newWidth = (bitmap.width * scale).toInt()
+                val newHeight = (bitmap.height * scale).toInt()
+
+                println("[ImagePicker] Scaling down from ${bitmap.width}x${bitmap.height} to ${newWidth}x${newHeight}")
+                scaledBitmap = Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true)
             }
-            
-            quality -= 10
-        } while (true)
-        
-        return Pair(scaledBitmap, quality)
+
+            // Try different quality levels to find optimal compression
+            val targetSize = 2 * 1024 * 1024 // 2MB target
+            var quality = 90
+            var outputStream: ByteArrayOutputStream
+
+            do {
+                outputStream = ByteArrayOutputStream()
+                scaledBitmap.compress(Bitmap.CompressFormat.JPEG, quality, outputStream)
+                val size = outputStream.size()
+
+                println("[ImagePicker] Quality $quality%: ${size / 1024}KB")
+
+                if (size <= targetSize || quality <= 50) {
+                    break
+                }
+
+                quality -= 10
+            } while (true)
+
+            return Pair(scaledBitmap, quality)
+        } catch (e: Exception) {
+            // Clean up scaled bitmap if compression failed
+            if (scaledBitmap != bitmap) {
+                scaledBitmap.recycle()
+            }
+            throw e
+        }
     }
     
     /**

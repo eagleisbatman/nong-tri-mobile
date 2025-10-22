@@ -281,10 +281,28 @@ class NongTriApi(
 
             println("[ImageDiagnosis] ✓ Image diagnosis complete, response length: ${fullResponse.length}")
             Result.success(fullResponse)
+        } catch (e: io.ktor.client.plugins.HttpRequestTimeoutException) {
+            println("[ImageDiagnosis] ✗ Timeout: ${e.message}")
+            Result.failure(Exception("Upload timed out. This may be due to slow internet. Please try a smaller image or wait and try again."))
+        } catch (e: io.ktor.network.sockets.ConnectTimeoutException) {
+            println("[ImageDiagnosis] ✗ Connection timeout: ${e.message}")
+            Result.failure(Exception("Cannot connect to server. Please check your internet connection."))
+        } catch (e: java.net.UnknownHostException) {
+            println("[ImageDiagnosis] ✗ No internet: ${e.message}")
+            Result.failure(Exception("No internet connection. Please check your network and try again."))
         } catch (e: Exception) {
             println("[ImageDiagnosis] ✗ Error: ${e.message}")
             e.printStackTrace()
-            Result.failure(e)
+            // Provide farmer-friendly error message
+            val userMessage = when {
+                e.message?.contains("timeout", ignoreCase = true) == true ->
+                    "Upload timed out. Please try with a smaller image."
+                e.message?.contains("connection", ignoreCase = true) == true ->
+                    "Connection problem. Please check your internet."
+                else ->
+                    "Upload failed. Please try again."
+            }
+            Result.failure(Exception(userMessage))
         }
     }
 

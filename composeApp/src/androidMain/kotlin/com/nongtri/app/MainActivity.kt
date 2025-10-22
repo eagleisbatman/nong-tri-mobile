@@ -183,6 +183,11 @@ class MainActivity : ComponentActivity() {
         ttsManager.shutdown()
         audioRecorder.shutdown()
         voiceMessagePlayer.shutdown()
+
+        // Clean up ImagePicker callbacks to prevent memory leaks
+        ImagePicker.cameraResultCallback = null
+        ImagePicker.galleryResultCallback = null
+        ImagePicker.pendingCameraUri = null
     }
 }
 

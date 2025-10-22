@@ -665,10 +665,12 @@ fun ChatScreen(
                         showImagePreviewDialog = true
                     } else {
                         println("[ChatScreen] Camera capture cancelled or failed: base64Data=${result?.base64Data != null}")
+                        // Show specific error message if available (farmer-friendly)
+                        val errorMessage = result?.error ?: "Failed to process image. Please try again."
                         coroutineScope.launch {
                             snackbarHostState.showSnackbar(
-                                message = "Failed to process image. Please try again.",
-                                duration = SnackbarDuration.Short
+                                message = errorMessage,
+                                duration = SnackbarDuration.Long
                             )
                         }
                     }
@@ -690,11 +692,12 @@ fun ChatScreen(
                     } else {
                         println("[ChatScreen] Gallery selection cancelled or failed: base64Data=${result?.base64Data != null}")
                         if (result != null && result.base64Data == null) {
-                            // Image was selected but failed to process
+                            // Image was selected but failed to process - show specific error
+                            val errorMessage = result.error ?: "Failed to process image. Please try again."
                             coroutineScope.launch {
                                 snackbarHostState.showSnackbar(
-                                    message = "Failed to process image. Please try again.",
-                                    duration = SnackbarDuration.Short
+                                    message = errorMessage,
+                                    duration = SnackbarDuration.Long
                                 )
                             }
                         }
