@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Nông Trí Splash Screen - Vietnamese Agricultural Theme -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Background: Brand Dark Green -->
+    <item android:drawable="@color/brand_green_dark"/>
+
+    <!-- Center: Logo (Vietnamese rice paddy symbol) -->
+    <item>
+        <bitmap
+            android:gravity="center"
+            android:src="@mipmap/ic_launcher"/>
+    </item>
+
+    <!-- Bottom: Powered by Vietnamese Innovation -->
+    <item android:bottom="80dp">
+        <shape android:shape="rectangle">
+            <solid android:color="@android:color/transparent"/>
+            <size android:height="24dp"/>
+        </shape>
+    </item>
+</layer-list>
