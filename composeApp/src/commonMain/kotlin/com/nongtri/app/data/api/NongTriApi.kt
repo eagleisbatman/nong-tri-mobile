@@ -853,7 +853,8 @@ data class HistoryMessage(
     val voiceTranscription: String? = null,   // Transcribed text
     val imageUrl: String? = null,             // Image URL
     val diagnosisData: String? = null,        // Plant diagnosis JSON (JSONB from database)
-    val language: String? = "en"              // Message language
+    val language: String? = "en",             // Message language
+    val followUpQuestions: List<String> = emptyList()  // Follow-up questions for this message
 )
 
 @kotlinx.serialization.Serializable

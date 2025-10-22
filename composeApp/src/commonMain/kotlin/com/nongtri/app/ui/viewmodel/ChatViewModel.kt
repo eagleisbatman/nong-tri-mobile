@@ -163,7 +163,8 @@ class ChatViewModel(
                                         println("[ChatViewModel] Failed to parse diagnosisData: ${e.message}")
                                         null
                                     }
-                                }
+                                },
+                                followUpQuestions = h.followUpQuestions
                             )
                         }
                         _uiState.update { it.copy(messages = messages) }
