@@ -4,13 +4,14 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+    <!-- Nông Trí Leaf Icon - White leaf on green background -->
     <group
-        android:scaleX="2"
-        android:scaleY="2"
-        android:translateX="27"
-        android:translateY="27">
+        android:scaleX="0.8"
+        android:scaleY="0.8"
+        android:translateX="54"
+        android:translateY="54">
         <path
             android:fillColor="#FFFFFF"
-            android:pathData="M27,15c-0.28,0 -0.5,-0.22 -0.5,-0.5C26.5,12.01 24.49,10 22,10c-2.49,0 -4.5,2.01 -4.5,4.5C17.5,14.78 17.28,15 17,15s-0.5,-0.22 -0.5,-0.5C16.5,11.46 19.14,8.82 22.5,9.09C25.18,9.3 27.3,11.42 27.51,14.1C27.54,14.38 27.28,14.62 27,15zM22,27c-3.87,0 -7,-3.13 -7,-7c0,-0.28 0.22,-0.5 0.5,-0.5s0.5,0.22 0.5,0.5c0,3.31 2.69,6 6,6s6,-2.69 6,-6c0,-0.28 0.22,-0.5 0.5,-0.5s0.5,0.22 0.5,0.5C29,23.87 25.87,27 22,27z"/>
+            android:pathData="M-10,-25 Q-20,-15 -15,0 Q-10,15 0,20 Q10,15 15,0 Q20,-15 10,-25 Q5,-30 0,-32 Q-5,-30 -10,-25 Z M0,-28 L0,18 M-8,-15 Q0,-8 8,-15 M-10,-5 Q0,2 10,-5 M-12,5 Q0,12 12,5" />
     </group>
 </vector>
