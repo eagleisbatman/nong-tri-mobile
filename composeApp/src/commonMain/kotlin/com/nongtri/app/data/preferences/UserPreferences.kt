@@ -24,6 +24,10 @@ expect class UserPreferences {
     fun getUuid(): String
     fun getDeviceInfo(): DeviceInfo
 
+    // Pending diagnosis job (for notification tap handling)
+    fun setPendingDiagnosisJobId(jobId: String?)
+    fun getPendingDiagnosisJobId(): String?
+
     companion object {
         fun getInstance(): UserPreferences
     }

@@ -40,11 +40,6 @@ class ChatViewModel(
 
     private val locationRepository by lazy { LocationRepository.getInstance() }
 
-    companion object {
-        // Set by MainActivity when notification is tapped
-        var pendingDiagnosisJobId: String? = null
-    }
-
     init {
         // Initialize location for first message
         // DO NOT load previous messages - start with blank screen
@@ -247,9 +242,10 @@ class ChatViewModel(
     /**
      * Check if there's a pending diagnosis to fetch (from notification tap)
      * Called on ViewModel initialization
+     * Reads from UserPreferences (persists across process death)
      */
     private fun checkPendingDiagnosis() {
-        val jobId = pendingDiagnosisJobId ?: return
+        val jobId = userPreferences.getPendingDiagnosisJobId() ?: return
 
         println("[ChatViewModel] Fetching pending diagnosis: $jobId")
 
@@ -317,7 +313,7 @@ class ChatViewModel(
                 }
             } finally {
                 // Clear the pending job ID after handling
-                pendingDiagnosisJobId = null
+                userPreferences.setPendingDiagnosisJobId(null)
             }
         }
     }

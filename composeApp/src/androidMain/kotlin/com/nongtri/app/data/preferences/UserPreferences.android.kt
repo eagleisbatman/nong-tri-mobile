@@ -243,6 +243,26 @@ actual class UserPreferences private constructor(context: Context) {
         return deviceInfoProvider.getDeviceInfo()
     }
 
+    // Pending diagnosis job ID (for notification tap handling)
+    actual fun setPendingDiagnosisJobId(jobId: String?) {
+        prefs.edit().apply {
+            if (jobId != null) {
+                putString("pending_diagnosis_job_id", jobId)
+                println("UserPreferences: Saved pending diagnosis job ID: $jobId")
+            } else {
+                remove("pending_diagnosis_job_id")
+                println("UserPreferences: Cleared pending diagnosis job ID")
+            }
+            apply()
+        }
+    }
+
+    actual fun getPendingDiagnosisJobId(): String? {
+        val jobId = prefs.getString("pending_diagnosis_job_id", null)
+        println("UserPreferences: Retrieved pending diagnosis job ID: $jobId")
+        return jobId
+    }
+
     actual companion object {
         private var instance: UserPreferences? = null
 

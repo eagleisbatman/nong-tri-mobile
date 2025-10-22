@@ -22,7 +22,6 @@ import com.nongtri.app.ui.viewmodel.LocationViewModel
 import com.nongtri.app.ui.viewmodel.VoicePermissionViewModel
 import com.nongtri.app.ui.viewmodel.ImagePermissionViewModel
 import com.nongtri.app.platform.ImagePicker
-import com.nongtri.app.ui.viewmodel.ChatViewModel
 
 class MainActivity : ComponentActivity() {
     private lateinit var ttsManager: TextToSpeechManager
@@ -203,8 +202,8 @@ class MainActivity : ComponentActivity() {
 
             if (jobId != null && openDiagnosis) {
                 println("[MainActivity] Notification tap detected - jobId: $jobId")
-                // Trigger ChatViewModel to fetch diagnosis result
-                ChatViewModel.pendingDiagnosisJobId = jobId
+                // Save to UserPreferences (persists across process death)
+                UserPreferences.getInstance().setPendingDiagnosisJobId(jobId)
             }
         }
     }
