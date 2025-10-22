@@ -40,11 +40,19 @@ class ChatViewModel(
 
     private val locationRepository by lazy { LocationRepository.getInstance() }
 
+    companion object {
+        // Set by MainActivity when notification is tapped
+        var pendingDiagnosisJobId: String? = null
+    }
+
     init {
         // Initialize location for first message
         // DO NOT load previous messages - start with blank screen
         // User can view history via Conversations menu
         initializeLocation()
+
+        // Check if there's a pending diagnosis to fetch (from notification tap)
+        checkPendingDiagnosis()
     }
 
     /**
@@ -232,6 +240,84 @@ class ChatViewModel(
             } catch (e: Exception) {
                 println("⚠ Failed to initialize location: ${e.message}")
                 // Don't block app startup if location fails
+            }
+        }
+    }
+
+    /**
+     * Check if there's a pending diagnosis to fetch (from notification tap)
+     * Called on ViewModel initialization
+     */
+    private fun checkPendingDiagnosis() {
+        val jobId = pendingDiagnosisJobId ?: return
+
+        println("[ChatViewModel] Fetching pending diagnosis: $jobId")
+
+        viewModelScope.launch {
+            try {
+                api.getDiagnosisResult(jobId).fold(
+                    onSuccess = { response ->
+                        when (response.status) {
+                            "completed" -> {
+                                response.diagnosis?.let { diagnosis ->
+                                    println("[ChatViewModel] Diagnosis completed, adding to messages")
+
+                                    // Remove "diagnosis_pending" message with this jobId if it exists
+                                    _uiState.update { state ->
+                                        state.copy(
+                                            messages = state.messages.filter { msg ->
+                                                !(msg.messageType == "diagnosis_pending" &&
+                                                  msg.diagnosisPendingJobId == jobId)
+                                            }
+                                        )
+                                    }
+
+                                    // Add completed diagnosis message
+                                    val diagnosisMessage = ChatMessage(
+                                        id = Uuid.random().toString(),
+                                        role = MessageRole.ASSISTANT,
+                                        content = diagnosis.aiResponse ?: "Diagnosis completed",
+                                        timestamp = Clock.System.now(),
+                                        diagnosisData = diagnosis.diagnosisData,
+                                        language = diagnosis.responseLanguage ?: "vi"
+                                    )
+
+                                    _uiState.update { state ->
+                                        state.copy(messages = state.messages + diagnosisMessage)
+                                    }
+                                }
+                            }
+                            "pending", "processing" -> {
+                                println("[ChatViewModel] Diagnosis still processing: ${response.status}")
+                                // Keep the pending card visible
+                            }
+                            "failed" -> {
+                                println("[ChatViewModel] Diagnosis failed: ${response.error}")
+                                // Show error message
+                                _uiState.update { state ->
+                                    state.copy(error = "Diagnosis failed: ${response.error}")
+                                }
+                            }
+                            else -> {
+                                println("[ChatViewModel] Unknown diagnosis status: ${response.status}")
+                            }
+                        }
+                    },
+                    onFailure = { error ->
+                        println("[ChatViewModel] Failed to fetch diagnosis: ${error.message}")
+                        _uiState.update { state ->
+                            state.copy(error = "Failed to fetch diagnosis: ${error.message}")
+                        }
+                    }
+                )
+            } catch (e: Exception) {
+                println("[ChatViewModel] Error fetching diagnosis: ${e.message}")
+                _uiState.update { state ->
+                    state.copy(error = "Error fetching diagnosis: ${e.message}")
+                }
+            } finally {
+                // Clear the pending job ID after handling
+                pendingDiagnosisJobId = null
             }
         }
     }

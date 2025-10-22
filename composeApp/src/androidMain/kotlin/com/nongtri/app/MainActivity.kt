@@ -1,5 +1,6 @@
 package com.nongtri.app
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -21,6 +22,7 @@ import com.nongtri.app.ui.viewmodel.LocationViewModel
 import com.nongtri.app.ui.viewmodel.VoicePermissionViewModel
 import com.nongtri.app.ui.viewmodel.ImagePermissionViewModel
 import com.nongtri.app.platform.ImagePicker
+import com.nongtri.app.ui.viewmodel.ChatViewModel
 
 class MainActivity : ComponentActivity() {
     private lateinit var ttsManager: TextToSpeechManager
@@ -128,6 +130,9 @@ class MainActivity : ComponentActivity() {
         val fcmService = FCMService(applicationContext)
         fcmService.initialize()
 
+        // Handle notification tap if app was opened from notification
+        handleNotificationIntent(intent)
+
         // Set up location permission launcher for LocationViewModel
         LocationViewModel.permissionLauncher = { permissions ->
             locationPermissionLauncher.launch(permissions)
@@ -178,6 +183,28 @@ class MainActivity : ComponentActivity() {
                 LocalVoiceMessagePlayer provides voiceMessagePlayer
             ) {
                 App()
+            }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        // Handle notification tap when app is already running
+        handleNotificationIntent(intent)
+    }
+
+    /**
+     * Handle notification intent data (jobId for diagnosis completion)
+     */
+    private fun handleNotificationIntent(intent: Intent?) {
+        intent?.extras?.let { extras ->
+            val jobId = extras.getString("jobId")
+            val openDiagnosis = extras.getBoolean("openDiagnosis", false)
+
+            if (jobId != null && openDiagnosis) {
+                println("[MainActivity] Notification tap detected - jobId: $jobId")
+                // Trigger ChatViewModel to fetch diagnosis result
+                ChatViewModel.pendingDiagnosisJobId = jobId
             }
         }
     }
