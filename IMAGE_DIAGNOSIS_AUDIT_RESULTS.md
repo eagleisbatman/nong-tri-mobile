@@ -7,62 +7,66 @@
 
 ## 🚨 CRITICAL ISSUES
 
-### ❌ Issue #1: diagnosisData Structure Mismatch (BLOCKER)
+### ❌ Issue #1: Backend Not Parsing AgriVision Text Response (BLOCKER)
 **Severity**: CRITICAL - Feature is completely broken
 **Status**: NOT FIXED - Requires backend changes
 
 **Problem**:
-Backend stores diagnosisData in incompatible format:
+AgriVision MCP returns **formatted text** (not JSON), but backend doesn't parse it:
+
+**What AgriVision MCP Returns**:
+```text
+🌱 **CROP IDENTIFICATION:**
+Crop: Tomato (Scientific: Solanum lycopersicum) - Confidence: High
+
+🔍 **HEALTH STATUS:**
+Overall health: Moderate Issue
+Confidence: High
+
+⚠️ **ISSUE DETECTION:**
+**Issue 1: Early Blight**
+- Scientific name: Alternaria solani
+- Category: Fungal Disease
+- Severity: Moderate
+- Affected parts: Leaves
+...
+```
+
+**What Backend Does** (openai-agent.js:844):
 ```javascript
-// Backend (openai-agent.js:844)
 analytics.diagnosisData = {
-  raw_diagnosis: "...",  // Wrapped string
+  raw_diagnosis: functionResult,  // Stores the formatted TEXT as-is
   timestamp: "...",
   tool: "agrivision_mcp"
 }
 ```
 
-Mobile expects structured format per IMAGE_DIAGNOSIS_STRATEGY.md:
+**What Mobile Expects**:
 ```kotlin
-// Mobile (DiagnosisData.kt)
 @Serializable
 data class DiagnosisData(
-    @SerialName("crop") val crop: Crop,
+    @SerialName("crop") val crop: Crop,              // ← Needs parsed object
     @SerialName("health_status") val healthStatus: String,
-    @SerialName("issues") val issues: List<Issue>,
+    @SerialName("issues") val issues: List<Issue>,   // ← Needs parsed array
     ...
 )
 ```
 
 **Impact**:
-- Mobile parsing will throw `SerializationException`
-- DiagnosisResponseBubble will never show structured diagnosis
-- Users only see plain text response, not the color-coded health cards
+- Backend sends `{raw_diagnosis: "🌱 CROP...", timestamp, tool}`
+- Mobile parsing throws `SerializationException` (field 'crop' missing)
+- DiagnosisResponseBubble never renders
+- Users only see plain text, not color-coded health cards
 
 **Required Fix**:
-Backend must parse AgriVision JSON and store it directly:
-```javascript
-// openai-agent.js - FIX NEEDED
-if (functionName === 'diagnose_plant_health' && functionResult && !functionResult.error) {
-  // Parse the raw JSON string from AgriVision
-  const parsedDiagnosis = typeof functionResult === 'string'
-    ? JSON.parse(functionResult)
-    : functionResult;
+Backend must **PARSE the formatted text** and convert to structured JSON:
 
-  // Store structured object directly (NOT wrapped)
-  analytics.diagnosisData = {
-    crop: parsedDiagnosis.crop,
-    health_status: parsedDiagnosis.health_status,
-    health_confidence: parsedDiagnosis.health_confidence,
-    issues: parsedDiagnosis.issues || [],
-    growth_stage: parsedDiagnosis.growth_stage,
-    image_quality: parsedDiagnosis.image_quality,
-    diagnostic_notes: parsedDiagnosis.diagnostic_notes,
-    agriculture_api_reference: parsedDiagnosis.agriculture_api_reference,
-    analyzed_at: new Date().toISOString()
-  };
-}
-```
+See `/BACKEND_FIX_NEEDED.md` for complete fix with parser function.
+
+Summary:
+1. Add `parseDiagnosisText()` function to extract structured data from formatted text
+2. Update openai-agent.js lines 841-851 to use parser
+3. Store structured JSON matching mobile's DiagnosisData model
 
 **Files Affected**:
 - Backend: `/backend/src/services/openai-agent.js` (line 844-847)
