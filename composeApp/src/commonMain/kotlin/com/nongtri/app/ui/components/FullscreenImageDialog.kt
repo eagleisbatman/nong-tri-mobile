@@ -5,6 +5,7 @@ import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.BrokenImage
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -51,7 +52,7 @@ fun FullscreenImageDialog(
                 .fillMaxSize()
                 .background(Color.Black)
         ) {
-            // Zoomable image
+            // Zoomable image (loading/error states handled by Coil internally)
             AsyncImage(
                 model = imageUrl,
                 contentDescription = "Plant image fullscreen",
@@ -81,36 +82,7 @@ fun FullscreenImageDialog(
                             }
                         }
                     },
-                contentScale = ContentScale.Fit,
-                loading = {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator(color = Color.White)
-                    }
-                },
-                error = {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(
-                                Icons.Default.BrokenImage,
-                                contentDescription = "Failed to load image",
-                                modifier = Modifier.size(64.dp),
-                                tint = Color.White.copy(alpha = 0.7f)
-                            )
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text(
-                                "Failed to load image",
-                                color = Color.White,
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        }
-                    }
-                }
+                contentScale = ContentScale.Fit
             )
 
             // Top bar with close button
