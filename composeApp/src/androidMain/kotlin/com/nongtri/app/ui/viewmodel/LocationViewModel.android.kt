@@ -14,7 +14,9 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.CancellationTokenSource
 import com.nongtri.app.MainActivity
+import com.nongtri.app.data.preferences.UserPreferences
 import com.nongtri.app.data.repository.LocationRepository
+import com.nongtri.app.l10n.LocalizationProvider
 import com.nongtri.app.ui.components.UserLocation
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -31,6 +33,8 @@ actual class LocationViewModel actual constructor() : ViewModel() {
     private val locationRepository = LocationRepository.getInstance()
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var context: Context
+    private val userPreferences = UserPreferences.getInstance()
+    private val strings get() = LocalizationProvider.getStrings(userPreferences.language.value)
 
     companion object {
         var permissionLauncher: ((Array<String>) -> Unit)? = null
@@ -85,7 +89,7 @@ actual class LocationViewModel actual constructor() : ViewModel() {
                 it.copy(
                     shouldShowSettings = true,
                     permissionRequested = true,
-                    error = "Please enable location permission in Settings to share your location"
+                    error = strings.permissionLocationDeniedSettings
                 )
             }
         }
@@ -217,7 +221,7 @@ actual class LocationViewModel actual constructor() : ViewModel() {
                     it.copy(
                         shouldShowSettings = true,
                         permissionRequested = true,
-                        error = "Please enable location permission in Settings to share your location"
+                        error = strings.permissionLocationDeniedSettings
                     )
                 }
             } else {
@@ -225,7 +229,7 @@ actual class LocationViewModel actual constructor() : ViewModel() {
                 _locationState.update {
                     it.copy(
                         permissionRequested = true,
-                        error = "Location permission is needed to share your exact location"
+                        error = strings.permissionLocationRationale
                     )
                 }
             }
@@ -250,14 +254,14 @@ actual class LocationViewModel actual constructor() : ViewModel() {
             context.startActivity(intent)
         } catch (e: Exception) {
             _locationState.update {
-                it.copy(error = "Could not open settings: ${e.message}")
+                it.copy(error = "${strings.errorCouldNotOpenSettings}: ${e.message}")
             }
         }
     }
 
     actual fun shareCurrentLocation() {
         if (!hasLocationPermission()) {
-            _locationState.update { it.copy(error = "Location permission not granted") }
+            _locationState.update { it.copy(error = strings.errorLocationPermissionNotGranted) }
             return
         }
 
@@ -307,7 +311,7 @@ actual class LocationViewModel actual constructor() : ViewModel() {
                     _locationState.update {
                         it.copy(
                             isLoading = false,
-                            error = "Could not get current location"
+                            error = strings.errorCouldNotGetCurrentLocation
                         )
                     }
                 }

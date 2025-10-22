@@ -6,6 +6,8 @@ import android.media.MediaPlayer
 import android.util.Log
 import android.widget.Toast
 import com.nongtri.app.BuildConfig
+import com.nongtri.app.data.preferences.UserPreferences
+import com.nongtri.app.l10n.LocalizationProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -22,6 +24,9 @@ import java.util.concurrent.TimeUnit
 actual class TextToSpeechManager(private val context: Context) {
     private val _state = MutableStateFlow(TtsState.IDLE)
     actual val state: StateFlow<TtsState> = _state.asStateFlow()
+
+    private val userPreferences = UserPreferences.getInstance()
+    private val strings get() = LocalizationProvider.getStrings(userPreferences.language.value)
 
     private var mediaPlayer: MediaPlayer? = null
     @Volatile
@@ -55,7 +60,7 @@ actual class TextToSpeechManager(private val context: Context) {
         if (isProcessing) {
             Log.d(TAG, "TTS: Already processing, ignoring request")
             withContext(Dispatchers.Main) {
-                Toast.makeText(context, "Speech already playing", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, strings.toastSpeechAlreadyPlaying, Toast.LENGTH_SHORT).show()
             }
             return@withContext null  // FIXED: Return null explicitly to avoid implicit Unit return
         }
@@ -134,7 +139,7 @@ actual class TextToSpeechManager(private val context: Context) {
             _state.value = TtsState.ERROR
             Log.e(TAG, "TTS error: ${e.message}", e)
             withContext(Dispatchers.Main) {
-                Toast.makeText(context, "TTS Error: ${e.message}", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, "${strings.toastTtsError}: ${e.message}", Toast.LENGTH_LONG).show()
             }
             // Reset to IDLE after showing error
             kotlinx.coroutines.delay(3000)

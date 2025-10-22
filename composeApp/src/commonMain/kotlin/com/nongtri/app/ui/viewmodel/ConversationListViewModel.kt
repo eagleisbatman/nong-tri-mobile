@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.nongtri.app.data.api.NongTriApi
 import com.nongtri.app.data.model.ConversationThread
 import com.nongtri.app.data.preferences.UserPreferences
+import com.nongtri.app.l10n.LocalizationProvider
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -50,9 +51,10 @@ class ConversationListViewModel(
                         println("✓ Loaded ${threads.size} threads")
                     },
                     onFailure = { error ->
+                        val strings = LocalizationProvider.getStrings(userPreferences.language.value)
                         _uiState.update {
                             it.copy(
-                                error = error.message ?: "Failed to load conversations",
+                                error = error.message ?: strings.errorFailedToLoadConversations,
                                 isLoading = false
                             )
                         }
@@ -60,9 +62,10 @@ class ConversationListViewModel(
                     }
                 )
             } catch (e: Exception) {
+                val strings = LocalizationProvider.getStrings(userPreferences.language.value)
                 _uiState.update {
                     it.copy(
-                        error = e.message ?: "Unknown error",
+                        error = e.message ?: strings.errorUnknown,
                         isLoading = false
                     )
                 }
@@ -85,15 +88,17 @@ class ConversationListViewModel(
                         onSuccess(thread)
                     },
                     onFailure = { error ->
+                        val strings = LocalizationProvider.getStrings(userPreferences.language.value)
                         _uiState.update {
-                            it.copy(error = error.message ?: "Failed to create conversation")
+                            it.copy(error = error.message ?: strings.errorFailedToCreateConversation)
                         }
                         println("⚠ Failed to create thread: ${error.message}")
                     }
                 )
             } catch (e: Exception) {
+                val strings = LocalizationProvider.getStrings(userPreferences.language.value)
                 _uiState.update {
-                    it.copy(error = e.message ?: "Unknown error")
+                    it.copy(error = e.message ?: strings.errorUnknown)
                 }
                 println("⚠ Error creating thread: ${e.message}")
             }
@@ -113,15 +118,17 @@ class ConversationListViewModel(
                         loadThreads()
                     },
                     onFailure = { error ->
+                        val strings = LocalizationProvider.getStrings(userPreferences.language.value)
                         _uiState.update {
-                            it.copy(error = error.message ?: "Failed to delete conversation")
+                            it.copy(error = error.message ?: strings.errorFailedToDeleteConversation)
                         }
                         println("⚠ Failed to delete thread: ${error.message}")
                     }
                 )
             } catch (e: Exception) {
+                val strings = LocalizationProvider.getStrings(userPreferences.language.value)
                 _uiState.update {
-                    it.copy(error = e.message ?: "Unknown error")
+                    it.copy(error = e.message ?: strings.errorUnknown)
                 }
                 println("⚠ Error deleting thread: ${e.message}")
             }
@@ -140,15 +147,17 @@ class ConversationListViewModel(
                         loadThreads()
                     },
                     onFailure = { error ->
+                        val strings = LocalizationProvider.getStrings(userPreferences.language.value)
                         _uiState.update {
-                            it.copy(error = error.message ?: "Failed to archive conversation")
+                            it.copy(error = error.message ?: strings.errorFailedToArchiveConversation)
                         }
                         println("⚠ Failed to archive thread: ${error.message}")
                     }
                 )
             } catch (e: Exception) {
+                val strings = LocalizationProvider.getStrings(userPreferences.language.value)
                 _uiState.update {
-                    it.copy(error = e.message ?: "Unknown error")
+                    it.copy(error = e.message ?: strings.errorUnknown)
                 }
                 println("⚠ Error archiving thread: ${e.message}")
             }

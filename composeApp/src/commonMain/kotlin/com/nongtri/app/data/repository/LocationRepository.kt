@@ -4,6 +4,7 @@ import com.nongtri.app.data.api.ApiClient
 import com.nongtri.app.data.preferences.ThemeMode
 import com.nongtri.app.data.preferences.UserPreferences
 import com.nongtri.app.l10n.Language
+import com.nongtri.app.l10n.LocalizationProvider
 import com.nongtri.app.ui.components.UserLocation
 import io.ktor.client.call.*
 import io.ktor.client.request.*
@@ -14,6 +15,9 @@ import kotlinx.serialization.json.Json
 class LocationRepository private constructor() {
     private val apiClient by lazy { ApiClient.getInstance() }
     private val userPreferences by lazy { UserPreferences.getInstance() }
+
+    // Get localized strings based on user's current language preference
+    private val strings get() = LocalizationProvider.getStrings(userPreferences.language.value)
 
     companion object {
         @Volatile
@@ -95,7 +99,7 @@ class LocationRepository private constructor() {
                     Result.success(null)
                 }
             } else {
-                Result.failure(Exception("Failed to initialize location: ${response.status}"))
+                Result.failure(Exception(strings.errorFailedToInitializeLocation))
             }
         } catch (e: Exception) {
             println("Error initializing location: ${e.message}")
@@ -123,7 +127,7 @@ class LocationRepository private constructor() {
                     Result.success(Pair(null, null))
                 }
             } else {
-                Result.failure(Exception("Failed to get locations: ${response.status}"))
+                Result.failure(Exception(strings.errorFailedToGetLocations))
             }
         } catch (e: Exception) {
             println("Error getting current locations: ${e.message}")
@@ -165,7 +169,7 @@ class LocationRepository private constructor() {
                     Result.success(emptyList())
                 }
             } else {
-                Result.failure(Exception("Failed to get saved locations: ${response.status}"))
+                Result.failure(Exception(strings.errorFailedToGetSavedLocations))
             }
         } catch (e: Exception) {
             println("Error getting saved locations: ${e.message}")
@@ -208,10 +212,10 @@ class LocationRepository private constructor() {
                 if (body.success && body.location != null) {
                     Result.success(body.location.toUserLocation())
                 } else {
-                    Result.failure(Exception("Failed to save location"))
+                    Result.failure(Exception(strings.errorFailedToSaveLocation))
                 }
             } else {
-                Result.failure(Exception("Failed to share location: ${response.status}"))
+                Result.failure(Exception(strings.errorFailedToShareLocation))
             }
         } catch (e: Exception) {
             println("Error sharing location: ${e.message}")
@@ -232,7 +236,7 @@ class LocationRepository private constructor() {
             if (response.status.isSuccess()) {
                 Result.success(Unit)
             } else {
-                Result.failure(Exception("Failed to set primary location: ${response.status}"))
+                Result.failure(Exception(strings.errorFailedToSetPrimaryLocation))
             }
         } catch (e: Exception) {
             println("Error setting primary location: ${e.message}")
@@ -253,7 +257,7 @@ class LocationRepository private constructor() {
             if (response.status.isSuccess()) {
                 Result.success(Unit)
             } else {
-                Result.failure(Exception("Failed to delete location: ${response.status}"))
+                Result.failure(Exception(strings.errorFailedToDeleteLocation))
             }
         } catch (e: Exception) {
             println("Error deleting location: ${e.message}")

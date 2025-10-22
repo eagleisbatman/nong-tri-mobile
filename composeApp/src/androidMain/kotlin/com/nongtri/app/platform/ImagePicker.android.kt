@@ -10,6 +10,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.FileProvider
+import com.nongtri.app.data.preferences.UserPreferences
+import com.nongtri.app.l10n.LocalizationProvider
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
@@ -17,7 +19,10 @@ import kotlin.math.sqrt
 
 actual class ImagePicker(private val context: Context) {
     private lateinit var activity: ComponentActivity
-    
+
+    private val userPreferences = UserPreferences.getInstance()
+    private val strings get() = LocalizationProvider.getStrings(userPreferences.language.value)
+
     // Store callbacks for camera and gallery results
     companion object {
         var cameraResultCallback: ((ImagePickerResult?) -> Unit)? = null
@@ -146,7 +151,7 @@ actual class ImagePicker(private val context: Context) {
                     width = 0,
                     height = 0,
                     mimeType = null,
-                    error = "Cannot access image file. Please try another image."
+                    error = strings.errorCannotAccessImageFile
                 )
             }
 
@@ -162,7 +167,7 @@ actual class ImagePicker(private val context: Context) {
                     width = 0,
                     height = 0,
                     mimeType = null,
-                    error = "Cannot read image. The file may be corrupted or in an unsupported format."
+                    error = strings.errorCannotReadImage
                 )
             }
             

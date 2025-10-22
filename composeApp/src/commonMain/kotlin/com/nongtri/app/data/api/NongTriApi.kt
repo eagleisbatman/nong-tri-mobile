@@ -2,6 +2,7 @@ package com.nongtri.app.data.api
 
 import com.nongtri.app.BuildConfig
 import com.nongtri.app.data.preferences.UserPreferences
+import com.nongtri.app.l10n.LocalizationProvider
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.plugins.contentnegotiation.*
@@ -30,6 +31,9 @@ class NongTriApi(
     private val baseUrl: String = BuildConfig.API_URL
 ) {
     private val userPreferences by lazy { UserPreferences.getInstance() }
+
+    // Get localized strings based on user's current language preference
+    private val strings get() = LocalizationProvider.getStrings(userPreferences.language.value)
 
     private val client = HttpClient {
         install(ContentNegotiation) {
@@ -289,14 +293,14 @@ class NongTriApi(
             val userMessage = when {
                 e::class.simpleName?.contains("Timeout", ignoreCase = true) == true ||
                 e.message?.contains("timeout", ignoreCase = true) == true ->
-                    "Upload timed out. This may be due to slow internet. Please try a smaller image or wait and try again."
+                    strings.errorUploadTimeout
                 e.message?.contains("host", ignoreCase = true) == true ||
                 e.message?.contains("network", ignoreCase = true) == true ->
-                    "No internet connection. Please check your network and try again."
+                    strings.errorNoInternetConnection
                 e.message?.contains("connection", ignoreCase = true) == true ->
-                    "Cannot connect to server. Please check your internet connection."
+                    strings.errorCannotConnectToServer
                 else ->
-                    "Upload failed. Please try again."
+                    strings.errorUploadFailed
             }
             Result.failure(Exception(userMessage))
         }
@@ -358,7 +362,7 @@ class NongTriApi(
                 Result.success(response.questions)
             } else {
                 println("[NongTriApi] API returned success=false")
-                Result.failure(Exception("Failed to fetch starter questions"))
+                Result.failure(Exception(strings.errorFailedToFetchStarterQuestions))
             }
         } catch (e: Exception) {
             println("[NongTriApi] Exception occurred: ${e.message}")
@@ -432,7 +436,7 @@ class NongTriApi(
             if (response.success) {
                 Result.success(response)
             } else {
-                Result.failure(Exception(response.error ?: "Failed to save voice message"))
+                Result.failure(Exception(response.error ?: strings.errorFailedToSaveVoiceMessage))
             }
         } catch (e: Exception) {
             println("[NongTriApi] Save voice message error: ${e.message}")
@@ -466,7 +470,7 @@ class NongTriApi(
             if (response.success) {
                 Result.success(Unit)
             } else {
-                Result.failure(Exception(response.message ?: "Failed to update audio URL"))
+                Result.failure(Exception(response.message ?: strings.errorFailedToUpdateAudioUrl))
             }
         } catch (e: Exception) {
             println("[NongTriApi] Update audio URL error: ${e.message}")
@@ -491,7 +495,7 @@ class NongTriApi(
             if (response.success) {
                 Result.success(response.history)
             } else {
-                Result.failure(Exception(response.message ?: "Failed to load history"))
+                Result.failure(Exception(response.message ?: strings.errorFailedToLoadHistory))
             }
         } catch (e: Exception) {
             println("[NongTriApi] History loading error: ${e.message}")
@@ -519,7 +523,7 @@ class NongTriApi(
             if (response.success) {
                 Result.success(response.threads)
             } else {
-                Result.failure(Exception(response.error ?: "Failed to load threads"))
+                Result.failure(Exception(response.error ?: strings.errorFailedToLoadThreads))
             }
         } catch (e: Exception) {
             println("[NongTriApi] Get threads error: ${e.message}")
@@ -544,7 +548,7 @@ class NongTriApi(
             if (response.success && response.thread != null) {
                 Result.success(response.thread)
             } else {
-                Result.failure(Exception(response.error ?: "Failed to create thread"))
+                Result.failure(Exception(response.error ?: strings.errorFailedToCreateThread))
             }
         } catch (e: Exception) {
             println("[NongTriApi] Create thread error: ${e.message}")
@@ -565,7 +569,7 @@ class NongTriApi(
             if (response.success && response.thread != null) {
                 Result.success(response.thread)
             } else {
-                Result.failure(Exception(response.error ?: "Failed to get active thread"))
+                Result.failure(Exception(response.error ?: strings.errorFailedToGetActiveThread))
             }
         } catch (e: Exception) {
             println("[NongTriApi] Get active thread error: ${e.message}")
@@ -591,7 +595,7 @@ class NongTriApi(
             if (response.success) {
                 Result.success(response.messages)
             } else {
-                Result.failure(Exception(response.error ?: "Failed to load thread messages"))
+                Result.failure(Exception(response.error ?: strings.errorFailedToLoadThreadMessages))
             }
         } catch (e: Exception) {
             println("[NongTriApi] Get thread messages error: ${e.message}")
@@ -623,7 +627,7 @@ class NongTriApi(
             if (response.success && response.thread != null) {
                 Result.success(response.thread)
             } else {
-                Result.failure(Exception(response.error ?: "Failed to update thread"))
+                Result.failure(Exception(response.error ?: strings.errorFailedToUpdateThread))
             }
         } catch (e: Exception) {
             println("[NongTriApi] Update thread error: ${e.message}")
@@ -645,7 +649,7 @@ class NongTriApi(
             if (response.success) {
                 Result.success(Unit)
             } else {
-                Result.failure(Exception(response.error ?: "Failed to delete thread"))
+                Result.failure(Exception(response.error ?: strings.errorFailedToDeleteThread))
             }
         } catch (e: Exception) {
             println("[NongTriApi] Delete thread error: ${e.message}")
@@ -678,7 +682,7 @@ class NongTriApi(
                 println("[NongTriApi] Diagnosis job submitted: ${response.jobId}")
                 Result.success(response)
             } else {
-                Result.failure(Exception(response.error ?: "Failed to submit diagnosis"))
+                Result.failure(Exception(response.error ?: strings.errorFailedToSubmitDiagnosis))
             }
         } catch (e: Exception) {
             println("[NongTriApi] Submit diagnosis error: ${e.message}")
@@ -698,7 +702,7 @@ class NongTriApi(
                 println("[NongTriApi] Diagnosis result fetched: status=${response.status}")
                 Result.success(response)
             } else {
-                Result.failure(Exception(response.error ?: "Failed to fetch diagnosis"))
+                Result.failure(Exception(response.error ?: strings.errorFailedToFetchDiagnosis))
             }
         } catch (e: Exception) {
             println("[NongTriApi] Get diagnosis error: ${e.message}")
@@ -733,7 +737,7 @@ class NongTriApi(
                 println("[NongTriApi] FCM token registered successfully")
                 Result.success(Unit)
             } else {
-                Result.failure(Exception(response.error ?: "Failed to register FCM token"))
+                Result.failure(Exception(response.error ?: strings.errorFailedToRegisterFcmToken))
             }
         } catch (e: Exception) {
             println("[NongTriApi] FCM token registration error: ${e.message}")

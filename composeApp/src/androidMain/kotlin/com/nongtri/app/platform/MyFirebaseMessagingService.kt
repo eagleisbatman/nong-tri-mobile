@@ -12,6 +12,8 @@ import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.nongtri.app.MainActivity
 import com.nongtri.app.R
+import com.nongtri.app.data.preferences.UserPreferences
+import com.nongtri.app.l10n.LocalizationProvider
 
 /**
  * Firebase Cloud Messaging Service
@@ -19,6 +21,8 @@ import com.nongtri.app.R
  */
 class MyFirebaseMessagingService : FirebaseMessagingService() {
     private val tag = "FCMService"
+    private val userPreferences by lazy { UserPreferences.getInstance() }
+    private val strings get() = LocalizationProvider.getStrings(userPreferences.language.value)
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)
@@ -45,8 +49,8 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
         // Show notification
         showNotification(
-            title = notification?.title ?: "Plant Diagnosis Ready",
-            body = notification?.body ?: "Your plant diagnosis is complete. Tap to view results.",
+            title = notification?.title ?: strings.notificationDiagnosisTitle,
+            body = notification?.body ?: strings.notificationDiagnosisBody,
             jobId = jobId
         )
     }
@@ -59,10 +63,10 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 channelId,
-                "Diagnosis Notifications",
+                strings.notificationChannelName,
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
-                description = "Notifications for plant diagnosis results"
+                description = strings.notificationChannelDescription
             }
             notificationManager.createNotificationChannel(channel)
         }

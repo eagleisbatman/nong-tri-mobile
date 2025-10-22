@@ -9,6 +9,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
+import com.nongtri.app.data.preferences.UserPreferences
+import com.nongtri.app.l10n.LocalizationProvider
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,6 +21,8 @@ actual class VoicePermissionViewModel actual constructor() : ViewModel() {
     actual val permissionState: StateFlow<VoicePermissionState> = _permissionState.asStateFlow()
 
     private lateinit var context: Context
+    private val userPreferences = UserPreferences.getInstance()
+    private val strings get() = LocalizationProvider.getStrings(userPreferences.language.value)
 
     companion object {
         var permissionLauncher: (() -> Unit)? = null
@@ -70,7 +74,7 @@ actual class VoicePermissionViewModel actual constructor() : ViewModel() {
                 it.copy(
                     shouldShowSettings = true,
                     permissionRequested = true,
-                    error = "Microphone permission denied. Please enable it in Settings to use voice messages."
+                    error = strings.permissionMicrophoneDeniedSettings
                 )
             }
         }
@@ -147,7 +151,7 @@ actual class VoicePermissionViewModel actual constructor() : ViewModel() {
                         hasPermission = false,
                         shouldShowSettings = true,
                         permissionRequested = true,
-                        error = "Microphone permission denied. Please enable it in Settings to use voice messages."
+                        error = strings.permissionMicrophoneDeniedSettings
                     )
                 }
             } else {
@@ -156,7 +160,7 @@ actual class VoicePermissionViewModel actual constructor() : ViewModel() {
                     it.copy(
                         hasPermission = false,
                         permissionRequested = true,
-                        error = "Microphone permission is needed to record voice messages"
+                        error = strings.permissionMicrophoneRationale
                     )
                 }
             }
@@ -180,7 +184,7 @@ actual class VoicePermissionViewModel actual constructor() : ViewModel() {
             context.startActivity(intent)
         } catch (e: Exception) {
             _permissionState.update {
-                it.copy(error = "Could not open settings: ${e.message}")
+                it.copy(error = "${strings.errorCouldNotOpenSettings}: ${e.message}")
             }
         }
     }

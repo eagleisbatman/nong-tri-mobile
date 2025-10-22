@@ -7,6 +7,7 @@ import com.nongtri.app.data.model.ChatMessage
 import com.nongtri.app.data.model.MessageRole
 import com.nongtri.app.data.preferences.UserPreferences
 import com.nongtri.app.data.repository.LocationRepository
+import com.nongtri.app.l10n.LocalizationProvider
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -270,10 +271,11 @@ class ChatViewModel(
                                     }
 
                                     // Add completed diagnosis message
+                                    val strings = LocalizationProvider.getStrings(userPreferences.language.value)
                                     val diagnosisMessage = ChatMessage(
                                         id = Uuid.random().toString(),
                                         role = MessageRole.ASSISTANT,
-                                        content = diagnosis.aiResponse ?: "Diagnosis completed",
+                                        content = diagnosis.aiResponse ?: strings.diagnosisCompleted,
                                         timestamp = Clock.System.now(),
                                         diagnosisData = diagnosis.diagnosisData,
                                         language = diagnosis.responseLanguage ?: "vi"
@@ -291,8 +293,9 @@ class ChatViewModel(
                             "failed" -> {
                                 println("[ChatViewModel] Diagnosis failed: ${response.error}")
                                 // Show error message
+                                val strings = LocalizationProvider.getStrings(userPreferences.language.value)
                                 _uiState.update { state ->
-                                    state.copy(error = "Diagnosis failed: ${response.error}")
+                                    state.copy(error = "${strings.errorDiagnosisFailed}: ${response.error}")
                                 }
                             }
                             else -> {
@@ -302,15 +305,17 @@ class ChatViewModel(
                     },
                     onFailure = { error ->
                         println("[ChatViewModel] Failed to fetch diagnosis: ${error.message}")
+                        val strings = LocalizationProvider.getStrings(userPreferences.language.value)
                         _uiState.update { state ->
-                            state.copy(error = "Failed to fetch diagnosis: ${error.message}")
+                            state.copy(error = "${strings.errorFailedToFetchDiagnosis}: ${error.message}")
                         }
                     }
                 )
             } catch (e: Exception) {
                 println("[ChatViewModel] Error fetching diagnosis: ${e.message}")
+                val strings = LocalizationProvider.getStrings(userPreferences.language.value)
                 _uiState.update { state ->
-                    state.copy(error = "Error fetching diagnosis: ${e.message}")
+                    state.copy(error = "${strings.errorFetchingDiagnosis}: ${e.message}")
                 }
             } finally {
                 // Clear the pending job ID after handling
@@ -415,11 +420,12 @@ class ChatViewModel(
                 },
                 onFailure = { error ->
                     // Remove the placeholder message and show error
+                    val strings = LocalizationProvider.getStrings(userPreferences.language.value)
                     _uiState.update { state ->
                         state.copy(
                             messages = state.messages.filter { it.id != assistantMessageId },
                             isLoading = false,
-                            error = error.message ?: "Failed to send message"
+                            error = error.message ?: strings.errorFailedToSendMessage
                         )
                     }
                 }
@@ -576,11 +582,12 @@ class ChatViewModel(
                     }
                 },
                 onFailure = { error ->
+                    val strings = LocalizationProvider.getStrings(userPreferences.language.value)
                     _uiState.update { state ->
                         state.copy(
                             messages = state.messages.filter { it.id != assistantMessageId },
                             isLoading = false,
-                            error = error.message ?: "Failed to send message"
+                            error = error.message ?: strings.errorFailedToSendMessage
                         )
                     }
                 }
@@ -676,9 +683,10 @@ class ChatViewModel(
 
         if (estimatedSizeMB > maxSizeMB) {
             println("[ImageDiagnosis] ✗ Image too large: ${String.format("%.2f", estimatedSizeMB)}MB (max ${maxSizeMB}MB)")
+            val strings = LocalizationProvider.getStrings(userPreferences.language.value)
             _uiState.update { state ->
                 state.copy(
-                    error = "Image is too large (${String.format("%.1f", estimatedSizeMB)}MB). Please try a smaller image.",
+                    error = strings.errorImageTooLarge,
                     isLoading = false
                 )
             }
@@ -727,11 +735,12 @@ class ChatViewModel(
                     }
 
                     // Add informative "diagnosis pending" message
+                    val strings = LocalizationProvider.getStrings(userPreferences.language.value)
                     val pendingMessageId = Uuid.random().toString()
                     val pendingMessage = ChatMessage(
                         id = pendingMessageId,
                         role = MessageRole.ASSISTANT,
-                        content = response.message ?: "Your diagnosis is being processed. We'll notify you when it's ready!",
+                        content = response.message ?: strings.diagnosisProcessingMessage,
                         timestamp = Clock.System.now(),
                         messageType = "diagnosis_pending",
                         diagnosisPendingJobId = response.jobId,
@@ -744,6 +753,7 @@ class ChatViewModel(
                 },
                 onFailure = { error ->
                     println("[ImageDiagnosis] ✗ Error submitting job: ${error.message}")
+                    val strings = LocalizationProvider.getStrings(userPreferences.language.value)
                     _uiState.update { state ->
                         state.copy(
                             isLoading = false,
@@ -756,7 +766,7 @@ class ChatViewModel(
                                     msg
                                 }
                             },
-                            error = error.message ?: "Failed to submit diagnosis"
+                            error = error.message ?: strings.errorFailedToSubmitDiagnosis
                         )
                     }
                 }

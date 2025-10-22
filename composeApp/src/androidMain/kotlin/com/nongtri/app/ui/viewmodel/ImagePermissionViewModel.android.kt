@@ -10,6 +10,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
+import com.nongtri.app.data.preferences.UserPreferences
+import com.nongtri.app.l10n.LocalizationProvider
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,6 +22,8 @@ actual class ImagePermissionViewModel actual constructor() : ViewModel() {
     actual val permissionState: StateFlow<ImagePermissionState> = _permissionState.asStateFlow()
 
     private lateinit var context: Context
+    private val userPreferences = UserPreferences.getInstance()
+    private val strings get() = LocalizationProvider.getStrings(userPreferences.language.value)
 
     companion object {
         var cameraPermissionLauncher: (() -> Unit)? = null
@@ -92,7 +96,7 @@ actual class ImagePermissionViewModel actual constructor() : ViewModel() {
                     hasStoragePermission = hasStoragePermission,
                     shouldShowSettings = true,
                     permissionRequested = true,
-                    error = "Camera and image permissions are needed. Please enable them in Settings."
+                    error = strings.permissionCameraStorageDeniedSettings
                 )
             }
         } else {
@@ -197,7 +201,7 @@ actual class ImagePermissionViewModel actual constructor() : ViewModel() {
                         hasCameraPermission = false,
                         shouldShowSettings = true,
                         permissionRequested = true,
-                        error = "Camera permission denied. Please enable it in Settings."
+                        error = strings.permissionCameraDeniedSettings
                     )
                 }
             } else {
@@ -205,7 +209,7 @@ actual class ImagePermissionViewModel actual constructor() : ViewModel() {
                     it.copy(
                         hasCameraPermission = false,
                         permissionRequested = true,
-                        error = "Camera permission is needed to capture plant images"
+                        error = strings.permissionCameraRationale
                     )
                 }
             }
@@ -234,7 +238,7 @@ actual class ImagePermissionViewModel actual constructor() : ViewModel() {
                         hasStoragePermission = false,
                         shouldShowSettings = true,
                         permissionRequested = true,
-                        error = "Storage permission denied. Please enable it in Settings."
+                        error = strings.permissionStorageDeniedSettings
                     )
                 }
             } else {
@@ -242,7 +246,7 @@ actual class ImagePermissionViewModel actual constructor() : ViewModel() {
                     it.copy(
                         hasStoragePermission = false,
                         permissionRequested = true,
-                        error = "Storage permission is needed to select images from gallery"
+                        error = strings.permissionStorageRationale
                     )
                 }
             }
@@ -269,7 +273,7 @@ actual class ImagePermissionViewModel actual constructor() : ViewModel() {
             context.startActivity(intent)
         } catch (e: Exception) {
             _permissionState.update {
-                it.copy(error = "Could not open settings: ${e.message}")
+                it.copy(error = "${strings.errorCouldNotOpenSettings}: ${e.message}")
             }
         }
     }

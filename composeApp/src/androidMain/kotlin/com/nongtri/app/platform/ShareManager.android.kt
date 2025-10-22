@@ -3,10 +3,15 @@ package com.nongtri.app.platform
 import android.content.Context
 import android.content.Intent
 import androidx.core.content.FileProvider
+import com.nongtri.app.data.preferences.UserPreferences
+import com.nongtri.app.l10n.LocalizationProvider
 import java.io.File
 import java.io.FileOutputStream
 
 actual class ShareManager(private val context: Context) {
+
+    private val userPreferences = UserPreferences.getInstance()
+    private val strings get() = LocalizationProvider.getStrings(userPreferences.language.value)
 
     actual fun shareText(text: String, title: String) {
         val sendIntent = Intent().apply {
@@ -49,7 +54,7 @@ actual class ShareManager(private val context: Context) {
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
 
-            val chooserIntent = Intent.createChooser(shareIntent, "Share Image")
+            val chooserIntent = Intent.createChooser(shareIntent, strings.shareImageTitle)
             chooserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             context.startActivity(chooserIntent)
 
