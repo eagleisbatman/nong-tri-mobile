@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.kotlinx.serialization)
+    alias(libs.plugins.google.services)
 }
 
 kotlin {
@@ -30,6 +31,10 @@ kotlin {
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
             implementation("com.github.3llomi:RecordView:3.1.3")
             implementation("androidx.appcompat:appcompat:1.6.1")
+
+            // Firebase
+            implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
+            implementation("com.google.firebase:firebase-messaging-ktx")
         }
         commonMain.dependencies {
             implementation(compose.runtime)

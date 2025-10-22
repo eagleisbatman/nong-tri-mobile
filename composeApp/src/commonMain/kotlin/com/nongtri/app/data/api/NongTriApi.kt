@@ -654,6 +654,41 @@ class NongTriApi(
         }
     }
 
+    /**
+     * Register FCM device token for push notifications
+     */
+    suspend fun registerFCMToken(
+        deviceId: String,
+        fcmToken: String,
+        platform: String,
+        appVersion: String? = null,
+        osVersion: String? = null
+    ): Result<Unit> {
+        return try {
+            val response: FCMRegistrationResponse = client.post("$baseUrl/api/diagnosis/register-token") {
+                contentType(ContentType.Application.Json)
+                setBody(FCMRegistrationRequest(
+                    userId = deviceId,
+                    fcmToken = fcmToken,
+                    platform = platform,
+                    appVersion = appVersion,
+                    osVersion = osVersion
+                ))
+            }.body()
+
+            if (response.success) {
+                println("[NongTriApi] FCM token registered successfully")
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception(response.error ?: "Failed to register FCM token"))
+            }
+        } catch (e: Exception) {
+            println("[NongTriApi] FCM token registration error: ${e.message}")
+            e.printStackTrace()
+            Result.failure(e)
+        }
+    }
+
     fun close() {
         client.close()
     }
@@ -686,6 +721,22 @@ data class UpdateAudioRequest(
     val conversationId: Int,
     val audioUrl: String,
     val ttsVoice: String
+)
+
+@kotlinx.serialization.Serializable
+data class FCMRegistrationRequest(
+    val userId: String,
+    val fcmToken: String,
+    val platform: String,
+    val appVersion: String? = null,
+    val osVersion: String? = null
+)
+
+@kotlinx.serialization.Serializable
+data class FCMRegistrationResponse(
+    val success: Boolean,
+    val message: String? = null,
+    val error: String? = null
 )
 
 @kotlinx.serialization.Serializable

@@ -124,6 +124,10 @@ class MainActivity : ComponentActivity() {
         imagePicker = ImagePicker(applicationContext)
         imagePicker.initialize(this)
 
+        // Initialize FCM for push notifications
+        val fcmService = FCMService(applicationContext)
+        fcmService.initialize()
+
         // Set up location permission launcher for LocationViewModel
         LocationViewModel.permissionLauncher = { permissions ->
             locationPermissionLauncher.launch(permissions)

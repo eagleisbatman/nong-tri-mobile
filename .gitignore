@@ -53,3 +53,11 @@ Pods/
 
 # Claude development rules (personal, not committed)
 Claude.md
+
+# Firebase configuration (contains API keys)
+google-services.json
+**/google-services.json
+
+# Never commit Firebase service account keys
+*firebase-adminsdk*.json
+*-firebase-adminsdk-*.json
