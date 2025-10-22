@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Nông Trí Brand Colors -->
+    <color name="brand_green_dark">#006A03</color>
+    <color name="brand_green_bright">#60C228</color>
+
+    <!-- Notification color -->
+    <color name="notification_color">@color/brand_green_dark</color>
+</resources>

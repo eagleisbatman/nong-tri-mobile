@@ -82,11 +82,12 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
-        // Build notification
+        // Build notification with brand colors
         val notification = NotificationCompat.Builder(this, channelId)
-            .setSmallIcon(android.R.drawable.ic_menu_info_details) // Use your app icon
+            .setSmallIcon(android.R.drawable.ic_menu_info_details) // Default Android icon for now
             .setContentTitle(title)
             .setContentText(body)
+            .setColor(resources.getColor(com.nongtri.app.R.color.brand_green_dark, null)) // Nông Trí brand green
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
