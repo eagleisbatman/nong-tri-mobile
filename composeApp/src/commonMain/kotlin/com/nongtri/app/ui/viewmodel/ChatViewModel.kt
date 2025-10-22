@@ -104,7 +104,16 @@ class ChatViewModel(
                                     language = h.language ?: "en",
                                     messageType = h.messageType ?: "text",
                                     voiceAudioUrl = h.voiceAudioUrl,
-                                    voiceTranscription = h.voiceTranscription
+                                    voiceTranscription = h.voiceTranscription,
+                                    imageUrl = h.imageUrl,
+                                    diagnosisData = h.diagnosisData?.let { json ->
+                                        try {
+                                            kotlinx.serialization.json.Json.decodeFromString(json)
+                                        } catch (e: Exception) {
+                                            println("[ChatViewModel] Failed to parse diagnosisData: ${e.message}")
+                                            null
+                                        }
+                                    }
                                 )
                             }
                             _uiState.update { it.copy(messages = messages) }
@@ -142,7 +151,16 @@ class ChatViewModel(
                                 language = h.language ?: "en",
                                 messageType = h.messageType ?: "text",
                                 voiceAudioUrl = h.voiceAudioUrl,
-                                voiceTranscription = h.voiceTranscription
+                                voiceTranscription = h.voiceTranscription,
+                                imageUrl = h.imageUrl,
+                                diagnosisData = h.diagnosisData?.let { json ->
+                                    try {
+                                        kotlinx.serialization.json.Json.decodeFromString(json)
+                                    } catch (e: Exception) {
+                                        println("[ChatViewModel] Failed to parse diagnosisData: ${e.message}")
+                                        null
+                                    }
+                                }
                             )
                         }
                         _uiState.update { it.copy(messages = messages) }
@@ -480,6 +498,189 @@ class ChatViewModel(
                             messages = state.messages.filter { it.id != assistantMessageId },
                             isLoading = false,
                             error = error.message ?: "Failed to send message"
+                        )
+                    }
+                }
+            )
+        }
+    }
+
+    // ========================================================================
+    // IMAGE DIAGNOSIS METHODS
+    // ========================================================================
+
+    /**
+     * Show optimistic image message bubble immediately (with placeholder)
+     * This provides instant feedback while image is uploading
+     * @param imageData Base64 data URL or URI string for preview
+     * @param question User's question about the plant
+     * @return Message ID for updating later
+     */
+    fun showOptimisticImageMessage(imageData: String, question: String): String {
+        val messageId = Uuid.random().toString()
+        val optimisticMessage = ChatMessage(
+            id = messageId,
+            role = MessageRole.USER,
+            content = question,
+            timestamp = Clock.System.now(),
+            messageType = "image",
+            imageUrl = imageData,  // Temporarily use base64/URI for preview
+            isLoading = true  // Show as loading/uploading
+        )
+
+        _uiState.update { state ->
+            state.copy(
+                messages = state.messages + optimisticMessage,
+                error = null
+            )
+        }
+
+        println("[ImageDiagnosis] Optimistic image message shown: $messageId")
+        return messageId
+    }
+
+    /**
+     * Update optimistic image message with server imageUrl
+     * Called when upload completes
+     */
+    fun updateImageMessage(messageId: String, imageUrl: String) {
+        _uiState.update { state ->
+            state.copy(
+                messages = state.messages.map { msg ->
+                    if (msg.id == messageId) {
+                        msg.copy(
+                            imageUrl = imageUrl,
+                            isLoading = false
+                        )
+                    } else {
+                        msg
+                    }
+                }
+            )
+        }
+        println("[ImageDiagnosis] Image message updated with server URL: $messageId")
+    }
+
+    /**
+     * Remove failed image message
+     * Called when upload or diagnosis fails
+     */
+    fun removeImageMessage(messageId: String) {
+        _uiState.update { state ->
+            state.copy(
+                messages = state.messages.filter { it.id != messageId }
+            )
+        }
+        println("[ImageDiagnosis] Failed image message removed: $messageId")
+    }
+
+    /**
+     * Send image diagnosis request with streaming response
+     * Image messages show plant image with diagnosis results
+     * @param imageData Base64 data URL (data:image/jpeg;base64,...)
+     * @param question User's question about the plant
+     */
+    fun sendImageDiagnosis(imageData: String, question: String) {
+        if (imageData.isBlank() || question.isBlank()) {
+            println("[ImageDiagnosis] ✗ Invalid input: imageData or question is blank")
+            return
+        }
+
+        println("[ImageDiagnosis] Starting diagnosis upload...")
+        println("[ImageDiagnosis] Question: $question")
+        println("[ImageDiagnosis] Image data length: ${imageData.length}")
+
+        // Note: Optimistic message should already be shown by caller
+        // We just need to set loading state and trigger AI response
+
+        _uiState.update { state ->
+            state.copy(
+                isLoading = true,
+                error = null
+            )
+        }
+
+        // Create placeholder for streaming assistant message
+        val assistantMessageId = Uuid.random().toString()
+        val initialAssistantMessage = ChatMessage(
+            id = assistantMessageId,
+            role = MessageRole.ASSISTANT,
+            content = "",
+            timestamp = Clock.System.now(),
+            isLoading = true  // Mark as loading during streaming
+        )
+
+        _uiState.update { state ->
+            state.copy(messages = state.messages + initialAssistantMessage)
+        }
+
+        // Send to API with streaming
+        viewModelScope.launch {
+            api.sendImageDiagnosisStream(
+                userId = userId,
+                message = question,
+                imageData = imageData,
+                onChunk = { chunk ->
+                    // Update the assistant message with each chunk
+                    _uiState.update { state ->
+                        state.copy(
+                            messages = state.messages.map { msg ->
+                                if (msg.id == assistantMessageId) {
+                                    msg.copy(content = msg.content + chunk)
+                                } else {
+                                    msg
+                                }
+                            }
+                        )
+                    }
+                },
+                onMetadata = { metadata ->
+                    // Update the assistant message with metadata (diagnosis data, conversation ID, etc.)
+                    println("[ImageDiagnosis] Metadata received: conversationId=${metadata.conversationId}")
+                    _uiState.update { state ->
+                        state.copy(
+                            messages = state.messages.map { msg ->
+                                if (msg.id == assistantMessageId) {
+                                    msg.copy(
+                                        responseType = metadata.responseType,
+                                        followUpQuestions = metadata.followUpQuestions,
+                                        isGenericResponse = metadata.isGenericResponse,
+                                        language = metadata.language,
+                                        conversationId = metadata.conversationId
+                                        // TODO: Extract diagnosisData from metadata if backend sends it
+                                    )
+                                } else {
+                                    msg
+                                }
+                            }
+                        )
+                    }
+                }
+            ).fold(
+                onSuccess = { fullResponse ->
+                    // Mark loading as complete
+                    println("[ImageDiagnosis] ✓ Diagnosis complete, response length: ${fullResponse.length}")
+                    _uiState.update { state ->
+                        state.copy(
+                            isLoading = false,
+                            messages = state.messages.map { msg ->
+                                if (msg.id == assistantMessageId) {
+                                    msg.copy(isLoading = false)
+                                } else {
+                                    msg
+                                }
+                            }
+                        )
+                    }
+                },
+                onFailure = { error ->
+                    // Remove the placeholder message and show error
+                    println("[ImageDiagnosis] ✗ Error: ${error.message}")
+                    _uiState.update { state ->
+                        state.copy(
+                            messages = state.messages.filter { it.id != assistantMessageId },
+                            isLoading = false,
+                            error = error.message ?: "Failed to analyze image"
                         )
                     }
                 }

@@ -1,0 +1,143 @@
+package com.nongtri.app.util
+
+/**
+ * Result of image validation
+ */
+sealed class ImageValidationResult {
+    data object Valid : ImageValidationResult()
+    data class Invalid(val reason: String) : ImageValidationResult()
+}
+
+/**
+ * Validates images before upload for plant diagnosis
+ */
+object ImageValidator {
+    // Maximum file size: 5MB
+    private const val MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024
+
+    // Maximum dimensions: 4096x4096
+    private const val MAX_DIMENSION = 4096
+
+    // Supported formats
+    private val SUPPORTED_FORMATS = setOf("jpg", "jpeg", "png", "webp")
+
+    /**
+     * Validate image file size
+     */
+    fun validateFileSize(sizeBytes: Long): ImageValidationResult {
+        return if (sizeBytes > MAX_FILE_SIZE_BYTES) {
+            ImageValidationResult.Invalid(
+                "Image is too large (${formatSize(sizeBytes)}). Maximum size is ${formatSize(MAX_FILE_SIZE_BYTES.toLong())}."
+            )
+        } else if (sizeBytes == 0L) {
+            ImageValidationResult.Invalid("Image file is empty")
+        } else {
+            ImageValidationResult.Valid
+        }
+    }
+
+    /**
+     * Validate image dimensions
+     */
+    fun validateDimensions(width: Int, height: Int): ImageValidationResult {
+        return when {
+            width == 0 || height == 0 -> {
+                ImageValidationResult.Invalid("Invalid image dimensions")
+            }
+            width > MAX_DIMENSION || height > MAX_DIMENSION -> {
+                ImageValidationResult.Invalid(
+                    "Image dimensions too large (${width}x${height}). Maximum is ${MAX_DIMENSION}x${MAX_DIMENSION}."
+                )
+            }
+            else -> ImageValidationResult.Valid
+        }
+    }
+
+    /**
+     * Validate image format by file extension or MIME type
+     */
+    fun validateFormat(filename: String?, mimeType: String?): ImageValidationResult {
+        // Check MIME type first if available
+        if (mimeType != null) {
+            val validMimeTypes = setOf("image/jpeg", "image/png", "image/webp")
+            if (mimeType.lowercase() !in validMimeTypes) {
+                return ImageValidationResult.Invalid(
+                    "Unsupported image format: $mimeType. Please use JPEG, PNG, or WebP."
+                )
+            }
+            return ImageValidationResult.Valid
+        }
+
+        // Fall back to file extension
+        if (filename != null) {
+            val extension = filename.substringAfterLast('.', "").lowercase()
+            if (extension !in SUPPORTED_FORMATS) {
+                return ImageValidationResult.Invalid(
+                    "Unsupported image format: .$extension. Please use JPEG, PNG, or WebP."
+                )
+            }
+            return ImageValidationResult.Valid
+        }
+
+        return ImageValidationResult.Invalid("Cannot determine image format")
+    }
+
+    /**
+     * Perform complete validation
+     */
+    fun validate(
+        sizeBytes: Long,
+        width: Int,
+        height: Int,
+        filename: String? = null,
+        mimeType: String? = null
+    ): ImageValidationResult {
+        // Validate size
+        val sizeResult = validateFileSize(sizeBytes)
+        if (sizeResult is ImageValidationResult.Invalid) {
+            return sizeResult
+        }
+
+        // Validate dimensions
+        val dimensionsResult = validateDimensions(width, height)
+        if (dimensionsResult is ImageValidationResult.Invalid) {
+            return dimensionsResult
+        }
+
+        // Validate format
+        val formatResult = validateFormat(filename, mimeType)
+        if (formatResult is ImageValidationResult.Invalid) {
+            return formatResult
+        }
+
+        return ImageValidationResult.Valid
+    }
+
+    /**
+     * Format file size for display
+     */
+    private fun formatSize(bytes: Long): String {
+        return when {
+            bytes < 1024 -> "$bytes B"
+            bytes < 1024 * 1024 -> "${bytes / 1024} KB"
+            else -> "${bytes / (1024 * 1024)} MB"
+        }
+    }
+
+    /**
+     * Check if image needs compression
+     * Returns suggested quality (0-100) or null if no compression needed
+     */
+    fun getSuggestedCompressionQuality(sizeBytes: Long): Int? {
+        val targetSize = 2 * 1024 * 1024 // 2MB target
+        return when {
+            sizeBytes <= targetSize -> null  // No compression needed
+            sizeBytes > MAX_FILE_SIZE_BYTES -> 50  // Aggressive compression
+            else -> {
+                // Calculate quality based on size
+                val ratio = targetSize.toFloat() / sizeBytes
+                (ratio * 100).toInt().coerceIn(50, 90)
+            }
+        }
+    }
+}

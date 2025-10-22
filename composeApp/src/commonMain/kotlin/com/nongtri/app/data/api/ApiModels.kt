@@ -47,3 +47,13 @@ data class FeedbackRequest(
     val isPositive: Boolean,
     val feedbackText: String? = null
 )
+
+@Serializable
+data class ImageDiagnosisRequest(
+    val userId: String,
+    val message: String,  // User's question about the plant
+    val imageData: String,  // Base64 data URL: data:image/jpeg;base64,...
+    val messageType: String = "image",
+    val userName: String? = null,
+    val deviceInfo: DeviceInfo? = null
+)

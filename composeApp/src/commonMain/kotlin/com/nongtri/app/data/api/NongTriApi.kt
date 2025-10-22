@@ -146,6 +146,127 @@ class NongTriApi(
         }
     }
 
+    /**
+     * Send image diagnosis request with streaming response
+     * Similar to sendMessageStream but includes base64 image data
+     * Backend handles image upload to MinIO and calls AgriVision MCP for diagnosis
+     *
+     * @param userId Device ID
+     * @param message User's question about the plant (e.g., "How is the health of my crop?")
+     * @param imageData Base64 data URL (data:image/jpeg;base64,...)
+     * @param onChunk Callback for each streaming content chunk
+     * @param onMetadata Callback for metadata (diagnosis data, conversation ID, etc.)
+     * @return Result with full response or error
+     */
+    suspend fun sendImageDiagnosisStream(
+        userId: String,
+        message: String,
+        imageData: String,
+        userName: String? = null,
+        onChunk: (String) -> Unit,
+        onMetadata: ((StreamMetadata) -> Unit)? = null
+    ): Result<String> {
+        return try {
+            var fullResponse = ""
+
+            // Get device info to send with request
+            val deviceInfo = userPreferences.getDeviceInfo()
+
+            println("[ImageDiagnosis] Starting image diagnosis upload...")
+            println("[ImageDiagnosis] Image data size: ${imageData.length} chars")
+
+            client.preparePost("$baseUrl/api/chat/stream") {
+                contentType(ContentType.Application.Json)
+                setBody(ImageDiagnosisRequest(
+                    userId = userId,
+                    message = message,
+                    imageData = imageData,
+                    userName = userName,
+                    deviceInfo = deviceInfo
+                ))
+            }.execute { response ->
+                val channel: ByteReadChannel = response.body()
+
+                while (!channel.isClosedForRead) {
+                    val line = channel.readUTF8Line() ?: break
+
+                    if (line.startsWith("data: ")) {
+                        val jsonData = line.substring(6)
+                        try {
+                            val parsed = Json.parseToJsonElement(jsonData).jsonObject
+
+                            // Check if done
+                            if (parsed["done"]?.toString() == "true") {
+                                println("[ImageDiagnosis] SSE stream completed")
+                                break
+                            }
+
+                            // Check for error
+                            parsed["error"]?.let { errorMsg ->
+                                val error = errorMsg.toString().trim('"')
+                                println("[ImageDiagnosis] SSE error: $error")
+                                throw Exception(error)
+                            }
+
+                            // Check for metadata chunk (includes diagnosisData)
+                            if (parsed["__metadata"]?.toString() == "true") {
+                                println("[ImageDiagnosis] Metadata chunk received")
+
+                                val followUpQuestions = try {
+                                    val questionsElement = parsed["followUpQuestions"]
+                                    if (questionsElement != null) {
+                                        val questionsArray = if (questionsElement is JsonArray) {
+                                            questionsElement
+                                        } else {
+                                            Json.parseToJsonElement(questionsElement.toString()).jsonArray
+                                        }
+
+                                        questionsArray.map { element ->
+                                            element.toString().trim('"')
+                                        }.filter { it.isNotEmpty() && it != "null" }
+                                    } else {
+                                        emptyList()
+                                    }
+                                } catch (e: Exception) {
+                                    println("[ImageDiagnosis] Error parsing follow-up questions: ${e.message}")
+                                    emptyList()
+                                }
+
+                                val metadata = StreamMetadata(
+                                    responseType = parsed["responseType"]?.toString()?.trim('"') ?: "image_diagnosis",
+                                    followUpQuestions = followUpQuestions,
+                                    isGenericResponse = false,  // Diagnosis is never generic
+                                    language = parsed["language"]?.toString()?.trim('"') ?: "en",
+                                    conversationId = parsed["conversationId"]?.toString()?.toIntOrNull()
+                                )
+
+                                println("[ImageDiagnosis] Metadata received: conversationId=${metadata.conversationId}, questions=${metadata.followUpQuestions.size}")
+                                onMetadata?.invoke(metadata)
+                                continue
+                            }
+
+                            // Extract content chunk
+                            parsed["content"]?.let { content ->
+                                val chunk = content.toString().trim('"')
+                                fullResponse += chunk
+                                onChunk(chunk)
+                            }
+                        } catch (e: Exception) {
+                            println("[ImageDiagnosis] Failed to parse SSE data: $jsonData - ${e.message}")
+                        }
+                    }
+                }
+            }
+
+            println("[ImageDiagnosis] ✓ Image diagnosis complete, response length: ${fullResponse.length}")
+            Result.success(fullResponse)
+        } catch (e: Exception) {
+            println("[ImageDiagnosis] ✗ Error: ${e.message}")
+            e.printStackTrace()
+            Result.failure(e)
+        }
+    }
+
     suspend fun getHistory(userId: String, limit: Int = 20): Result<HistoryResponse> {
         return try {
             val response: HistoryResponse = client.get("$baseUrl/api/chat/history/$userId") {
@@ -557,6 +678,7 @@ data class HistoryMessage(
     val voiceAudioUrl: String? = null,        // User voice recording
     val voiceTranscription: String? = null,   // Transcribed text
     val imageUrl: String? = null,             // Image URL
+    val diagnosisData: String? = null,        // Plant diagnosis JSON (JSONB from database)
     val language: String? = "en"              // Message language
 )
 

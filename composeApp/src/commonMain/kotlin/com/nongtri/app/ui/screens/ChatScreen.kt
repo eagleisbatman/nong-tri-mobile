@@ -46,6 +46,9 @@ fun ChatScreen(
     val locationViewModel = rememberLocationViewModel()
     val locationState by locationViewModel.locationState.collectAsState()
 
+    // Image picker
+    val imagePicker = com.nongtri.app.platform.rememberImagePicker()
+
     // Voice permission state
     var showVoicePermissionBottomSheet by remember { mutableStateOf(false) }
     val voicePermissionViewModel = rememberVoicePermissionViewModel()
@@ -58,6 +61,19 @@ fun ChatScreen(
     val voiceAmplitude by voiceRecordingViewModel.amplitude.collectAsState()
     val isTranscribing by voiceRecordingViewModel.isTranscribing.collectAsState()
     val transcriptionText by voiceRecordingViewModel.transcriptionText.collectAsState()
+
+    // Image permission state
+    var showImagePermissionBottomSheet by remember { mutableStateOf(false) }
+    val imagePermissionViewModel = rememberImagePermissionViewModel()
+    val imagePermissionState by imagePermissionViewModel.permissionState.collectAsState()
+
+    // Image selection state
+    var showImageSourceSelector by remember { mutableStateOf(false) }
+    var showImagePreviewDialog by remember { mutableStateOf(false) }
+    var selectedImageUri by remember { mutableStateOf<String?>(null) }  // Display URI
+    var selectedImageBase64 by remember { mutableStateOf<String?>(null) }  // Base64 data for upload
+    var currentImageMessageId by remember { mutableStateOf<String?>(null) }
+    var showFullscreenImage by remember { mutableStateOf<String?>(null) }  // Image URL to show fullscreen
 
     // Snackbar for error messages (only for non-permission errors)
     val snackbarHostState = remember { SnackbarHostState() }
@@ -82,6 +98,25 @@ fun ChatScreen(
                     duration = SnackbarDuration.Short
                 )
             }
+        }
+    }
+
+    // Auto-check image permission state while bottom sheet is visible
+    LaunchedEffect(showImagePermissionBottomSheet) {
+        if (showImagePermissionBottomSheet) {
+            while (showImagePermissionBottomSheet) {
+                imagePermissionViewModel.checkPermissionState()
+                kotlinx.coroutines.delay(500)  // Check every 500ms
+            }
+        }
+    }
+
+    // Auto-dismiss image permission bottom sheet when permissions are granted
+    LaunchedEffect(imagePermissionState.hasCameraPermission, imagePermissionState.hasStoragePermission) {
+        if (imagePermissionState.hasCameraPermission && imagePermissionState.hasStoragePermission && showImagePermissionBottomSheet) {
+            showImagePermissionBottomSheet = false
+            // Automatically open image source selector
+            showImageSourceSelector = true
         }
     }
 
@@ -323,7 +358,14 @@ fun ChatScreen(
                                 viewModel.sendMessage(uiState.currentMessage)
                             },
                             onImageClick = {
-                                // TODO: Handle image selection
+                                // Check if both permissions are granted
+                                if (imagePermissionState.hasCameraPermission && imagePermissionState.hasStoragePermission) {
+                                    // Permissions granted, show image source selector
+                                    showImageSourceSelector = true
+                                } else {
+                                    // Request permissions
+                                    showImagePermissionBottomSheet = true
+                                }
                             },
                             onVoiceClick = {
                                 // Single tap - check permission and start recording
@@ -430,21 +472,53 @@ fun ChatScreen(
                     items = uiState.messages,
                     key = { _, message -> message.id }
                 ) { index, message ->
-                    MessageBubble(
-                        message = message,
-                        index = index,
-                        isLightTheme = isLightTheme,
-                        language = language,
-                        onFeedback = { conversationId, isPositive ->
-                            viewModel.submitFeedback(conversationId, isPositive)
-                        },
-                        onFollowUpClick = { question ->
-                            viewModel.sendMessage(question)
-                        },
-                        onAudioUrlCached = { messageId, audioUrl ->
-                            viewModel.updateMessageAudioUrl(messageId, audioUrl)
+                    // Render specialized bubbles for image messages
+                    when {
+                        message.messageType == "image" && message.role == com.nongtri.app.data.model.MessageRole.USER -> {
+                            // User image message
+                            ImageMessageBubble(
+                                message = message,
+                                onImageClick = { imageUrl ->
+                                    showFullscreenImage = imageUrl
+                                }
+                            )
                         }
-                    )
+                        message.diagnosisData != null && message.role == com.nongtri.app.data.model.MessageRole.ASSISTANT -> {
+                            // AI diagnosis response
+                            val ttsManager = com.nongtri.app.platform.LocalTextToSpeechManager.current
+
+                            DiagnosisResponseBubble(
+                                message = message,
+                                onTtsClick = {
+                                    // Play TTS for diagnosis advice
+                                    coroutineScope.launch {
+                                        ttsManager.speak(
+                                            text = message.content,
+                                            language = if (language == Language.VIETNAMESE) "vi" else "en"
+                                        )
+                                    }
+                                }
+                            )
+                        }
+                        else -> {
+                            // Regular text/voice message
+                            MessageBubble(
+                                message = message,
+                                index = index,
+                                isLightTheme = isLightTheme,
+                                language = language,
+                                onFeedback = { conversationId, isPositive ->
+                                    viewModel.submitFeedback(conversationId, isPositive)
+                                },
+                                onFollowUpClick = { question ->
+                                    viewModel.sendMessage(question)
+                                },
+                                onAudioUrlCached = { messageId, audioUrl ->
+                                    viewModel.updateMessageAudioUrl(messageId, audioUrl)
+                                }
+                            )
+                        }
+                    }
                 }
 
                 // Typing indicator
@@ -537,6 +611,113 @@ fun ChatScreen(
                 showVoicePermissionBottomSheet = false
                 // Check permission after dismissing in case user granted it
                 voicePermissionViewModel.checkPermissionState()
+            }
+        )
+    }
+
+    // Image Permission Bottom Sheet
+    if (showImagePermissionBottomSheet) {
+        ImagePermissionBottomSheet(
+            hasCameraPermission = imagePermissionState.hasCameraPermission,
+            hasStoragePermission = imagePermissionState.hasStoragePermission,
+            shouldShowSettings = imagePermissionState.shouldShowSettings,
+            onRequestCameraPermission = {
+                if (imagePermissionState.shouldShowSettings) {
+                    imagePermissionViewModel.openSettings()
+                } else {
+                    imagePermissionViewModel.requestCameraPermission()
+                }
+            },
+            onRequestStoragePermission = {
+                if (imagePermissionState.shouldShowSettings) {
+                    imagePermissionViewModel.openSettings()
+                } else {
+                    imagePermissionViewModel.requestStoragePermission()
+                }
+            },
+            onDismiss = {
+                showImagePermissionBottomSheet = false
+                imagePermissionViewModel.checkPermissionState()
+            }
+        )
+    }
+
+    // Image Source Selector Bottom Sheet
+    if (showImageSourceSelector) {
+        ImageSourceBottomSheet(
+            onCameraClick = {
+                showImageSourceSelector = false
+                println("[ChatScreen] Launching camera...")
+
+                imagePicker.launchCamera { result ->
+                    if (result != null) {
+                        println("[ChatScreen] Camera image captured: ${result.width}x${result.height}, ${result.sizeBytes / 1024}KB")
+                        selectedImageUri = result.uri
+                        selectedImageBase64 = result.base64Data
+                        showImagePreviewDialog = true
+                    } else {
+                        println("[ChatScreen] Camera capture cancelled or failed")
+                    }
+                }
+            },
+            onGalleryClick = {
+                showImageSourceSelector = false
+                println("[ChatScreen] Launching gallery...")
+
+                imagePicker.launchGallery { result ->
+                    if (result != null) {
+                        println("[ChatScreen] Gallery image selected: ${result.width}x${result.height}, ${result.sizeBytes / 1024}KB")
+                        selectedImageUri = result.uri
+                        selectedImageBase64 = result.base64Data
+                        showImagePreviewDialog = true
+                    } else {
+                        println("[ChatScreen] Gallery selection cancelled")
+                    }
+                }
+            },
+            onDismiss = {
+                showImageSourceSelector = false
+            }
+        )
+    }
+
+    // Image Preview Dialog
+    if (showImagePreviewDialog && selectedImageUri != null && selectedImageBase64 != null) {
+        ImagePreviewDialog(
+            imageUri = selectedImageUri!!,
+            onDismiss = {
+                showImagePreviewDialog = false
+                selectedImageUri = null
+                selectedImageBase64 = null
+            },
+            onConfirm = { question ->
+                println("[ChatScreen] Sending image for diagnosis: $question")
+
+                // Send image to backend for diagnosis
+                viewModel.sendImageDiagnosis(
+                    imageData = selectedImageBase64!!,
+                    question = question
+                )
+
+                // Close dialog and clear state
+                showImagePreviewDialog = false
+                selectedImageUri = null
+                selectedImageBase64 = null
+            }
+        )
+    }
+
+    // Fullscreen Image Viewer
+    if (showFullscreenImage != null) {
+        val diagnosisData = uiState.messages
+            .firstOrNull { it.imageUrl == showFullscreenImage }
+            ?.diagnosisData
+
+        FullscreenImageDialog(
+            imageUrl = showFullscreenImage!!,
+            diagnosisData = diagnosisData,
+            onDismiss = {
+                showFullscreenImage = null
             }
         )
     }

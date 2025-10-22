@@ -27,7 +27,10 @@ data class ChatMessage(
     // Voice message fields (for user messages)
     val messageType: String = "text",  // "text" | "voice" | "image"
     val voiceAudioUrl: String? = null,  // User voice recording URL (from MinIO)
-    val voiceTranscription: String? = null  // Transcribed text from voice message
+    val voiceTranscription: String? = null,  // Transcribed text from voice message
+    // Image diagnosis fields (for image messages)
+    val imageUrl: String? = null,  // Plant image URL (from MinIO)
+    val diagnosisData: DiagnosisData? = null  // Structured diagnosis data (for assistant response to image)
 )
 
 @Serializable
