@@ -676,17 +676,19 @@ class ChatViewModel(
             return
         }
 
-        // Validate image size (max 5MB for low connectivity areas)
+        // Validate image size using localized ImageValidator
         val estimatedSizeBytes = (imageData.length * 3L / 4)  // base64 to bytes
-        val estimatedSizeMB = estimatedSizeBytes / (1024.0 * 1024.0)
-        val maxSizeMB = 5.0
+        val strings = LocalizationProvider.getStrings(userPreferences.language.value)
+        val validationResult = com.nongtri.app.util.ImageValidator.validateFileSize(
+            estimatedSizeBytes,
+            strings
+        )
 
-        if (estimatedSizeMB > maxSizeMB) {
-            println("[ImageDiagnosis] ✗ Image too large: ${String.format("%.2f", estimatedSizeMB)}MB (max ${maxSizeMB}MB)")
-            val strings = LocalizationProvider.getStrings(userPreferences.language.value)
+        if (validationResult is com.nongtri.app.util.ImageValidationResult.Invalid) {
+            println("[ImageDiagnosis] ✗ Image validation failed: ${validationResult.reason}")
             _uiState.update { state ->
                 state.copy(
-                    error = strings.errorImageTooLarge,
+                    error = validationResult.reason,
                     isLoading = false
                 )
             }
@@ -695,7 +697,7 @@ class ChatViewModel(
 
         println("[ImageDiagnosis] Starting async diagnosis upload...")
         println("[ImageDiagnosis] Question: $question")
-        println("[ImageDiagnosis] Image size: ${String.format("%.2f", estimatedSizeMB)}MB")
+        println("[ImageDiagnosis] Image size: ${estimatedSizeBytes / (1024 * 1024)}MB")
 
         // Note: Optimistic message should already be shown by caller
         // We just need to set loading state and submit diagnosis job

@@ -225,7 +225,7 @@ private fun ConversationThreadItem(
                 modifier = Modifier.weight(1f)
             ) {
                 Text(
-                    text = thread.getDisplayTitle(),
+                    text = thread.getDisplayTitle(strings),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Medium,
                     maxLines = 1,

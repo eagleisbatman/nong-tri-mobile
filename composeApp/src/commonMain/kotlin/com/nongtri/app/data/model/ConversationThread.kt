@@ -32,10 +32,10 @@ data class ConversationThread(
     val lastMessageAt: String? = null
 ) {
     /**
-     * Get display title (use title or fallback to "New Conversation")
+     * Get display title (use title or fallback to localized "New Conversation")
      */
-    fun getDisplayTitle(): String {
-        return title?.takeIf { it.isNotBlank() } ?: "New Conversation"
+    fun getDisplayTitle(strings: com.nongtri.app.l10n.Strings): String {
+        return title?.takeIf { it.isNotBlank() } ?: strings.newConversation
     }
 
     /**
