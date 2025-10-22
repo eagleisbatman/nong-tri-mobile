@@ -53,6 +53,7 @@ Pods/
 
 # Claude development rules (personal, not committed)
 Claude.md
+CLAUDE.md
 
 # Firebase configuration (contains API keys)
 google-services.json
