@@ -655,6 +655,58 @@ class NongTriApi(
     }
 
     /**
+     * Submit plant image for async diagnosis
+     * Returns job ID for tracking
+     */
+    suspend fun submitDiagnosisJob(
+        userId: String,
+        imageUrl: String,
+        question: String = "How is the health of my crop?"
+    ): Result<DiagnosisJobResponse> {
+        return try {
+            val response: DiagnosisJobResponse = client.post("$baseUrl/api/diagnosis/submit") {
+                contentType(ContentType.Application.Json)
+                setBody(DiagnosisJobRequest(
+                    userId = userId,
+                    imageUrl = imageUrl,
+                    question = question
+                ))
+            }.body()
+
+            if (response.success) {
+                println("[NongTriApi] Diagnosis job submitted: ${response.jobId}")
+                Result.success(response)
+            } else {
+                Result.failure(Exception(response.error ?: "Failed to submit diagnosis"))
+            }
+        } catch (e: Exception) {
+            println("[NongTriApi] Submit diagnosis error: ${e.message}")
+            e.printStackTrace()
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Get diagnosis result by job ID
+     */
+    suspend fun getDiagnosisResult(jobId: String): Result<DiagnosisResultResponse> {
+        return try {
+            val response: DiagnosisResultResponse = client.get("$baseUrl/api/diagnosis/$jobId").body()
+
+            if (response.success) {
+                println("[NongTriApi] Diagnosis result fetched: status=${response.status}")
+                Result.success(response)
+            } else {
+                Result.failure(Exception(response.error ?: "Failed to fetch diagnosis"))
+            }
+        } catch (e: Exception) {
+            println("[NongTriApi] Get diagnosis error: ${e.message}")
+            e.printStackTrace()
+            Result.failure(e)
+        }
+    }
+
+    /**
      * Register FCM device token for push notifications
      */
     suspend fun registerFCMToken(
@@ -737,6 +789,40 @@ data class FCMRegistrationResponse(
     val success: Boolean,
     val message: String? = null,
     val error: String? = null
+)
+
+@kotlinx.serialization.Serializable
+data class DiagnosisJobRequest(
+    val userId: String,
+    val imageUrl: String,
+    val question: String
+)
+
+@kotlinx.serialization.Serializable
+data class DiagnosisJobResponse(
+    val success: Boolean,
+    val jobId: String? = null,
+    val message: String? = null,
+    val estimatedTimeMinutes: Int? = null,
+    val error: String? = null
+)
+
+@kotlinx.serialization.Serializable
+data class DiagnosisResultResponse(
+    val success: Boolean,
+    val status: String? = null,  // "pending", "processing", "completed", "failed"
+    val diagnosis: DiagnosisResult? = null,
+    val message: String? = null,
+    val error: String? = null,
+    val createdAt: String? = null,
+    val completedAt: String? = null
+)
+
+@kotlinx.serialization.Serializable
+data class DiagnosisResult(
+    val diagnosisData: DiagnosisData? = null,
+    val aiResponse: String? = null,
+    val responseLanguage: String? = null
 )
 
 @kotlinx.serialization.Serializable

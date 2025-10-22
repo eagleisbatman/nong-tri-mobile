@@ -30,7 +30,10 @@ data class ChatMessage(
     val voiceTranscription: String? = null,  // Transcribed text from voice message
     // Image diagnosis fields (for image messages)
     val imageUrl: String? = null,  // Plant image URL (from MinIO)
-    val diagnosisData: DiagnosisData? = null  // Structured diagnosis data (for assistant response to image)
+    val diagnosisData: DiagnosisData? = null,  // Structured diagnosis data (for assistant response to image)
+    // Async diagnosis fields (for diagnosis_pending message type)
+    val diagnosisPendingJobId: String? = null,  // Job ID for async diagnosis
+    val diagnosisPendingImageUrl: String? = null  // Image URL for showing in pending card
 )
 
 @Serializable

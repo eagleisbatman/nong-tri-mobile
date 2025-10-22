@@ -490,6 +490,14 @@ fun ChatScreen(
                                 }
                             )
                         }
+                        message.messageType == "diagnosis_pending" && message.role == com.nongtri.app.data.model.MessageRole.ASSISTANT -> {
+                            // Diagnosis pending - show informative card
+                            com.nongtri.app.ui.components.DiagnosisPendingCard(
+                                imageUrl = message.diagnosisPendingImageUrl ?: "",
+                                jobId = message.diagnosisPendingJobId ?: "",
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
                         message.diagnosisData != null && message.role == com.nongtri.app.data.model.MessageRole.ASSISTANT -> {
                             // AI diagnosis response
                             val ttsManager = com.nongtri.app.platform.LocalTextToSpeechManager.current

@@ -602,12 +602,12 @@ class ChatViewModel(
             return
         }
 
-        println("[ImageDiagnosis] Starting diagnosis upload...")
+        println("[ImageDiagnosis] Starting async diagnosis upload...")
         println("[ImageDiagnosis] Question: $question")
         println("[ImageDiagnosis] Image size: ${String.format("%.2f", estimatedSizeMB)}MB")
 
         // Note: Optimistic message should already be shown by caller
-        // We just need to set loading state and trigger AI response
+        // We just need to set loading state and submit diagnosis job
 
         _uiState.update { state ->
             state.copy(
@@ -616,94 +616,25 @@ class ChatViewModel(
             )
         }
 
-        // Create placeholder for streaming assistant message
-        val assistantMessageId = Uuid.random().toString()
-        val initialAssistantMessage = ChatMessage(
-            id = assistantMessageId,
-            role = MessageRole.ASSISTANT,
-            content = "",
-            timestamp = Clock.System.now(),
-            isLoading = true  // Mark as loading during streaming
-        )
-
-        _uiState.update { state ->
-            state.copy(messages = state.messages + initialAssistantMessage)
-        }
-
-        // Send to API with streaming
+        // Submit diagnosis job (async)
         viewModelScope.launch {
-            var firstChunkReceived = false
-
-            api.sendImageDiagnosisStream(
+            api.submitDiagnosisJob(
                 userId = userId,
-                message = question,
-                imageData = imageData,
-                onChunk = { chunk ->
-                    // On first chunk, clear loading state on user's image message
-                    // (indicates backend received image and started processing)
-                    if (!firstChunkReceived) {
-                        firstChunkReceived = true
-                        _uiState.update { state ->
-                            state.copy(
-                                messages = state.messages.map { msg ->
-                                    // Find most recent user image message with isLoading=true
-                                    if (msg.role == MessageRole.USER &&
-                                        msg.messageType == "image" &&
-                                        msg.isLoading) {
-                                        msg.copy(isLoading = false)
-                                    } else {
-                                        msg
-                                    }
-                                }
-                            )
-                        }
-                        println("[ImageDiagnosis] User image message loading cleared")
-                    }
-
-                    // Update the assistant message with each chunk
-                    _uiState.update { state ->
-                        state.copy(
-                            messages = state.messages.map { msg ->
-                                if (msg.id == assistantMessageId) {
-                                    msg.copy(content = msg.content + chunk)
-                                } else {
-                                    msg
-                                }
-                            }
-                        )
-                    }
-                },
-                onMetadata = { metadata ->
-                    // Update the assistant message with metadata (diagnosis data, conversation ID, etc.)
-                    println("[ImageDiagnosis] Metadata received: conversationId=${metadata.conversationId}, hasDiagnosisData=${metadata.diagnosisData != null}")
-                    _uiState.update { state ->
-                        state.copy(
-                            messages = state.messages.map { msg ->
-                                if (msg.id == assistantMessageId) {
-                                    msg.copy(
-                                        responseType = metadata.responseType,
-                                        followUpQuestions = metadata.followUpQuestions,
-                                        isGenericResponse = metadata.isGenericResponse,
-                                        language = metadata.language,
-                                        conversationId = metadata.conversationId,
-                                        diagnosisData = metadata.diagnosisData  // ✅ Store diagnosis data
-                                    )
-                                } else {
-                                    msg
-                                }
-                            }
-                        )
-                    }
-                }
+                imageUrl = imageUrl,
+                question = question
             ).fold(
-                onSuccess = { fullResponse ->
-                    // Mark loading as complete
-                    println("[ImageDiagnosis] ✓ Diagnosis complete, response length: ${fullResponse.length}")
+                onSuccess = { response ->
+                    println("[ImageDiagnosis] ✓ Job submitted: jobId=${response.jobId}")
+
+                    // Clear loading state on user's image message
                     _uiState.update { state ->
                         state.copy(
                             isLoading = false,
                             messages = state.messages.map { msg ->
-                                if (msg.id == assistantMessageId) {
+                                // Find most recent user image message with isLoading=true
+                                if (msg.role == MessageRole.USER &&
+                                    msg.messageType == "image" &&
+                                    msg.isLoading) {
                                     msg.copy(isLoading = false)
                                 } else {
                                     msg
@@ -711,15 +642,38 @@ class ChatViewModel(
                             }
                         )
                     }
+
+                    // Add informative "diagnosis pending" message
+                    val pendingMessageId = Uuid.random().toString()
+                    val pendingMessage = ChatMessage(
+                        id = pendingMessageId,
+                        role = MessageRole.ASSISTANT,
+                        content = response.message ?: "Your diagnosis is being processed. We'll notify you when it's ready!",
+                        timestamp = Clock.System.now(),
+                        messageType = "diagnosis_pending",
+                        diagnosisPendingJobId = response.jobId,
+                        diagnosisPendingImageUrl = imageUrl
+                    )
+
+                    _uiState.update { state ->
+                        state.copy(messages = state.messages + pendingMessage)
+                    }
                 },
                 onFailure = { error ->
-                    // Remove the placeholder message and show error
-                    println("[ImageDiagnosis] ✗ Error: ${error.message}")
+                    println("[ImageDiagnosis] ✗ Error submitting job: ${error.message}")
                     _uiState.update { state ->
                         state.copy(
-                            messages = state.messages.filter { it.id != assistantMessageId },
                             isLoading = false,
-                            error = error.message ?: "Failed to analyze image"
+                            messages = state.messages.map { msg ->
+                                if (msg.role == MessageRole.USER &&
+                                    msg.messageType == "image" &&
+                                    msg.isLoading) {
+                                    msg.copy(isLoading = false)
+                                } else {
+                                    msg
+                                }
+                            },
+                            error = error.message ?: "Failed to submit diagnosis"
                         )
                     }
                 }
