@@ -1,6 +1,7 @@
 package com.nongtri.app.ui.viewmodel
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Geocoder
@@ -367,6 +368,8 @@ actual class LocationViewModel actual constructor() : ViewModel() {
         ) == PackageManager.PERMISSION_GRANTED
     }
 
+    @SuppressLint("MissingPermission")
+    // Permission is checked by caller (shareCurrentLocation checks hasLocationPermission)
     private suspend fun getCurrentGPSLocation(): Location? {
         return try {
             val cancellationTokenSource = CancellationTokenSource()

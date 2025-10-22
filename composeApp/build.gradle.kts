@@ -15,6 +15,8 @@ kotlin {
         @OptIn(ExperimentalKotlinGradlePluginApi::class)
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_11)
+            // Suppress expect/actual Beta warnings
+            freeCompilerArgs.add("-Xexpect-actual-classes")
         }
     }
 

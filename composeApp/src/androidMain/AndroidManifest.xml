@@ -9,6 +9,8 @@
 
     <!-- Camera and image permissions for plant diagnosis -->
     <uses-permission android:name="android.permission.CAMERA" />
+    <!-- Declare camera as optional feature for ChromeOS compatibility -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" /> <!-- Android 13+ -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" /> <!-- Android 12 and below -->

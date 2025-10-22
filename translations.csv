@@ -183,3 +183,7 @@ cd_plant_image_fullscreen,Plant image fullscreen,Hình ảnh cây trồng toàn 
 cd_cancel_recording,Cancel recording,Hủy ghi âm,"Content description for cancel record button. For screen readers. Lowercase.",All,Accessibility
 cd_send_recording,Send recording,Gửi bản ghi,"Content description for send record button. For screen readers. Lowercase.",All,Accessibility
 cd_crop,Crop,Cây trồng,"Content description for crop icon. For screen readers.",All,Accessibility
+resume_voice_message,Resume,Tiếp tục,"Action to resume paused voice message. Action verb, short.",Voice,Actions
+plant_image_being_analyzed,Plant image being analyzed,Hình ảnh cây trồng đang được phân tích,"Content description for diagnosis pending image. For screen readers. Describes what's happening.",Diagnosis,Accessibility
+no_image,No image,Không có hình ảnh,"Message shown when image is missing or not available. Simple statement.",Image,Empty States
+crop_label,Crop,Cây trồng,"Label for crop/plant in diagnosis response. Noun, singular.",Diagnosis,Labels
