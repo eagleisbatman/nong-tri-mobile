@@ -657,10 +657,11 @@ class NongTriApi(
     /**
      * Submit plant image for async diagnosis
      * Returns job ID for tracking
+     * @param imageData Base64 data URL (data:image/jpeg;base64,...)
      */
     suspend fun submitDiagnosisJob(
         userId: String,
-        imageUrl: String,
+        imageData: String,
         question: String = "How is the health of my crop?"
     ): Result<DiagnosisJobResponse> {
         return try {
@@ -668,7 +669,7 @@ class NongTriApi(
                 contentType(ContentType.Application.Json)
                 setBody(DiagnosisJobRequest(
                     userId = userId,
-                    imageUrl = imageUrl,
+                    imageData = imageData,
                     question = question
                 ))
             }.body()
@@ -794,7 +795,7 @@ data class FCMRegistrationResponse(
 @kotlinx.serialization.Serializable
 data class DiagnosisJobRequest(
     val userId: String,
-    val imageUrl: String,
+    val imageData: String,  // Base64 data URL (data:image/jpeg;base64,...)
     val question: String
 )
 
@@ -802,6 +803,7 @@ data class DiagnosisJobRequest(
 data class DiagnosisJobResponse(
     val success: Boolean,
     val jobId: String? = null,
+    val imageUrl: String? = null,  // MinIO URL for preview
     val message: String? = null,
     val estimatedTimeMinutes: Int? = null,
     val error: String? = null

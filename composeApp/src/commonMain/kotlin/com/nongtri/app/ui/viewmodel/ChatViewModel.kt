@@ -706,7 +706,7 @@ class ChatViewModel(
         viewModelScope.launch {
             api.submitDiagnosisJob(
                 userId = userId,
-                imageUrl = imageUrl,
+                imageData = imageData,
                 question = question
             ).fold(
                 onSuccess = { response ->
@@ -738,7 +738,7 @@ class ChatViewModel(
                         timestamp = Clock.System.now(),
                         messageType = "diagnosis_pending",
                         diagnosisPendingJobId = response.jobId,
-                        diagnosisPendingImageUrl = imageUrl
+                        diagnosisPendingImageUrl = response.imageUrl  // Use MinIO URL from backend response
                     )
 
                     _uiState.update { state ->
