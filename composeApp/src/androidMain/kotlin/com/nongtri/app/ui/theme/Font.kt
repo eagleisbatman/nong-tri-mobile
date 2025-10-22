@@ -6,13 +6,13 @@ import androidx.compose.ui.text.font.FontWeight
 import com.nongtri.app.R
 
 /**
- * Be Vietnam Pro - A Vietnamese-optimized font family
+ * Be Vietnam Pro - Vietnamese-optimized font family
  *
- * Designed specifically for Vietnamese typography with:
+ * Specifically designed for Vietnamese typography with:
  * - Clear, properly-sized diacritics
  * - Excellent readability for Vietnamese text
  * - Proper kerning for Vietnamese characters
- * - Neo-Grotesk style suitable for UI/UX
+ * - Neo-Grotesk style suitable for modern UI/UX
  */
 private val BeVietnamProFontFamily = FontFamily(
     Font(R.font.be_vietnam_pro_regular, FontWeight.Normal),
