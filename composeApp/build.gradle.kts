@@ -47,6 +47,8 @@ kotlin {
             implementation(libs.ktor.client.logging)
             implementation(libs.multiplatform.markdown.m3)
             implementation(libs.compose.material.icons.extended)
+            implementation("io.coil-kt.coil3:coil-compose:3.0.0-rc02")
+            implementation("io.coil-kt.coil3:coil-network-ktor3:3.0.0-rc02")
         }
     }
 }

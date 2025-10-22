@@ -56,30 +56,7 @@ fun ImageMessageBubble(
                         model = message.imageUrl,
                         contentDescription = "Plant image",
                         modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop,
-                        error = {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .background(MaterialTheme.colorScheme.errorContainer),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Icon(
-                                        Icons.Default.BrokenImage,
-                                        contentDescription = "Failed to load image",
-                                        tint = MaterialTheme.colorScheme.error,
-                                        modifier = Modifier.size(48.dp)
-                                    )
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    Text(
-                                        "Failed to load image",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.error
-                                    )
-                                }
-                            }
-                        }
+                        contentScale = ContentScale.Crop
                     )
                 } else {
                     // Fallback: Show placeholder

@@ -155,7 +155,9 @@ class MainActivity : ComponentActivity() {
 
         ImagePicker.galleryLauncher = {
             pickImageLauncher.launch(
-                ActivityResultContracts.PickVisualMedia.ImageOnly
+                androidx.activity.result.PickVisualMediaRequest(
+                    ActivityResultContracts.PickVisualMedia.ImageOnly
+                )
             )
         }
 
