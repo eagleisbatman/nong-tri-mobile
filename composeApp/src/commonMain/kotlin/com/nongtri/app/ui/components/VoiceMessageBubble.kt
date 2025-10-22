@@ -12,6 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -27,6 +28,7 @@ fun VoiceMessageBubble(
     isPlaying: Boolean = false,
     currentPosition: Float = 0f,  // 0.0 to 1.0
     duration: Int = 0,  // seconds
+    strings: com.nongtri.app.l10n.Strings,
     onPlayPause: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -53,10 +55,11 @@ fun VoiceMessageBubble(
                         .size(48.dp)
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.primary)
+                        .testTag(TestTags.VOICE_PLAY_BUTTON)
                 ) {
                     Icon(
                         imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                        contentDescription = if (isPlaying) "Pause" else "Play",
+                        contentDescription = if (isPlaying) strings.cdPause else strings.cdPlay,
                         tint = MaterialTheme.colorScheme.onPrimary,
                         modifier = Modifier.size(24.dp)
                     )
@@ -127,7 +130,7 @@ fun VoiceMessageBubble(
                             color = MaterialTheme.colorScheme.primary
                         )
                         Text(
-                            text = "Transcribing...",
+                            text = strings.transcribing,
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                         )
@@ -146,7 +149,7 @@ fun VoiceMessageBubble(
             if (voiceAudioUrl == null) {
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "⚠ Audio not available",
+                    text = strings.audioNotAvailable,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error,
                     fontSize = 11.sp

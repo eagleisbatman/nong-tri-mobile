@@ -20,6 +20,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.nongtri.app.l10n.Strings
 import com.nongtri.app.ui.viewmodel.VoiceRecordingState
 import kotlin.math.absoluteValue
 
@@ -31,6 +32,7 @@ import kotlin.math.absoluteValue
 fun VoiceRecordingBar(
     recordingState: VoiceRecordingState,
     onCancel: () -> Unit,
+    strings: Strings,
     modifier: Modifier = Modifier
 ) {
     var offsetX by remember { mutableStateOf(0f) }
@@ -70,11 +72,12 @@ fun VoiceRecordingBar(
                     RecordingContent(
                         durationMs = recordingState.durationMs,
                         waveformAmplitudes = recordingState.waveformAmplitudes,
-                        offsetX = offsetX
+                        offsetX = offsetX,
+                        strings = strings
                     )
                 }
                 is VoiceRecordingState.Transcribing -> {
-                    TranscribingContent()
+                    TranscribingContent(strings = strings)
                 }
                 is VoiceRecordingState.Error -> {
                     ErrorContent(message = recordingState.message)
@@ -82,7 +85,7 @@ fun VoiceRecordingBar(
                 else -> {
                     // Should not happen, but show placeholder
                     Text(
-                        text = "Recording...",
+                        text = strings.recording,
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
@@ -100,12 +103,12 @@ fun VoiceRecordingBar(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = "Cancel",
+                        contentDescription = strings.cancel,
                         tint = MaterialTheme.colorScheme.error,
                         modifier = Modifier.size(20.dp)
                     )
                     Text(
-                        text = "Cancel",
+                        text = strings.cancel,
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodySmall
                     )
@@ -119,7 +122,8 @@ fun VoiceRecordingBar(
 private fun RecordingContent(
     durationMs: Long,
     waveformAmplitudes: List<Float>,
-    offsetX: Float
+    offsetX: Float,
+    strings: Strings
 ) {
     Row(
         modifier = Modifier
@@ -150,7 +154,7 @@ private fun RecordingContent(
         // Swipe left hint
         if (offsetX == 0f) {
             Text(
-                text = "< Slide to cancel",
+                text = strings.slideToCancelHint,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.6f)
             )
@@ -202,7 +206,7 @@ private fun Waveform(
 }
 
 @Composable
-private fun TranscribingContent() {
+private fun TranscribingContent(strings: Strings) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -214,7 +218,7 @@ private fun TranscribingContent() {
             color = MaterialTheme.colorScheme.onErrorContainer
         )
         Text(
-            text = "Transcribing...",
+            text = strings.transcribing,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onErrorContainer
         )

@@ -12,10 +12,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.nongtri.app.data.model.ConversationThread
+import com.nongtri.app.ui.components.TestTags
 import com.nongtri.app.ui.viewmodel.ConversationListViewModel
 import kotlinx.datetime.Instant
 import kotlin.time.Duration.Companion.days
@@ -27,33 +29,39 @@ fun ConversationListScreen(
     onThreadSelected: (Int, String?) -> Unit,
     onNavigateBack: () -> Unit,
     onNewConversation: (Int) -> Unit,
+    language: com.nongtri.app.l10n.Language,
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val strings = com.nongtri.app.l10n.LocalizationProvider.getStrings(language)
 
     Scaffold(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize().testTag(TestTags.CONVERSATIONS_SCREEN),
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        text = "Conversations",
+                        text = strings.conversations,
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Medium
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(
+                        onClick = onNavigateBack,
+                        modifier = Modifier.testTag(TestTags.BACK_BUTTON)
+                    ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = strings.cdBack
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface,
                     titleContentColor = MaterialTheme.colorScheme.onSurface
-                )
+                ),
+                modifier = Modifier.testTag(TestTags.CONVERSATIONS_TOP_BAR)
             )
         },
         floatingActionButton = {
@@ -63,11 +71,12 @@ fun ConversationListScreen(
                         onNewConversation(thread.id)
                     }
                 },
-                containerColor = MaterialTheme.colorScheme.primary
+                containerColor = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.testTag(TestTags.NEW_CONVERSATION_FAB)
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
-                    contentDescription = "New Conversation"
+                    contentDescription = strings.cdNewConversation
                 )
             }
         }
@@ -92,7 +101,7 @@ fun ConversationListScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = "Error loading conversations",
+                            text = strings.errorLoadingConversations,
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.error
                         )
@@ -103,8 +112,11 @@ fun ConversationListScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Spacer(modifier = Modifier.height(16.dp))
-                        Button(onClick = { viewModel.loadThreads() }) {
-                            Text("Retry")
+                        Button(
+                            onClick = { viewModel.loadThreads() },
+                            modifier = Modifier.testTag(TestTags.RETRY_BUTTON)
+                        ) {
+                            Text(strings.retry)
                         }
                     }
                 }
@@ -117,13 +129,13 @@ fun ConversationListScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = "No conversations yet",
+                            text = strings.noConversationsYet,
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "Tap + to start a new conversation",
+                            text = strings.noConversationsHint,
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -132,7 +144,7 @@ fun ConversationListScreen(
 
                 else -> {
                     LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier.fillMaxSize().testTag(TestTags.CONVERSATION_LIST),
                         contentPadding = PaddingValues(vertical = 8.dp)
                     ) {
                         items(
@@ -142,7 +154,8 @@ fun ConversationListScreen(
                             ConversationThreadItem(
                                 thread = thread,
                                 onClick = { onThreadSelected(thread.id, thread.title) },
-                                onDelete = { viewModel.deleteThread(thread.id) }
+                                onDelete = { viewModel.deleteThread(thread.id) },
+                                strings = strings
                             )
                         }
                     }
@@ -158,6 +171,7 @@ private fun ConversationThreadItem(
     thread: ConversationThread,
     onClick: () -> Unit,
     onDelete: () -> Unit,
+    strings: com.nongtri.app.l10n.Strings,
     modifier: Modifier = Modifier
 ) {
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -165,23 +179,28 @@ private fun ConversationThreadItem(
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-            title = { Text("Delete Conversation") },
-            text = { Text("Are you sure you want to delete this conversation? This action cannot be undone.") },
+            title = { Text(strings.deleteConversationTitle) },
+            text = { Text(strings.deleteConversationMessage) },
             confirmButton = {
                 TextButton(
                     onClick = {
                         showDeleteDialog = false
                         onDelete()
-                    }
+                    },
+                    modifier = Modifier.testTag(TestTags.DELETE_CONFIRM_BUTTON)
                 ) {
-                    Text("Delete", color = MaterialTheme.colorScheme.error)
+                    Text(strings.deleteConversationConfirm, color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) {
-                    Text("Cancel")
+                TextButton(
+                    onClick = { showDeleteDialog = false },
+                    modifier = Modifier.testTag(TestTags.DELETE_CANCEL_BUTTON)
+                ) {
+                    Text(strings.cancel)
                 }
-            }
+            },
+            modifier = Modifier.testTag(TestTags.DELETE_DIALOG)
         )
     }
 
@@ -189,7 +208,8 @@ private fun ConversationThreadItem(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 4.dp)
-            .clickable(onClick = onClick),
+            .clickable(onClick = onClick)
+            .testTag(TestTags.conversationItem(thread.id)),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
         )
@@ -219,7 +239,7 @@ private fun ConversationThreadItem(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "${thread.messageCount} messages",
+                        text = "${thread.messageCount}${strings.messageCountSuffix}",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -231,17 +251,20 @@ private fun ConversationThreadItem(
                     )
 
                     Text(
-                        text = formatRelativeTime(thread.getLastActivityTime()),
+                        text = formatRelativeTime(thread.getLastActivityTime(), strings),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
 
-            IconButton(onClick = { showDeleteDialog = true }) {
+            IconButton(
+                onClick = { showDeleteDialog = true },
+                modifier = Modifier.testTag(TestTags.deleteButton(thread.id))
+            ) {
                 Icon(
                     imageVector = Icons.Default.Delete,
-                    contentDescription = "Delete conversation",
+                    contentDescription = strings.cdDeleteConversation,
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -249,15 +272,15 @@ private fun ConversationThreadItem(
     }
 }
 
-private fun formatRelativeTime(instant: Instant): String {
+private fun formatRelativeTime(instant: Instant, strings: com.nongtri.app.l10n.Strings): String {
     val now = kotlinx.datetime.Clock.System.now()
     val duration = now - instant
 
     return when {
-        duration < 1.days -> "Today"
-        duration < 2.days -> "Yesterday"
-        duration < 7.days -> "${duration.inWholeDays} days ago"
-        duration < 30.days -> "${duration.inWholeDays / 7} weeks ago"
-        else -> "${duration.inWholeDays / 30} months ago"
+        duration < 1.days -> strings.today
+        duration < 2.days -> strings.yesterday
+        duration < 7.days -> "${duration.inWholeDays}${strings.daysAgo}"
+        duration < 30.days -> "${duration.inWholeDays / 7}${strings.weeksAgo}"
+        else -> "${duration.inWholeDays / 30}${strings.monthsAgo}"
     }
 }

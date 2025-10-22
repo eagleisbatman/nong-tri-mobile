@@ -29,6 +29,7 @@ import coil3.compose.AsyncImage
 fun DiagnosisPendingCard(
     imageUrl: String,
     jobId: String,
+    strings: com.nongtri.app.l10n.Strings,
     modifier: Modifier = Modifier
 ) {
     // Pulsing animation for the status indicator
@@ -58,7 +59,7 @@ fun DiagnosisPendingCard(
             // Uploaded image preview
             AsyncImage(
                 model = imageUrl,
-                contentDescription = "Plant image being analyzed",
+                contentDescription = strings.plantImageBeingAnalyzed,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(200.dp)
@@ -88,7 +89,7 @@ fun DiagnosisPendingCard(
                 Spacer(modifier = Modifier.width(12.dp))
 
                 Text(
-                    text = "Analyzing your crop photo...",
+                    text = strings.analyzingYourCrop,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSecondaryContainer
@@ -115,7 +116,7 @@ fun DiagnosisPendingCard(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Estimated time: 2-3 minutes",
+                        text = strings.estimatedTime,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSecondaryContainer
                     )
@@ -134,7 +135,7 @@ fun DiagnosisPendingCard(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "We'll notify you when it's ready",
+                        text = strings.notificationWhenReady,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSecondaryContainer
                     )
@@ -154,7 +155,7 @@ fun DiagnosisPendingCard(
                     modifier = Modifier.padding(12.dp)
                 ) {
                     Text(
-                        text = "What's happening?",
+                        text = strings.whatsHappening,
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -163,11 +164,7 @@ fun DiagnosisPendingCard(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
-                        text = "Our AI is carefully analyzing your crop photo to identify:\n" +
-                                "• Crop type\n" +
-                                "• Health status\n" +
-                                "• Any diseases or issues\n" +
-                                "• Recommendations for care",
+                        text = strings.diagnosisPendingExplanation,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
                         lineHeight = MaterialTheme.typography.bodySmall.lineHeight * 1.4f
@@ -176,7 +173,7 @@ fun DiagnosisPendingCard(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
-                        text = "You can close this app and continue your work. We'll send you a notification when the diagnosis is ready!",
+                        text = strings.diagnosisPendingInfo,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Medium
@@ -188,7 +185,7 @@ fun DiagnosisPendingCard(
 
             // Job ID for reference (small text)
             Text(
-                text = "Job ID: ${jobId.take(8)}...",
+                text = "${strings.jobIdLabel}${jobId.take(8)}...",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.5f),
                 modifier = Modifier.fillMaxWidth(),

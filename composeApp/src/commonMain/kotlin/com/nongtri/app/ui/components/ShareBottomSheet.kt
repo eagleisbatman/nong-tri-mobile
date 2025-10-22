@@ -9,20 +9,25 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import com.nongtri.app.l10n.Language
+import com.nongtri.app.l10n.LocalizationProvider
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ShareBottomSheet(
+    language: Language,
     messageContent: String,
     onDismiss: () -> Unit,
     onShareAsText: () -> Unit,
     onShareAsImage: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val strings = LocalizationProvider.getStrings(language)
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        modifier = modifier
+        modifier = modifier.testTag(TestTags.SHARE_BOTTOM_SHEET)
     ) {
         Column(
             modifier = Modifier
@@ -30,7 +35,7 @@ fun ShareBottomSheet(
                 .padding(16.dp)
         ) {
             Text(
-                text = "Share Response",
+                text = strings.shareResponse,
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.padding(bottom = 16.dp)
             )
@@ -38,12 +43,13 @@ fun ShareBottomSheet(
             // Share as text
             ShareOption(
                 icon = Icons.AutoMirrored.Filled.Send,
-                title = "Share as Text",
-                description = "Share via messaging apps",
+                title = strings.shareAsText,
+                description = strings.shareViaMessaging,
                 onClick = {
                     onShareAsText()
                     onDismiss()
-                }
+                },
+                testTag = TestTags.SHARE_AS_TEXT
             )
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
@@ -51,12 +57,13 @@ fun ShareBottomSheet(
             // Share as image
             ShareOption(
                 icon = Icons.Default.CameraAlt,
-                title = "Share as Image",
-                description = "Save or share as screenshot",
+                title = strings.shareAsImage,
+                description = strings.saveOrShareScreenshot,
                 onClick = {
                     onShareAsImage()
                     onDismiss()
-                }
+                },
+                testTag = TestTags.SHARE_AS_IMAGE
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -69,13 +76,15 @@ private fun ShareOption(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     title: String,
     description: String,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    testTag: String
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(vertical = 12.dp),
+            .padding(vertical = 12.dp)
+            .testTag(testTag),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(

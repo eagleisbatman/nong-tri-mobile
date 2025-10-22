@@ -10,8 +10,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.nongtri.app.l10n.Strings
+import com.nongtri.app.ui.components.TestTags
 
 @Composable
 fun WhatsAppStyleInputBar(
@@ -29,7 +31,7 @@ fun WhatsAppStyleInputBar(
     modifier: Modifier = Modifier
 ) {
     Surface(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth().testTag(TestTags.INPUT_AREA),
         color = MaterialTheme.colorScheme.surface,
         tonalElevation = 3.dp
     ) {
@@ -45,11 +47,11 @@ fun WhatsAppStyleInputBar(
                 IconButton(
                     onClick = onImageClick,
                     enabled = isEnabled,
-                    modifier = Modifier.size(40.dp)  // Smaller icon
+                    modifier = Modifier.size(40.dp).testTag(TestTags.IMAGE_BUTTON)  // Smaller icon
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.CameraAlt,
-                        contentDescription = "Attach image",
+                        contentDescription = strings.attachImage,
                         modifier = Modifier.size(24.dp),
                         tint = if (isEnabled) MaterialTheme.colorScheme.primary
                               else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
@@ -61,10 +63,10 @@ fun WhatsAppStyleInputBar(
             OutlinedTextField(
                 value = value,
                 onValueChange = onValueChange,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f).testTag(TestTags.TEXT_FIELD),
                 placeholder = {
                     Text(
-                        text = if (isTranscribing) "Transcribing..." else strings.typeMessage,
+                        text = if (isTranscribing) strings.transcribing else strings.typeMessage,
                         style = MaterialTheme.typography.bodyMedium  // Smaller font
                     )
                 },
@@ -99,7 +101,7 @@ fun WhatsAppStyleInputBar(
                     colors = IconButtonDefaults.filledIconButtonColors(
                         containerColor = MaterialTheme.colorScheme.primary
                     ),
-                    modifier = Modifier.size(44.dp)  // Slightly smaller
+                    modifier = Modifier.size(44.dp).testTag(TestTags.SEND_BUTTON)  // Slightly smaller
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.Send,
@@ -113,11 +115,11 @@ fun WhatsAppStyleInputBar(
                 IconButton(
                     onClick = onVoiceClick,
                     enabled = isEnabled,
-                    modifier = Modifier.size(44.dp)  // Slightly smaller
+                    modifier = Modifier.size(44.dp).testTag(TestTags.VOICE_BUTTON)  // Slightly smaller
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.Mic,
-                        contentDescription = "Voice input",
+                        contentDescription = strings.cdVoiceInput,
                         modifier = Modifier.size(24.dp),
                         tint = if (isEnabled) MaterialTheme.colorScheme.primary
                               else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)

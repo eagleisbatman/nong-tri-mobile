@@ -12,11 +12,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil3.compose.AsyncImage
+import com.nongtri.app.ui.components.TestTags
+import com.nongtri.app.l10n.Language
+import com.nongtri.app.l10n.LocalizationProvider
 
 /**
  * Dialog for previewing selected image before sending for diagnosis
@@ -25,12 +29,14 @@ import coil3.compose.AsyncImage
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ImagePreviewDialog(
+    language: Language,
     imageUri: String,
     onDismiss: () -> Unit,
     onConfirm: (question: String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var question by remember { mutableStateOf("How is the health of my crop?") }
+    val strings = LocalizationProvider.getStrings(language)
+    var question by remember { mutableStateOf(strings.defaultPlantQuestion) }
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -43,14 +49,15 @@ fun ImagePreviewDialog(
         Column(
             modifier = modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background),
+                .background(MaterialTheme.colorScheme.background)
+                .testTag(TestTags.IMAGE_PREVIEW_DIALOG),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             // Top bar with close button
             TopAppBar(
                 title = {
                     Text(
-                        "Confirm Image",
+                        strings.confirmImage,
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Medium
                     )
@@ -59,7 +66,7 @@ fun ImagePreviewDialog(
                     IconButton(onClick = onDismiss) {
                         Icon(
                             Icons.Default.Close,
-                            contentDescription = "Cancel",
+                            contentDescription = strings.cdCancel,
                             tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
@@ -83,7 +90,7 @@ fun ImagePreviewDialog(
                 ) {
                     AsyncImage(
                         model = imageUri,
-                        contentDescription = "Selected plant image",
+                        contentDescription = strings.cdSelectedPlantImage,
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Fit
                     )
@@ -102,7 +109,7 @@ fun ImagePreviewDialog(
                         .padding(16.dp)
                 ) {
                     Text(
-                        text = "Ask a question about your plant:",
+                        text = strings.askQuestionAboutPlant,
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(bottom = 8.dp)
@@ -111,8 +118,8 @@ fun ImagePreviewDialog(
                     OutlinedTextField(
                         value = question,
                         onValueChange = { question = it },
-                        modifier = Modifier.fillMaxWidth(),
-                        placeholder = { Text("How is the health of my crop?") },
+                        modifier = Modifier.fillMaxWidth().testTag(TestTags.QUESTION_INPUT),
+                        placeholder = { Text(strings.defaultPlantQuestion) },
                         minLines = 2,
                         maxLines = 4,
                         shape = RoundedCornerShape(12.dp)
@@ -126,17 +133,17 @@ fun ImagePreviewDialog(
                     ) {
                         OutlinedButton(
                             onClick = onDismiss,
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f).testTag(TestTags.CANCEL_BUTTON)
                         ) {
-                            Text("Cancel")
+                            Text(strings.cancel)
                         }
 
                         Button(
                             onClick = {
-                                val finalQuestion = question.ifBlank { "How is the health of my crop?" }
+                                val finalQuestion = question.ifBlank { strings.defaultPlantQuestion }
                                 onConfirm(finalQuestion)
                             },
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier.weight(1f).testTag(TestTags.SEND_DIAGNOSIS_BUTTON),
                             enabled = question.isNotBlank()
                         ) {
                             Icon(
@@ -145,14 +152,14 @@ fun ImagePreviewDialog(
                                 modifier = Modifier.size(20.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Send for Diagnosis")
+                            Text(strings.sendForDiagnosis)
                         }
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
-                        text = "The AI will analyze your plant image and provide health diagnosis with treatment recommendations.",
+                        text = strings.diagnosisInfoText,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

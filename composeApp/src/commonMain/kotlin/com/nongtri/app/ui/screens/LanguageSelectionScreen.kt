@@ -9,10 +9,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.nongtri.app.l10n.Language
+import com.nongtri.app.l10n.LocalizationProvider
+import com.nongtri.app.ui.components.TestTags
 
 @Composable
 fun LanguageSelectionScreen(
@@ -20,9 +23,10 @@ fun LanguageSelectionScreen(
     modifier: Modifier = Modifier
 ) {
     var selectedLanguage by remember { mutableStateOf<Language?>(null) }
+    val strings = LocalizationProvider.getStrings(selectedLanguage ?: Language.ENGLISH)
 
     Surface(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize().testTag(TestTags.LANGUAGE_SELECTION_SCREEN),
         color = MaterialTheme.colorScheme.background
     ) {
         Column(
@@ -34,7 +38,7 @@ fun LanguageSelectionScreen(
         ) {
             // Title
             Text(
-                text = "Nông Trí",
+                text = strings.appName,
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
@@ -43,7 +47,7 @@ fun LanguageSelectionScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "AI Farming Assistant",
+                text = strings.appTagline,
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -52,7 +56,7 @@ fun LanguageSelectionScreen(
 
             // Language selection prompt
             Text(
-                text = "Select Language / Chọn ngôn ngữ",
+                text = strings.selectLanguageBilingual,
                 style = MaterialTheme.typography.titleMedium,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(bottom = 24.dp)
@@ -80,14 +84,12 @@ fun LanguageSelectionScreen(
                 enabled = selectedLanguage != null,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(48.dp),
+                    .height(48.dp)
+                    .testTag(TestTags.CONTINUE_BUTTON),
                 shape = RoundedCornerShape(8.dp)
             ) {
                 Text(
-                    text = when (selectedLanguage) {
-                        Language.VIETNAMESE -> "Tiếp tục"
-                        else -> "Continue"
-                    },
+                    text = strings.continue_,
                     style = MaterialTheme.typography.titleMedium
                 )
             }
@@ -105,7 +107,8 @@ private fun LanguageOption(
     Surface(
         modifier = modifier
             .clip(RoundedCornerShape(8.dp))
-            .clickable(onClick = onClick),
+            .clickable(onClick = onClick)
+            .testTag(TestTags.languageCard(language.code)),
         color = if (isSelected) {
             MaterialTheme.colorScheme.primaryContainer
         } else {

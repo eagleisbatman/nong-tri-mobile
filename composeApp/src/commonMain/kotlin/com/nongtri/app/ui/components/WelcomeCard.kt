@@ -124,6 +124,7 @@ fun WelcomeCard(
             if (isLoadingQuestions) {
                 // Show loading skeleton
                 StarterQuestionsLoadingSkeleton(
+                    strings = strings,
                     modifier = Modifier.padding(top = 16.dp)
                 )
             } else if (starterQuestions.isNotEmpty()) {
@@ -140,6 +141,7 @@ fun WelcomeCard(
 
 @Composable
 private fun StarterQuestionsLoadingSkeleton(
+    strings: Strings,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -159,7 +161,7 @@ private fun StarterQuestionsLoadingSkeleton(
                 style = MaterialTheme.typography.titleMedium
             )
             Text(
-                text = "Building your experience...",
+                text = strings.buildingExperience,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface

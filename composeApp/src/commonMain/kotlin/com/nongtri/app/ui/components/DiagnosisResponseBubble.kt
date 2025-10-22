@@ -9,12 +9,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.nongtri.app.data.model.ChatMessage
 import com.nongtri.app.data.model.HealthStatusColor
 import com.nongtri.app.data.model.getHealthStatusColor
 import com.nongtri.app.data.model.getSeverityIcon
+import com.nongtri.app.ui.components.TestTags
 
 /**
  * Message bubble for AI diagnosis responses
@@ -24,6 +26,7 @@ import com.nongtri.app.data.model.getSeverityIcon
 @Composable
 fun DiagnosisResponseBubble(
     message: ChatMessage,
+    strings: com.nongtri.app.l10n.Strings,
     onTtsClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
@@ -50,7 +53,7 @@ fun DiagnosisResponseBubble(
                     ) {
                         Icon(
                             Icons.Default.Eco,
-                            contentDescription = "Crop",
+                            contentDescription = strings.cropLabel,
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(20.dp)
                         )
@@ -90,7 +93,7 @@ fun DiagnosisResponseBubble(
 
                         Icon(
                             Icons.Default.HealthAndSafety,
-                            contentDescription = "Health status",
+                            contentDescription = strings.healthStatus,
                             tint = healthColor,
                             modifier = Modifier.size(20.dp)
                         )
@@ -110,7 +113,7 @@ fun DiagnosisResponseBubble(
                         Spacer(modifier = Modifier.height(12.dp))
 
                         Text(
-                            text = "Detected Issues:",
+                            text = strings.detectedIssues,
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSecondaryContainer
@@ -136,13 +139,13 @@ fun DiagnosisResponseBubble(
                                         color = MaterialTheme.colorScheme.onSecondaryContainer
                                     )
                                     Text(
-                                        text = "${issue.category} • Severity: ${issue.severity}",
+                                        text = "${issue.category}${strings.severityLabel}${issue.severity}",
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
                                     )
                                     if (issue.affectedParts.isNotEmpty()) {
                                         Text(
-                                            text = "Affected: ${issue.affectedParts.joinToString(", ")}",
+                                            text = "${strings.affectedLabel}${issue.affectedParts.joinToString(", ")}",
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.6f)
                                         )
@@ -156,7 +159,7 @@ fun DiagnosisResponseBubble(
                     message.diagnosisData.growthStage?.let { stage ->
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "Growth Stage: $stage",
+                            text = "${strings.growthStage}$stage",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
                         )
@@ -190,7 +193,7 @@ fun DiagnosisResponseBubble(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Analyzing plant health...",
+                            text = strings.analyzingPlantHealth,
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                         )
@@ -205,15 +208,15 @@ fun DiagnosisResponseBubble(
 
                     TextButton(
                         onClick = onTtsClick,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth().testTag(TestTags.DIAGNOSIS_TTS_BUTTON)
                     ) {
                         Icon(
                             Icons.Default.VolumeUp,
-                            contentDescription = "Listen to advice",
+                            contentDescription = strings.listenToAdvice,
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Listen to advice")
+                        Text(strings.listenToAdvice)
                     }
                 }
             }
@@ -232,15 +235,16 @@ fun DiagnosisResponseBubble(
 
 /**
  * Format timestamp for message display
+ * Note: This is a simplified version - ideally should be passed strings parameter
  */
 private fun formatTimestamp(timestamp: kotlinx.datetime.Instant): String {
     val now = kotlinx.datetime.Clock.System.now()
     val duration = now - timestamp
 
     return when {
-        duration.inWholeMinutes < 1 -> "Just now"
-        duration.inWholeMinutes < 60 -> "${duration.inWholeMinutes}m ago"
-        duration.inWholeHours < 24 -> "${duration.inWholeHours}h ago"
+        duration.inWholeMinutes < 1 -> "Just now"  // TODO: Use strings.justNow
+        duration.inWholeMinutes < 60 -> "${duration.inWholeMinutes}m ago"  // TODO: Use strings.minutesAgo
+        duration.inWholeHours < 24 -> "${duration.inWholeHours}h ago"  // TODO: Use strings.hoursAgo
         else -> {
             val local = timestamp.toString()
             local.substring(0, 16).replace("T", " ")

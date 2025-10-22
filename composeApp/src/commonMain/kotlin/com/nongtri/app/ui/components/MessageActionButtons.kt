@@ -10,6 +10,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import com.nongtri.app.l10n.Language
@@ -22,6 +23,7 @@ import kotlinx.coroutines.launch
 fun MessageActionButtons(
     messageContent: String,
     language: Language,
+    strings: com.nongtri.app.l10n.Strings,
     isGenericResponse: Boolean = false,  // true = greeting/casual, false = agricultural advice
     cachedAudioUrl: String? = null,  // Cached TTS audio URL
     onCopy: () -> Unit,
@@ -59,11 +61,11 @@ fun MessageActionButtons(
                     showCopiedSnackbar = true
                     onCopy()
                 },
-                modifier = Modifier.size(32.dp)
+                modifier = Modifier.size(32.dp).testTag(TestTags.COPY_BUTTON)
             ) {
                 Icon(
                     imageVector = Icons.Outlined.ContentCopy,
-                    contentDescription = "Copy",
+                    contentDescription = strings.cdCopy,
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(18.dp)
                 )
@@ -72,11 +74,11 @@ fun MessageActionButtons(
             // Share button (only for agricultural responses)
             IconButton(
                 onClick = { showShareSheet = true },
-                modifier = Modifier.size(32.dp)
+                modifier = Modifier.size(32.dp).testTag(TestTags.SHARE_BUTTON)
             ) {
                 Icon(
                     imageVector = Icons.Outlined.Share,
-                    contentDescription = "Share",
+                    contentDescription = strings.cdShare,
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(18.dp)
                 )
@@ -119,7 +121,7 @@ fun MessageActionButtons(
                 }
             },
             enabled = ttsState != TtsState.LOADING,
-            modifier = Modifier.size(32.dp)
+            modifier = Modifier.size(32.dp).testTag(TestTags.TTS_BUTTON)
         ) {
             when (ttsState) {
                 TtsState.LOADING -> {
@@ -132,7 +134,7 @@ fun MessageActionButtons(
                 TtsState.PLAYING -> {
                     Icon(
                         imageVector = Icons.Filled.Pause,
-                        contentDescription = "Pause",
+                        contentDescription = strings.cdPause,
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(18.dp)
                     )
@@ -140,7 +142,7 @@ fun MessageActionButtons(
                 TtsState.PAUSED -> {
                     Icon(
                         imageVector = Icons.Filled.PlayArrow,
-                        contentDescription = "Resume",
+                        contentDescription = strings.resumeVoiceMessage,
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(18.dp)
                     )
@@ -148,7 +150,7 @@ fun MessageActionButtons(
                 TtsState.ERROR -> {
                     Icon(
                         imageVector = Icons.AutoMirrored.Outlined.VolumeUp,
-                        contentDescription = "Listen (Error - tap to retry)",
+                        contentDescription = strings.actionListenError,
                         tint = MaterialTheme.colorScheme.error,
                         modifier = Modifier.size(18.dp)
                     )
@@ -156,7 +158,7 @@ fun MessageActionButtons(
                 TtsState.IDLE -> {
                     Icon(
                         imageVector = Icons.AutoMirrored.Outlined.VolumeUp,
-                        contentDescription = "Listen",
+                        contentDescription = strings.actionListen,
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(18.dp)
                     )
@@ -173,11 +175,11 @@ fun MessageActionButtons(
                     feedbackGiven = true
                     onFeedback(true)
                 },
-                modifier = Modifier.size(32.dp)
+                modifier = Modifier.size(32.dp).testTag(TestTags.THUMBS_UP_BUTTON)
             ) {
                 Icon(
                     imageVector = if (feedbackGiven == true) Icons.Filled.ThumbUp else Icons.Outlined.ThumbUp,
-                    contentDescription = "Good response",
+                    contentDescription = strings.actionThumbsUp,
                     tint = if (feedbackGiven == true) MaterialTheme.colorScheme.primary
                            else MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(18.dp)
@@ -190,11 +192,11 @@ fun MessageActionButtons(
                     feedbackGiven = false
                     onFeedback(false)
                 },
-                modifier = Modifier.size(32.dp)
+                modifier = Modifier.size(32.dp).testTag(TestTags.THUMBS_DOWN_BUTTON)
             ) {
                 Icon(
                     imageVector = if (feedbackGiven == false) Icons.Filled.ThumbDown else Icons.Outlined.ThumbDown,
-                    contentDescription = "Bad response",
+                    contentDescription = strings.actionThumbsDown,
                     tint = if (feedbackGiven == false) MaterialTheme.colorScheme.error
                            else MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(18.dp)
@@ -214,12 +216,13 @@ fun MessageActionButtons(
     // Share bottom sheet
     if (showShareSheet) {
         ShareBottomSheet(
+            language = language,
             messageContent = messageContent,
             onDismiss = { showShareSheet = false },
             onShareAsText = {
                 shareManager.shareText(
                     text = messageContent,
-                    title = "Share AI Response"
+                    title = strings.shareAiResponse
                 )
                 onShare()
             },

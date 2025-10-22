@@ -7,8 +7,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.nongtri.app.l10n.Language
+import com.nongtri.app.l10n.LocalizationProvider
 
 /**
  * Bottom sheet for selecting image source (Camera or Gallery)
@@ -16,14 +19,16 @@ import androidx.compose.ui.unit.dp
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ImageSourceBottomSheet(
+    language: Language,
     onCameraClick: () -> Unit,
     onGalleryClick: () -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val strings = LocalizationProvider.getStrings(language)
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        modifier = modifier,
+        modifier = modifier.testTag(TestTags.IMAGE_SOURCE_SHEET),
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     ) {
         Column(
@@ -39,12 +44,15 @@ fun ImageSourceBottomSheet(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Select Image Source",
+                    text = strings.selectImageSource,
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
-                IconButton(onClick = onDismiss) {
-                    Icon(Icons.Default.Close, contentDescription = "Close")
+                IconButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.testTag(TestTags.CLOSE_BUTTON)
+                ) {
+                    Icon(Icons.Default.Close, contentDescription = strings.cdClose)
                 }
             }
 
@@ -56,7 +64,7 @@ fun ImageSourceBottomSheet(
                     onCameraClick()
                     onDismiss()
                 },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().testTag(TestTags.CAMERA_OPTION),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceVariant
                 )
@@ -69,19 +77,19 @@ fun ImageSourceBottomSheet(
                 ) {
                     Icon(
                         imageVector = Icons.Default.CameraAlt,
-                        contentDescription = "Camera",
+                        contentDescription = strings.cdCamera,
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(32.dp)
                     )
                     Spacer(modifier = Modifier.width(16.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Take Photo",
+                            text = strings.takePhoto,
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Medium
                         )
                         Text(
-                            text = "Capture a new photo of your plant",
+                            text = strings.captureNewPhoto,
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -102,7 +110,7 @@ fun ImageSourceBottomSheet(
                     onGalleryClick()
                     onDismiss()
                 },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().testTag(TestTags.GALLERY_OPTION),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceVariant
                 )
@@ -115,19 +123,19 @@ fun ImageSourceBottomSheet(
                 ) {
                     Icon(
                         imageVector = Icons.Default.PhotoLibrary,
-                        contentDescription = "Gallery",
+                        contentDescription = strings.cdGallery,
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(32.dp)
                     )
                     Spacer(modifier = Modifier.width(16.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Choose from Gallery",
+                            text = strings.chooseFromGallery,
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Medium
                         )
                         Text(
-                            text = "Select an existing photo",
+                            text = strings.selectExistingPhoto,
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -144,7 +152,7 @@ fun ImageSourceBottomSheet(
 
             // Info text
             Text(
-                text = "For best results, take clear photos in good lighting with the plant filling most of the frame.",
+                text = strings.imageTipsText,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(vertical = 8.dp)

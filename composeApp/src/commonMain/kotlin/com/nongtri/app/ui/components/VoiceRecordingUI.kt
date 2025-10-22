@@ -11,7 +11,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import com.nongtri.app.l10n.Strings
 import kotlinx.coroutines.delay
 
 /**
@@ -40,6 +42,7 @@ fun VoiceRecordingUI(
     onStopRecording: () -> Unit,
     onCancel: () -> Unit = {},
     amplitude: Int = 0,
+    strings: Strings,
     modifier: Modifier = Modifier
 ) {
     when (state) {
@@ -93,7 +96,7 @@ fun VoiceRecordingUI(
                             // Cancel button
                             FilledTonalIconButton(
                                 onClick = onCancel,
-                                modifier = Modifier.size(64.dp),
+                                modifier = Modifier.size(64.dp).testTag(TestTags.VOICE_CANCEL_BUTTON),
                                 colors = IconButtonDefaults.filledTonalIconButtonColors(
                                     containerColor = MaterialTheme.colorScheme.errorContainer,
                                     contentColor = MaterialTheme.colorScheme.onErrorContainer
@@ -101,7 +104,7 @@ fun VoiceRecordingUI(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Close,
-                                    contentDescription = "Cancel recording",
+                                    contentDescription = strings.cdCancelRecording,
                                     modifier = Modifier.size(32.dp)
                                 )
                             }
@@ -109,7 +112,7 @@ fun VoiceRecordingUI(
                             // Send button (stop and transcribe)
                             FilledIconButton(
                                 onClick = onStopRecording,
-                                modifier = Modifier.size(64.dp),
+                                modifier = Modifier.size(64.dp).testTag(TestTags.VOICE_SEND_BUTTON),
                                 colors = IconButtonDefaults.filledIconButtonColors(
                                     containerColor = MaterialTheme.colorScheme.primary,
                                     contentColor = MaterialTheme.colorScheme.onPrimary
@@ -117,7 +120,7 @@ fun VoiceRecordingUI(
                             ) {
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Filled.Send,
-                                    contentDescription = "Send recording",
+                                    contentDescription = strings.cdSendRecording,
                                     modifier = Modifier.size(32.dp)
                                 )
                             }

@@ -39,6 +39,7 @@ fun MessageBubble(
     onAudioUrlCached: (String, String) -> Unit = { _, _ -> },  // (messageId, audioUrl)
     modifier: Modifier = Modifier
 ) {
+    val strings = com.nongtri.app.l10n.LocalizationProvider.getStrings(language)
     val isUser = message.role == MessageRole.USER
 
     // Voice message player for user voice recordings
@@ -99,7 +100,7 @@ fun MessageBubble(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = if (isUser) "You" else "Nông Trí AI",
+                        text = if (isUser) strings.userLabel else strings.aiLabel,
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -137,6 +138,7 @@ fun MessageBubble(
                                 isPlaying = isThisMessagePlaying,
                                 currentPosition = positionPercent,
                                 duration = displayDuration,
+                                strings = strings,
                                 onPlayPause = {
                                     message.voiceAudioUrl?.let { url ->
                                         if (isThisMessagePlaying) {
@@ -172,6 +174,7 @@ fun MessageBubble(
                             MessageActionButtons(
                                 messageContent = message.content,
                                 language = language,
+                                strings = strings,
                                 isGenericResponse = message.isGenericResponse,
                                 cachedAudioUrl = message.audioUrl,
                                 onCopy = { },
@@ -195,7 +198,7 @@ fun MessageBubble(
                             ) {
                                 // Section header
                                 Text(
-                                    text = "💡 What's next?",
+                                    text = strings.followUpSectionHeader,
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.SemiBold,
                                     color = MaterialTheme.colorScheme.onSurface,
@@ -207,7 +210,7 @@ fun MessageBubble(
                                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                                     verticalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
-                                    message.followUpQuestions.forEach { question ->
+                                    message.followUpQuestions.forEachIndexed { questionIndex, question ->
                                         SuggestionChip(
                                             onClick = { onFollowUpClick(question) },
                                             label = {
@@ -219,7 +222,9 @@ fun MessageBubble(
                                                     modifier = Modifier.padding(vertical = 8.dp, horizontal = 6.dp)
                                                 )
                                             },
-                                            modifier = Modifier.fillMaxWidth()
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .testTag(TestTags.followUpQuestion(questionIndex))
                                         )
                                     }
                                 }

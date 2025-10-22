@@ -15,12 +15,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil3.compose.AsyncImage
 import com.nongtri.app.data.model.DiagnosisData
+import com.nongtri.app.ui.components.TestTags
+import com.nongtri.app.l10n.Language
+import com.nongtri.app.l10n.LocalizationProvider
 
 /**
  * Full-screen dialog for viewing plant images
@@ -30,11 +34,13 @@ import com.nongtri.app.data.model.DiagnosisData
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FullscreenImageDialog(
+    language: Language,
     imageUrl: String,
     diagnosisData: DiagnosisData? = null,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val strings = LocalizationProvider.getStrings(language)
     // Zoom and pan state
     var scale by remember { mutableStateOf(1f) }
     var offset by remember { mutableStateOf(Offset.Zero) }
@@ -51,11 +57,12 @@ fun FullscreenImageDialog(
             modifier = modifier
                 .fillMaxSize()
                 .background(Color.Black)
+                .testTag(TestTags.FULLSCREEN_IMAGE_DIALOG)
         ) {
             // Zoomable image (loading/error states handled by Coil internally)
             AsyncImage(
                 model = imageUrl,
-                contentDescription = "Plant image fullscreen",
+                contentDescription = strings.cdPlantImageFullscreen,
                 modifier = Modifier
                     .fillMaxSize()
                     .graphicsLayer(
@@ -89,15 +96,18 @@ fun FullscreenImageDialog(
             TopAppBar(
                 title = {
                     Text(
-                        "Plant Image",
+                        strings.plantImage,
                         color = Color.White
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onDismiss) {
+                    IconButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.testTag(TestTags.CLOSE_BUTTON)
+                    ) {
                         Icon(
                             Icons.Default.Close,
-                            contentDescription = "Close",
+                            contentDescription = strings.cdClose,
                             tint = Color.White
                         )
                     }
@@ -142,7 +152,7 @@ fun FullscreenImageDialog(
 
                         // Health status
                         Text(
-                            text = "Health: ${diagnosisData.healthStatus}",
+                            text = "${strings.healthLabel}${diagnosisData.healthStatus}",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
                         )
@@ -151,7 +161,7 @@ fun FullscreenImageDialog(
                         if (diagnosisData.issues.isNotEmpty()) {
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "${diagnosisData.issues.size} issue(s) detected",
+                                text = "${diagnosisData.issues.size}${strings.issuesDetected}",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.error
                             )
@@ -160,7 +170,7 @@ fun FullscreenImageDialog(
                         // Image quality indicator
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "Image Quality: ${diagnosisData.imageQuality}",
+                            text = "${strings.imageQualityLabel}${diagnosisData.imageQuality}",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                         )

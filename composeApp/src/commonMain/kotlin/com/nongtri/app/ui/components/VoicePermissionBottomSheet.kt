@@ -7,8 +7,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.nongtri.app.l10n.Language
+import com.nongtri.app.l10n.LocalizationProvider
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -16,11 +19,13 @@ fun VoicePermissionBottomSheet(
     shouldShowSettings: Boolean = false,  // Show "Open Settings" instead of "Grant Permission"
     onRequestPermission: () -> Unit,
     onDismiss: () -> Unit,
+    language: Language,
     modifier: Modifier = Modifier
 ) {
+    val strings = LocalizationProvider.getStrings(language)
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        modifier = modifier,
+        modifier = modifier.testTag(TestTags.VOICE_PERMISSION_SHEET),
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     ) {
         Column(
@@ -36,12 +41,15 @@ fun VoicePermissionBottomSheet(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Microphone Permission",
+                    text = strings.microphonePermission,
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
-                IconButton(onClick = onDismiss) {
-                    Icon(Icons.Default.Close, contentDescription = "Close")
+                IconButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.testTag(TestTags.CLOSE_BUTTON)
+                ) {
+                    Icon(Icons.Default.Close, contentDescription = strings.cdClose)
                 }
             }
 
@@ -60,7 +68,7 @@ fun VoicePermissionBottomSheet(
                         .padding(16.dp)
                 ) {
                     Text(
-                        text = "Voice Recording",
+                        text = strings.voiceRecording,
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -69,9 +77,9 @@ fun VoicePermissionBottomSheet(
 
                     Text(
                         text = if (shouldShowSettings) {
-                            "Microphone permission is required to record voice messages. Please enable it in Settings."
+                            strings.microphonePermissionSettingsPrompt
                         } else {
-                            "Grant microphone permission to record and send voice messages to the AI assistant."
+                            strings.microphonePermissionPrompt
                         },
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurface
@@ -81,7 +89,7 @@ fun VoicePermissionBottomSheet(
 
                     Button(
                         onClick = onRequestPermission,
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth().testTag(TestTags.GRANT_PERMISSION_BUTTON),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.primary,
                             contentColor = MaterialTheme.colorScheme.onPrimary
@@ -92,7 +100,7 @@ fun VoicePermissionBottomSheet(
                             contentDescription = null
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(if (shouldShowSettings) "Open Settings" else "Grant Permission")
+                        Text(if (shouldShowSettings) strings.openSettings else strings.grantPermission)
                     }
                 }
             }
@@ -101,7 +109,7 @@ fun VoicePermissionBottomSheet(
 
             // Info text
             Text(
-                text = "Voice messages are transcribed using AI and sent to the assistant for farming advice.",
+                text = strings.voiceMessageInfoText,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(vertical = 8.dp)

@@ -4,9 +4,11 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.nongtri.app.l10n.Language
+import com.nongtri.app.l10n.LocalizationProvider
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -16,6 +18,7 @@ fun StarterQuestions(
     onQuestionClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val strings = LocalizationProvider.getStrings(language)
 
     Column(
         modifier = modifier
@@ -34,9 +37,9 @@ fun StarterQuestions(
             )
             Text(
                 text = if (language == Language.VIETNAMESE) {
-                    "Gợi ý câu hỏi"
+                    strings.starterQuestionsHeaderVi
                 } else {
-                    "Suggested questions"
+                    strings.starterQuestionsHeaderEn
                 },
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
@@ -49,7 +52,7 @@ fun StarterQuestions(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            questions.forEach { question ->
+            questions.forEachIndexed { index, question ->
                 SuggestionChip(
                     onClick = { onQuestionClick(question) },
                     label = {
@@ -61,7 +64,7 @@ fun StarterQuestions(
                             modifier = Modifier.padding(vertical = 8.dp, horizontal = 6.dp)
                         )
                     },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth().testTag(TestTags.starterQuestion(index))
                 )
             }
         }

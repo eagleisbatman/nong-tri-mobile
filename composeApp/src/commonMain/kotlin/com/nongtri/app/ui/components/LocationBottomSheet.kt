@@ -9,8 +9,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.nongtri.app.l10n.Language
+import com.nongtri.app.l10n.LocalizationProvider
 
 data class UserLocation(
     val id: Int,
@@ -33,6 +36,7 @@ data class UserLocation(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LocationBottomSheet(
+    language: Language,
     currentLocation: UserLocation?,
     savedLocations: List<UserLocation>,
     isLoading: Boolean,
@@ -46,9 +50,10 @@ fun LocationBottomSheet(
     ipLocation: UserLocation? = null,
     gpsLocation: UserLocation? = null
 ) {
+    val strings = LocalizationProvider.getStrings(language)
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        modifier = modifier,
+        modifier = modifier.testTag(TestTags.LOCATION_BOTTOM_SHEET),
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     ) {
         Column(
@@ -64,12 +69,15 @@ fun LocationBottomSheet(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Location",
+                    text = strings.location,
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
-                IconButton(onClick = onDismiss) {
-                    Icon(Icons.Default.Close, contentDescription = "Close")
+                IconButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.testTag(TestTags.CLOSE_BUTTON)
+                ) {
+                    Icon(Icons.Default.Close, contentDescription = strings.cdClose)
                 }
             }
 
@@ -99,7 +107,7 @@ fun LocationBottomSheet(
                                 modifier = Modifier.size(20.dp)
                             )
                             Text(
-                                text = "Detected Location (IP)",
+                                text = strings.detectedLocationIp,
                                 style = MaterialTheme.typography.labelLarge,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -149,7 +157,7 @@ fun LocationBottomSheet(
                             )
                         } else {
                             Text(
-                                text = "Unable to determine location",
+                                text = strings.unableToDetectLocation,
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -184,7 +192,7 @@ fun LocationBottomSheet(
                                 modifier = Modifier.size(20.dp)
                             )
                             Text(
-                                text = "My Shared Location (GPS)",
+                                text = strings.mySharedLocationGps,
                                 style = MaterialTheme.typography.labelLarge,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -234,7 +242,7 @@ fun LocationBottomSheet(
                             )
                         } else {
                             Text(
-                                text = "Unable to determine location",
+                                text = strings.unableToDetectLocation,
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -245,7 +253,7 @@ fun LocationBottomSheet(
                         // Update Location Button - Prominent green button
                         Button(
                             onClick = onShareLocation,
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier.fillMaxWidth().testTag(TestTags.UPDATE_LOCATION_BUTTON),
                             enabled = !isLoading,
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = MaterialTheme.colorScheme.primary,
@@ -258,7 +266,7 @@ fun LocationBottomSheet(
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Update Location")
+                            Text(strings.updateLocation)
                         }
                     }
                 }
@@ -276,7 +284,7 @@ fun LocationBottomSheet(
                             .padding(16.dp)
                     ) {
                         Text(
-                            text = "Share GPS Location",
+                            text = strings.shareGpsLocation,
                             style = MaterialTheme.typography.labelLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -284,7 +292,7 @@ fun LocationBottomSheet(
                         Spacer(modifier = Modifier.height(8.dp))
 
                         Text(
-                            text = "Share your precise location for more accurate weather forecasts and farming advice.",
+                            text = strings.shareLocationDescription,
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurface
                         )
@@ -293,7 +301,7 @@ fun LocationBottomSheet(
 
                         Button(
                             onClick = onShareLocation,
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier.fillMaxWidth().testTag(TestTags.SHARE_LOCATION_BUTTON),
                             enabled = !isLoading,
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = MaterialTheme.colorScheme.primary,
@@ -305,7 +313,7 @@ fun LocationBottomSheet(
                                 contentDescription = null
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text(if (shouldShowSettings) "Open Settings" else "Share My Location")
+                            Text(if (shouldShowSettings) strings.openSettings else strings.shareLocation)
                         }
                     }
                 }
@@ -315,7 +323,7 @@ fun LocationBottomSheet(
 
             // Info text about location usage
             Text(
-                text = "Your location helps provide accurate weather forecasts and farming advice for your area.",
+                text = strings.locationHelpText,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(vertical = 8.dp)

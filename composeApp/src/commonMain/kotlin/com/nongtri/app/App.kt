@@ -52,7 +52,8 @@ fun App() {
                     onNewConversation = { threadId ->
                         // Thread already switched in ViewModel
                         showConversationList = false
-                    }
+                    },
+                    language = selectedLanguage
                 )
             } else {
                 ChatScreen(

@@ -12,10 +12,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.nongtri.app.data.model.ChatMessage
+import com.nongtri.app.ui.components.TestTags
 
 /**
  * Message bubble for user image messages (plant photos)
@@ -25,6 +27,7 @@ import com.nongtri.app.data.model.ChatMessage
 @Composable
 fun ImageMessageBubble(
     message: ChatMessage,
+    strings: com.nongtri.app.l10n.Strings,
     onImageClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -39,7 +42,7 @@ fun ImageMessageBubble(
             onClick = {
                 message.imageUrl?.let { onImageClick(it) }
             },
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().testTag(TestTags.IMAGE_CARD),
             shape = RoundedCornerShape(12.dp),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surfaceVariant
@@ -54,7 +57,7 @@ fun ImageMessageBubble(
                 if (message.imageUrl != null) {
                     AsyncImage(
                         model = message.imageUrl,
-                        contentDescription = "Plant image",
+                        contentDescription = strings.plantImage,
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
                     )
@@ -68,7 +71,7 @@ fun ImageMessageBubble(
                     ) {
                         Icon(
                             Icons.Default.BrokenImage,
-                            contentDescription = "No image",
+                            contentDescription = strings.noImage,
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(48.dp)
                         )
@@ -90,7 +93,7 @@ fun ImageMessageBubble(
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                "Analyzing...",
+                                strings.analyzing,
                                 color = Color.White,
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Bold
@@ -132,15 +135,16 @@ fun ImageMessageBubble(
 
 /**
  * Format timestamp for message display
+ * Note: This is a simplified version - ideally should be passed strings parameter
  */
 private fun formatTimestamp(timestamp: kotlinx.datetime.Instant): String {
     val now = kotlinx.datetime.Clock.System.now()
     val duration = now - timestamp
 
     return when {
-        duration.inWholeMinutes < 1 -> "Just now"
-        duration.inWholeMinutes < 60 -> "${duration.inWholeMinutes}m ago"
-        duration.inWholeHours < 24 -> "${duration.inWholeHours}h ago"
+        duration.inWholeMinutes < 1 -> "Just now"  // TODO: Use strings.justNow
+        duration.inWholeMinutes < 60 -> "${duration.inWholeMinutes}m ago"  // TODO: Use strings.minutesAgo
+        duration.inWholeHours < 24 -> "${duration.inWholeHours}h ago"  // TODO: Use strings.hoursAgo
         else -> {
             // Format as date
             val local = timestamp.toString()

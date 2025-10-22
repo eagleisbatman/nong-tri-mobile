@@ -167,7 +167,7 @@ fun ChatScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.MoreVert,
-                                contentDescription = "Settings"
+                                contentDescription = strings.cdSettings
                             )
                         }
 
@@ -177,47 +177,50 @@ fun ChatScreen(
                         ) {
                             // 1. View Conversations (top priority)
                             DropdownMenuItem(
-                                text = { Text("Conversations") },
+                                text = { Text(strings.menuConversations) },
                                 leadingIcon = {
                                     Icon(Icons.AutoMirrored.Filled.List, contentDescription = null)
                                 },
                                 onClick = {
                                     onViewConversations()
                                     showMenu = false
-                                }
+                                },
+                                modifier = Modifier.testTag(TestTags.MENU_CONVERSATIONS)
                             )
 
                             // 2. New Chat
                             DropdownMenuItem(
-                                text = { Text("New Chat") },
+                                text = { Text(strings.menuNewChat) },
                                 leadingIcon = {
                                     Icon(Icons.Default.Add, contentDescription = null)
                                 },
                                 onClick = {
                                     viewModel.createNewThread()
                                     showMenu = false
-                                }
+                                },
+                                modifier = Modifier.testTag(TestTags.MENU_NEW_CHAT)
                             )
 
                             HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
 
                             // 3. Share Location
                             DropdownMenuItem(
-                                text = { Text("Share Location") },
+                                text = { Text(strings.menuShareLocation) },
                                 leadingIcon = {
                                     Icon(Icons.Default.LocationOn, contentDescription = null)
                                 },
                                 onClick = {
                                     showLocationBottomSheet = true
                                     showMenu = false
-                                }
+                                },
+                                modifier = Modifier.testTag(TestTags.MENU_SHARE_LOCATION)
                             )
 
                             HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
 
                             // 3. Language selection
                             Text(
-                                text = "Language",
+                                text = strings.menuLanguageSection,
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
@@ -252,7 +255,8 @@ fun ChatScreen(
                                     onClick = {
                                         onLanguageChange(lang)
                                         showMenu = false
-                                    }
+                                    },
+                                    modifier = Modifier.testTag(TestTags.menuLanguage(lang.code))
                                 )
                             }
 
@@ -260,7 +264,7 @@ fun ChatScreen(
 
                             // 5. Theme (at bottom)
                             Text(
-                                text = "Theme",
+                                text = strings.menuThemeSection,
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
@@ -275,9 +279,9 @@ fun ChatScreen(
                                         ) {
                                             Text(
                                                 when (mode) {
-                                                    com.nongtri.app.data.preferences.ThemeMode.LIGHT -> "Light"
-                                                    com.nongtri.app.data.preferences.ThemeMode.DARK -> "Dark"
-                                                    com.nongtri.app.data.preferences.ThemeMode.SYSTEM -> "System Default"
+                                                    com.nongtri.app.data.preferences.ThemeMode.LIGHT -> strings.light
+                                                    com.nongtri.app.data.preferences.ThemeMode.DARK -> strings.dark
+                                                    com.nongtri.app.data.preferences.ThemeMode.SYSTEM -> strings.systemDefault
                                                 }
                                             )
                                             if (mode == currentThemeMode) {
@@ -291,7 +295,8 @@ fun ChatScreen(
                                     onClick = {
                                         onThemeModeChange(mode)
                                         showMenu = false
-                                    }
+                                    },
+                                    modifier = Modifier.testTag(TestTags.menuTheme(mode.name.lowercase()))
                                 )
                             }
                         }
@@ -395,6 +400,7 @@ fun ChatScreen(
                         VoiceRecordingUI(
                             state = voiceRecordingUIState,
                             amplitude = voiceAmplitude,
+                            strings = strings,
                             onStopRecording = {
                                 // Stop recording and start transcription in background
                                 val audioFile = voiceRecordingViewModel.stopForPreview(
@@ -435,11 +441,13 @@ fun ChatScreen(
                         }
                     },
                     containerColor = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(48.dp)
+                    modifier = Modifier
+                        .size(48.dp)
+                        .testTag(TestTags.SCROLL_TO_BOTTOM_FAB)
                 ) {
                     Icon(
                         imageVector = Icons.Default.KeyboardArrowDown,
-                        contentDescription = "Scroll to bottom"
+                        contentDescription = strings.cdScrollToBottom
                     )
                 }
             }
@@ -485,6 +493,7 @@ fun ChatScreen(
                             // User image message
                             ImageMessageBubble(
                                 message = message,
+                                strings = strings,
                                 onImageClick = { imageUrl ->
                                     showFullscreenImage = imageUrl
                                 }
@@ -495,6 +504,7 @@ fun ChatScreen(
                             com.nongtri.app.ui.components.DiagnosisPendingCard(
                                 imageUrl = message.diagnosisPendingImageUrl ?: "",
                                 jobId = message.diagnosisPendingJobId ?: "",
+                                strings = strings,
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                             )
                         }
@@ -504,6 +514,7 @@ fun ChatScreen(
 
                             DiagnosisResponseBubble(
                                 message = message,
+                                strings = strings,
                                 onTtsClick = {
                                     // Play TTS for diagnosis advice
                                     coroutineScope.launch {
@@ -578,6 +589,7 @@ fun ChatScreen(
         }
 
         LocationBottomSheet(
+            language = language,
             currentLocation = locationState.currentLocation,
             savedLocations = locationState.savedLocations,
             isLoading = locationState.isLoading,
@@ -626,7 +638,8 @@ fun ChatScreen(
                 showVoicePermissionBottomSheet = false
                 // Check permission after dismissing in case user granted it
                 voicePermissionViewModel.checkPermissionState()
-            }
+            },
+            language = language
         )
     }
 
@@ -653,13 +666,15 @@ fun ChatScreen(
             onDismiss = {
                 showImagePermissionBottomSheet = false
                 imagePermissionViewModel.checkPermissionState()
-            }
+            },
+            language = language
         )
     }
 
     // Image Source Selector Bottom Sheet
     if (showImageSourceSelector) {
         ImageSourceBottomSheet(
+            language = language,
             onCameraClick = {
                 showImageSourceSelector = false
                 isImageProcessing = true
@@ -723,6 +738,7 @@ fun ChatScreen(
     // Image Preview Dialog
     if (showImagePreviewDialog && selectedImageUri != null && selectedImageBase64 != null) {
         ImagePreviewDialog(
+            language = language,
             imageUri = selectedImageUri!!,
             onDismiss = {
                 showImagePreviewDialog = false
@@ -776,6 +792,7 @@ fun ChatScreen(
             ?.diagnosisData
 
         FullscreenImageDialog(
+            language = language,
             imageUrl = showFullscreenImage!!,
             diagnosisData = diagnosisData,
             onDismiss = {
