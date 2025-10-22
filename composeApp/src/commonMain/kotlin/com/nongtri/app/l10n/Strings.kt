@@ -254,6 +254,86 @@ interface Strings {
     val errorFailedToProcessImage: String
     val errorLoadingConversations: String
 
+    // Diagnosis errors
+    val diagnosisCompleted: String
+    val errorDiagnosisFailed: String
+    val errorFailedToFetchDiagnosis: String
+    val errorFetchingDiagnosis: String
+    val diagnosisProcessingMessage: String
+    val errorFailedToFetchStarterQuestions: String
+
+    // Voice recording errors
+    val errorRecordingTooShort: String
+    val errorRecordingEmpty: String
+    val errorFailedToStartRecording: String
+    val errorFailedToStopRecording: String
+    val errorTranscriptionFailed: String
+
+    // Location errors
+    val errorFailedToInitializeLocation: String
+    val errorFailedToGetLocations: String
+    val errorFailedToGetSavedLocations: String
+    val errorFailedToSaveLocation: String
+    val errorFailedToShareLocation: String
+    val errorFailedToSetPrimaryLocation: String
+    val errorFailedToDeleteLocation: String
+
+    // API/Network errors
+    val errorUploadTimeout: String
+    val errorNoInternetConnection: String
+    val errorCannotConnectToServer: String
+    val errorUploadFailed: String
+    val errorFailedToSaveVoiceMessage: String
+    val errorFailedToUpdateAudioUrl: String
+    val errorFailedToLoadHistory: String
+    val errorFailedToLoadThreads: String
+    val errorFailedToCreateThread: String
+    val errorFailedToGetActiveThread: String
+    val errorFailedToLoadThreadMessages: String
+    val errorFailedToUpdateThread: String
+    val errorFailedToDeleteThread: String
+    val errorFailedToRegisterFcmToken: String
+
+    // Image validation errors
+    val errorImageTooLargeWithSize: String  // "Image is too large (X MB). Maximum size is Y MB."
+    val errorImageFileEmpty: String
+    val errorInvalidImageDimensions: String
+    val errorImageDimensionsTooLarge: String  // "Image dimensions too large (WxH). Maximum is XxX."
+    val errorUnsupportedImageFormatMimeType: String  // "Unsupported image format: X. Please use JPEG, PNG, or WebP."
+    val errorUnsupportedImageFormatExtension: String  // "Unsupported image format: .X. Please use JPEG, PNG, or WebP."
+    val errorCannotDetermineImageFormat: String
+
+    // Platform-specific errors (Android)
+    val errorCannotAccessImageFile: String
+    val errorCannotReadImage: String
+    val errorCouldNotOpenSettings: String
+    val errorLocationPermissionNotGranted: String
+    val errorCouldNotGetCurrentLocation: String
+
+    // Toast messages (Android)
+    val toastSpeechAlreadyPlaying: String
+    val toastTtsError: String  // "TTS Error: X"
+
+    // Permission messages (Android)
+    val permissionMicrophoneDeniedSettings: String
+    val permissionMicrophoneRationale: String
+    val permissionCameraStorageDeniedSettings: String
+    val permissionCameraDeniedSettings: String
+    val permissionCameraRationale: String
+    val permissionStorageDeniedSettings: String
+    val permissionStorageRationale: String
+    val permissionLocationDeniedSettings: String
+    val permissionLocationRationale: String
+
+    // Notification messages (Android)
+    val notificationDiagnosisTitle: String
+    val notificationDiagnosisBody: String
+    val notificationChannelName: String
+    val notificationChannelDescription: String
+
+    // Share/UI strings
+    val shareImageTitle: String
+
     // ============================================================================
     // VOICE MESSAGES
     // ============================================================================
@@ -297,6 +377,37 @@ interface Strings {
     val cdCancelRecording: String
     val cdSendRecording: String
     val cdCrop: String
+
+    // ============================================================================
+    // FORMATTING FUNCTIONS for parameterized strings
+    // ============================================================================
+
+    /**
+     * Format image size error with actual sizes
+     * @param currentSize Current file size (formatted, e.g., "7 MB")
+     * @param maxSize Maximum allowed size (formatted, e.g., "5 MB")
+     */
+    fun formatImageTooLargeWithSize(currentSize: String, maxSize: String): String
+
+    /**
+     * Format image dimensions error with actual dimensions
+     * @param width Image width in pixels
+     * @param height Image height in pixels
+     * @param maxDimension Maximum allowed dimension
+     */
+    fun formatImageDimensionsTooLarge(width: Int, height: Int, maxDimension: Int): String
+
+    /**
+     * Format unsupported format error with MIME type
+     * @param mimeType The unsupported MIME type
+     */
+    fun formatUnsupportedImageFormatMimeType(mimeType: String): String
+
+    /**
+     * Format unsupported format error with file extension
+     * @param extension The unsupported file extension
+     */
+    fun formatUnsupportedImageFormatExtension(extension: String): String
 }
 
 object EnglishStrings : Strings {
@@ -548,6 +659,86 @@ object EnglishStrings : Strings {
     override val errorFailedToProcessImage = "Failed to process image. Please try again."
     override val errorLoadingConversations = "Error loading conversations"
 
+    // Diagnosis errors
+    override val diagnosisCompleted = "Diagnosis completed"
+    override val errorDiagnosisFailed = "Diagnosis failed"
+    override val errorFailedToFetchDiagnosis = "Failed to fetch diagnosis"
+    override val errorFetchingDiagnosis = "Error fetching diagnosis"
+    override val diagnosisProcessingMessage = "Your diagnosis is being processed. We'll notify you when it's ready!"
+    override val errorFailedToFetchStarterQuestions = "Failed to fetch starter questions"
+
+    // Voice recording errors
+    override val errorRecordingTooShort = "Recording too short. Please hold longer."
+    override val errorRecordingEmpty = "Recording is empty. Please try again."
+    override val errorFailedToStartRecording = "Failed to start recording"
+    override val errorFailedToStopRecording = "Failed to stop recording"
+    override val errorTranscriptionFailed = "Transcription failed"
+
+    // Location errors
+    override val errorFailedToInitializeLocation = "Failed to initialize location"
+    override val errorFailedToGetLocations = "Failed to get locations"
+    override val errorFailedToGetSavedLocations = "Failed to get saved locations"
+    override val errorFailedToSaveLocation = "Failed to save location"
+    override val errorFailedToShareLocation = "Failed to share location"
+    override val errorFailedToSetPrimaryLocation = "Failed to set primary location"
+    override val errorFailedToDeleteLocation = "Failed to delete location"
+
+    // API/Network errors
+    override val errorUploadTimeout = "Upload timed out. This may be due to slow internet. Please try a smaller image or wait and try again."
+    override val errorNoInternetConnection = "No internet connection. Please check your network and try again."
+    override val errorCannotConnectToServer = "Cannot connect to server. Please check your internet connection."
+    override val errorUploadFailed = "Upload failed. Please try again."
+    override val errorFailedToSaveVoiceMessage = "Failed to save voice message"
+    override val errorFailedToUpdateAudioUrl = "Failed to update audio URL"
+    override val errorFailedToLoadHistory = "Failed to load history"
+    override val errorFailedToLoadThreads = "Failed to load threads"
+    override val errorFailedToCreateThread = "Failed to create thread"
+    override val errorFailedToGetActiveThread = "Failed to get active thread"
+    override val errorFailedToLoadThreadMessages = "Failed to load thread messages"
+    override val errorFailedToUpdateThread = "Failed to update thread"
+    override val errorFailedToDeleteThread = "Failed to delete thread"
+    override val errorFailedToRegisterFcmToken = "Failed to register FCM token"
+
+    // Image validation errors
+    override val errorImageTooLargeWithSize = "Image is too large. Maximum size is 10 MB."
+    override val errorImageFileEmpty = "Image file is empty"
+    override val errorInvalidImageDimensions = "Invalid image dimensions"
+    override val errorImageDimensionsTooLarge = "Image dimensions too large. Maximum is 4096x4096."
+    override val errorUnsupportedImageFormatMimeType = "Unsupported image format. Please use JPEG, PNG, or WebP."
+    override val errorUnsupportedImageFormatExtension = "Unsupported image format. Please use JPEG, PNG, or WebP."
+    override val errorCannotDetermineImageFormat = "Cannot determine image format"
+
+    // Platform-specific errors (Android)
+    override val errorCannotAccessImageFile = "Cannot access image file. Please try another image."
+    override val errorCannotReadImage = "Cannot read image. The file may be corrupted or in an unsupported format."
+    override val errorCouldNotOpenSettings = "Could not open settings"
+    override val errorLocationPermissionNotGranted = "Location permission not granted"
+    override val errorCouldNotGetCurrentLocation = "Could not get current location"
+
+    // Toast messages (Android)
+    override val toastSpeechAlreadyPlaying = "Speech already playing"
+    override val toastTtsError = "TTS Error"
+
+    // Permission messages (Android)
+    override val permissionMicrophoneDeniedSettings = "Microphone permission denied. Please enable it in Settings to use voice messages."
+    override val permissionMicrophoneRationale = "Microphone permission is needed to record voice messages"
+    override val permissionCameraStorageDeniedSettings = "Camera and image permissions are needed. Please enable them in Settings."
+    override val permissionCameraDeniedSettings = "Camera permission denied. Please enable it in Settings."
+    override val permissionCameraRationale = "Camera permission is needed to capture plant images"
+    override val permissionStorageDeniedSettings = "Storage permission denied. Please enable it in Settings."
+    override val permissionStorageRationale = "Storage permission is needed to select images from gallery"
+    override val permissionLocationDeniedSettings = "Please enable location permission in Settings to share your location"
+    override val permissionLocationRationale = "Location permission is needed to share your exact location"
+
+    // Notification messages (Android)
+    override val notificationDiagnosisTitle = "Plant Diagnosis Ready"
+    override val notificationDiagnosisBody = "Your plant diagnosis is complete. Tap to view results."
+    override val notificationChannelName = "Diagnosis Notifications"
+    override val notificationChannelDescription = "Notifications for plant diagnosis results"
+
+    // Share/UI strings
+    override val shareImageTitle = "Share Image"
+
     // ============================================================================
     // VOICE MESSAGES
     // ============================================================================
@@ -591,6 +782,19 @@ object EnglishStrings : Strings {
     override val cdCancelRecording = "Cancel recording"
     override val cdSendRecording = "Send recording"
     override val cdCrop = "Crop"
+
+    // Formatting functions
+    override fun formatImageTooLargeWithSize(currentSize: String, maxSize: String): String =
+        "Image is too large ($currentSize). Maximum size is $maxSize."
+
+    override fun formatImageDimensionsTooLarge(width: Int, height: Int, maxDimension: Int): String =
+        "Image dimensions too large (${width}x${height}). Maximum is ${maxDimension}x${maxDimension}."
+
+    override fun formatUnsupportedImageFormatMimeType(mimeType: String): String =
+        "Unsupported image format: $mimeType. Please use JPEG, PNG, or WebP."
+
+    override fun formatUnsupportedImageFormatExtension(extension: String): String =
+        "Unsupported image format: .$extension. Please use JPEG, PNG, or WebP."
 }
 
 object VietnameseStrings : Strings {
@@ -842,6 +1046,86 @@ object VietnameseStrings : Strings {
     override val errorFailedToProcessImage = "Không xử lý được hình ảnh. Vui lòng thử lại."
     override val errorLoadingConversations = "Lỗi tải cuộc trò chuyện"
 
+    // Diagnosis errors
+    override val diagnosisCompleted = "Chẩn đoán hoàn tất"
+    override val errorDiagnosisFailed = "Chẩn đoán thất bại"
+    override val errorFailedToFetchDiagnosis = "Không lấy được chẩn đoán"
+    override val errorFetchingDiagnosis = "Lỗi lấy chẩn đoán"
+    override val diagnosisProcessingMessage = "Chẩn đoán của bạn đang được xử lý. Chúng tôi sẽ thông báo khi sẵn sàng!"
+    override val errorFailedToFetchStarterQuestions = "Không tải được câu hỏi gợi ý"
+
+    // Voice recording errors
+    override val errorRecordingTooShort = "Ghi âm quá ngắn. Vui lòng giữ lâu hơn."
+    override val errorRecordingEmpty = "Bản ghi âm trống. Vui lòng thử lại."
+    override val errorFailedToStartRecording = "Không bắt đầu được ghi âm"
+    override val errorFailedToStopRecording = "Không dừng được ghi âm"
+    override val errorTranscriptionFailed = "Phiên âm thất bại"
+
+    // Location errors
+    override val errorFailedToInitializeLocation = "Không khởi tạo được vị trí"
+    override val errorFailedToGetLocations = "Không lấy được vị trí"
+    override val errorFailedToGetSavedLocations = "Không lấy được vị trí đã lưu"
+    override val errorFailedToSaveLocation = "Không lưu được vị trí"
+    override val errorFailedToShareLocation = "Không chia sẻ được vị trí"
+    override val errorFailedToSetPrimaryLocation = "Không đặt được vị trí chính"
+    override val errorFailedToDeleteLocation = "Không xóa được vị trí"
+
+    // API/Network errors
+    override val errorUploadTimeout = "Tải lên hết thời gian chờ. Có thể do internet chậm. Vui lòng thử hình ảnh nhỏ hơn hoặc đợi và thử lại."
+    override val errorNoInternetConnection = "Không có kết nối internet. Vui lòng kiểm tra mạng và thử lại."
+    override val errorCannotConnectToServer = "Không kết nối được máy chủ. Vui lòng kiểm tra kết nối internet."
+    override val errorUploadFailed = "Tải lên thất bại. Vui lòng thử lại."
+    override val errorFailedToSaveVoiceMessage = "Không lưu được tin nhắn thoại"
+    override val errorFailedToUpdateAudioUrl = "Không cập nhật được URL âm thanh"
+    override val errorFailedToLoadHistory = "Không tải được lịch sử"
+    override val errorFailedToLoadThreads = "Không tải được cuộc trò chuyện"
+    override val errorFailedToCreateThread = "Không tạo được cuộc trò chuyện"
+    override val errorFailedToGetActiveThread = "Không lấy được cuộc trò chuyện đang hoạt động"
+    override val errorFailedToLoadThreadMessages = "Không tải được tin nhắn"
+    override val errorFailedToUpdateThread = "Không cập nhật được cuộc trò chuyện"
+    override val errorFailedToDeleteThread = "Không xóa được cuộc trò chuyện"
+    override val errorFailedToRegisterFcmToken = "Không đăng ký được FCM token"
+
+    // Image validation errors
+    override val errorImageTooLargeWithSize = "Hình ảnh quá lớn. Kích thước tối đa là 10 MB."
+    override val errorImageFileEmpty = "Tệp hình ảnh trống"
+    override val errorInvalidImageDimensions = "Kích thước hình ảnh không hợp lệ"
+    override val errorImageDimensionsTooLarge = "Kích thước hình ảnh quá lớn. Tối đa là 4096x4096."
+    override val errorUnsupportedImageFormatMimeType = "Định dạng hình ảnh không được hỗ trợ. Vui lòng sử dụng JPEG, PNG hoặc WebP."
+    override val errorUnsupportedImageFormatExtension = "Định dạng hình ảnh không được hỗ trợ. Vui lòng sử dụng JPEG, PNG hoặc WebP."
+    override val errorCannotDetermineImageFormat = "Không xác định được định dạng hình ảnh"
+
+    // Platform-specific errors (Android)
+    override val errorCannotAccessImageFile = "Không truy cập được tệp hình ảnh. Vui lòng thử hình ảnh khác."
+    override val errorCannotReadImage = "Không đọc được hình ảnh. Tệp có thể bị hỏng hoặc định dạng không được hỗ trợ."
+    override val errorCouldNotOpenSettings = "Không mở được cài đặt"
+    override val errorLocationPermissionNotGranted = "Chưa cấp quyền vị trí"
+    override val errorCouldNotGetCurrentLocation = "Không lấy được vị trí hiện tại"
+
+    // Toast messages (Android)
+    override val toastSpeechAlreadyPlaying = "Đang phát giọng nói"
+    override val toastTtsError = "Lỗi TTS"
+
+    // Permission messages (Android)
+    override val permissionMicrophoneDeniedSettings = "Quyền microphone bị từ chối. Vui lòng bật trong Cài đặt để sử dụng tin nhắn thoại."
+    override val permissionMicrophoneRationale = "Cần quyền microphone để ghi âm tin nhắn thoại"
+    override val permissionCameraStorageDeniedSettings = "Cần quyền máy ảnh và ảnh. Vui lòng bật trong Cài đặt."
+    override val permissionCameraDeniedSettings = "Quyền máy ảnh bị từ chối. Vui lòng bật trong Cài đặt."
+    override val permissionCameraRationale = "Cần quyền máy ảnh để chụp ảnh cây trồng"
+    override val permissionStorageDeniedSettings = "Quyền lưu trữ bị từ chối. Vui lòng bật trong Cài đặt."
+    override val permissionStorageRationale = "Cần quyền lưu trữ để chọn hình ảnh từ thư viện"
+    override val permissionLocationDeniedSettings = "Vui lòng bật quyền vị trí trong Cài đặt để chia sẻ vị trí"
+    override val permissionLocationRationale = "Cần quyền vị trí để chia sẻ vị trí chính xác"
+
+    // Notification messages (Android)
+    override val notificationDiagnosisTitle = "Chẩn đoán cây trồng sẵn sàng"
+    override val notificationDiagnosisBody = "Chẩn đoán cây trồng của bạn đã hoàn tất. Nhấn để xem kết quả."
+    override val notificationChannelName = "Thông báo chẩn đoán"
+    override val notificationChannelDescription = "Thông báo cho kết quả chẩn đoán cây trồng"
+
+    // Share/UI strings
+    override val shareImageTitle = "Chia sẻ hình ảnh"
+
     // ============================================================================
     // VOICE MESSAGES
     // ============================================================================
@@ -885,6 +1169,19 @@ object VietnameseStrings : Strings {
     override val cdCancelRecording = "Hủy ghi âm"
     override val cdSendRecording = "Gửi bản ghi"
     override val cdCrop = "Cây trồng"
+
+    // Formatting functions
+    override fun formatImageTooLargeWithSize(currentSize: String, maxSize: String): String =
+        "Hình ảnh quá lớn ($currentSize). Kích thước tối đa là $maxSize."
+
+    override fun formatImageDimensionsTooLarge(width: Int, height: Int, maxDimension: Int): String =
+        "Kích thước hình ảnh quá lớn (${width}x${height}). Tối đa là ${maxDimension}x${maxDimension}."
+
+    override fun formatUnsupportedImageFormatMimeType(mimeType: String): String =
+        "Định dạng hình ảnh không được hỗ trợ: $mimeType. Vui lòng sử dụng JPEG, PNG hoặc WebP."
+
+    override fun formatUnsupportedImageFormatExtension(extension: String): String =
+        "Định dạng hình ảnh không được hỗ trợ: .$extension. Vui lòng sử dụng JPEG, PNG hoặc WebP."
 }
 
 object LocalizationProvider {
