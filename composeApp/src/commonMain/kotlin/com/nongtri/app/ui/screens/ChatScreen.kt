@@ -67,12 +67,13 @@ fun ChatScreen(
     val imagePermissionViewModel = rememberImagePermissionViewModel()
     val imagePermissionState by imagePermissionViewModel.permissionState.collectAsState()
 
-    // Image selection state
+    // Image selection state (critical state survives rotation to handle camera/gallery results)
     var showImageSourceSelector by remember { mutableStateOf(false) }
-    var showImagePreviewDialog by remember { mutableStateOf(false) }
-    var selectedImageUri by remember { mutableStateOf<String?>(null) }  // Display URI
+    var showImagePreviewDialog by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    var selectedImageUri by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<String?>(null) }  // Display URI
+    // Note: selectedImageBase64 cannot use rememberSaveable (too large for savedInstanceState)
     var selectedImageBase64 by remember { mutableStateOf<String?>(null) }  // Base64 data for upload
-    var currentImageMessageId by remember { mutableStateOf<String?>(null) }
+    var isImageProcessing by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }  // Prevent multiple simultaneous operations
     var showFullscreenImage by remember { mutableStateOf<String?>(null) }  // Image URL to show fullscreen
 
     // Snackbar for error messages (only for non-permission errors)
@@ -358,6 +359,12 @@ fun ChatScreen(
                                 viewModel.sendMessage(uiState.currentMessage)
                             },
                             onImageClick = {
+                                // Prevent multiple simultaneous operations
+                                if (isImageProcessing) {
+                                    println("[ChatScreen] Image already being processed, ignoring click")
+                                    return@WhatsAppStyleInputBar
+                                }
+
                                 // Check if both permissions are granted
                                 if (imagePermissionState.hasCameraPermission && imagePermissionState.hasStoragePermission) {
                                     // Permissions granted, show image source selector
@@ -647,6 +654,7 @@ fun ChatScreen(
         ImageSourceBottomSheet(
             onCameraClick = {
                 showImageSourceSelector = false
+                isImageProcessing = true
                 println("[ChatScreen] Launching camera...")
 
                 imagePicker.launchCamera { result ->
@@ -664,10 +672,13 @@ fun ChatScreen(
                             )
                         }
                     }
+                    // Always reset processing flag
+                    isImageProcessing = false
                 }
             },
             onGalleryClick = {
                 showImageSourceSelector = false
+                isImageProcessing = true
                 println("[ChatScreen] Launching gallery...")
 
                 imagePicker.launchGallery { result ->
@@ -688,6 +699,8 @@ fun ChatScreen(
                             }
                         }
                     }
+                    // Always reset processing flag
+                    isImageProcessing = false
                 }
             },
             onDismiss = {
@@ -725,11 +738,10 @@ fun ChatScreen(
                 println("[ChatScreen] Sending image for diagnosis: $question")
 
                 // Show optimistic user message with image immediately
-                val messageId = viewModel.showOptimisticImageMessage(
+                viewModel.showOptimisticImageMessage(
                     imageData = selectedImageUri!!,  // Use URI for local preview
                     question = question
                 )
-                currentImageMessageId = messageId
 
                 // Send image to backend for diagnosis
                 viewModel.sendImageDiagnosis(
@@ -741,6 +753,7 @@ fun ChatScreen(
                 showImagePreviewDialog = false
                 selectedImageUri = null
                 selectedImageBase64 = null
+                isImageProcessing = false  // Reset after upload starts
             }
         )
     }

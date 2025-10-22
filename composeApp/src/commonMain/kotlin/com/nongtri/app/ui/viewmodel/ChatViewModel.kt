@@ -616,11 +616,34 @@ class ChatViewModel(
 
         // Send to API with streaming
         viewModelScope.launch {
+            var firstChunkReceived = false
+
             api.sendImageDiagnosisStream(
                 userId = userId,
                 message = question,
                 imageData = imageData,
                 onChunk = { chunk ->
+                    // On first chunk, clear loading state on user's image message
+                    // (indicates backend received image and started processing)
+                    if (!firstChunkReceived) {
+                        firstChunkReceived = true
+                        _uiState.update { state ->
+                            state.copy(
+                                messages = state.messages.map { msg ->
+                                    // Find most recent user image message with isLoading=true
+                                    if (msg.role == MessageRole.USER &&
+                                        msg.messageType == "image" &&
+                                        msg.isLoading) {
+                                        msg.copy(isLoading = false)
+                                    } else {
+                                        msg
+                                    }
+                                }
+                            )
+                        }
+                        println("[ImageDiagnosis] User image message loading cleared")
+                    }
+
                     // Update the assistant message with each chunk
                     _uiState.update { state ->
                         state.copy(
