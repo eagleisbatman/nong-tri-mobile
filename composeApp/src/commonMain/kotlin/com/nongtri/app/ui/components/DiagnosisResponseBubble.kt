@@ -30,10 +30,18 @@ fun DiagnosisResponseBubble(
     onTtsClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
-    // ROUND 6 TODO: Track diagnosis result read (engagement tracking)
-    // Requires: jobId, readTimeMs (dwell time), scrollPercent
-    // Need to track scroll position and time spent reading
-    // LaunchedEffect(message.diagnosisData) { ... }
+    // ROUND 6: Track diagnosis result read when displayed
+    val displayStartTime = remember { System.currentTimeMillis() }
+    LaunchedEffect(message.diagnosisData) {
+        if (message.diagnosisData != null) {
+            val readTimeMs = System.currentTimeMillis() - displayStartTime
+            com.nongtri.app.analytics.Events.logDiagnosisResultRead(
+                jobId = message.diagnosisPendingJobId ?: message.id,  // Use pending job ID or message ID
+                readTimeMs = readTimeMs,
+                scrollPercent = 100  // Assume full view (no scroll tracking yet)
+            )
+        }
+    }
 
     Column(
         modifier = modifier
@@ -213,10 +221,11 @@ fun DiagnosisResponseBubble(
 
                     TextButton(
                         onClick = {
-                            // ROUND 6 TODO: Track diagnosis advice TTS played
-                            // Requires jobId which is not available in DiagnosisResponseBubble
-                            // Need to add jobId to ChatMessage or DiagnosisData
-                            // com.nongtri.app.analytics.Events.logDiagnosisAdviceTtsPlayed(jobId, message.content.length)
+                            // ROUND 6: Track diagnosis advice TTS played
+                            com.nongtri.app.analytics.Events.logDiagnosisAdviceTtsPlayed(
+                                jobId = message.diagnosisPendingJobId ?: message.id,  // Use pending job ID or message ID
+                                adviceLength = message.content.length
+                            )
                             onTtsClick()
                         },
                         modifier = Modifier.fillMaxWidth().testTag(TestTags.DIAGNOSIS_TTS_BUTTON)

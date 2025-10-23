@@ -902,14 +902,16 @@ fun ChatScreen(
 
     // Fullscreen Image Viewer
     if (showFullscreenImage != null) {
-        val diagnosisData = uiState.messages
+        val message = uiState.messages
             .firstOrNull { it.imageUrl == showFullscreenImage }
-            ?.diagnosisData
+        val diagnosisData = message?.diagnosisData
+        val jobId = message?.diagnosisPendingJobId
 
         FullscreenImageDialog(
             language = language,
             imageUrl = showFullscreenImage!!,
             diagnosisData = diagnosisData,
+            jobId = jobId,
             onDismiss = {
                 showFullscreenImage = null
             }

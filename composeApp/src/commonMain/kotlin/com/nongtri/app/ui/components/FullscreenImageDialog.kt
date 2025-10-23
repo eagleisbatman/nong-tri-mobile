@@ -38,19 +38,20 @@ fun FullscreenImageDialog(
     imageUrl: String,
     diagnosisData: DiagnosisData? = null,
     onDismiss: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    jobId: String? = null  // Add optional jobId parameter
 ) {
     val strings = LocalizationProvider.getStrings(language)
     // Zoom and pan state
     var scale by remember { mutableStateOf(1f) }
     var offset by remember { mutableStateOf(Offset.Zero) }
 
-    // ROUND 6 TODO: Track fullscreen image opened
-    // Requires jobId which is not available in FullscreenImageDialog
-    // Need to pass jobId as parameter or extract from diagnosisData
-    // LaunchedEffect(Unit) {
-    //     com.nongtri.app.analytics.Events.logDiagnosisImageFullscreenOpened(jobId)
-    // }
+    // ROUND 6: Track fullscreen image opened
+    LaunchedEffect(Unit) {
+        com.nongtri.app.analytics.Events.logDiagnosisImageFullscreenOpened(
+            jobId = jobId ?: imageUrl  // Use jobId if available, otherwise use imageUrl as identifier
+        )
+    }
 
     Dialog(
         onDismissRequest = onDismiss,

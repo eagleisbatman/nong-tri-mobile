@@ -33,18 +33,23 @@ fun ImagePreviewDialog(
     imageUri: String,
     onDismiss: () -> Unit,
     onConfirm: (question: String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    fileSizeKb: Int = 0,  // Pass from caller if available
+    imageWidth: Int = 0,  // Pass from caller if available
+    imageHeight: Int = 0  // Pass from caller if available
 ) {
     val strings = LocalizationProvider.getStrings(language)
     var question by remember { mutableStateOf(strings.defaultPlantQuestion) }
     val initialQuestion = remember { strings.defaultPlantQuestion }
 
-    // ROUND 6 TODO: Track image preview displayed
-    // Requires: fileSizeKb, imageWidth, imageHeight
-    // Need to extract image metadata from imageUri
-    // LaunchedEffect(Unit) {
-    //     com.nongtri.app.analytics.Events.logImagePreviewDisplayed(fileSizeKb, width, height)
-    // }
+    // ROUND 6: Track image preview displayed with available metadata
+    LaunchedEffect(Unit) {
+        com.nongtri.app.analytics.Events.logImagePreviewDisplayed(
+            fileSizeKb = fileSizeKb,
+            imageWidth = imageWidth,
+            imageHeight = imageHeight
+        )
+    }
 
     Dialog(
         onDismissRequest = onDismiss,

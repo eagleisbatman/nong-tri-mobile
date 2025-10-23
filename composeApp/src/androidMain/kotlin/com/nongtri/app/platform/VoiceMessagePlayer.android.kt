@@ -93,19 +93,22 @@ actual class VoiceMessagePlayer(private val context: Context) {
                     startPositionUpdates()  // Start position updates on playback
                     Log.d(TAG, "Started playback: $audioUrl (${mp.duration}ms)")
 
-                    // ROUND 6 TODO: Track voice message playback started
-                    // Requires messageId which is not available in VoiceMessagePlayer
-                    // Need to pass messageId through the play() function or add to state
-                    // com.nongtri.app.analytics.Events.logVoiceMessagePlaybackStarted(messageId, mp.duration.toLong())
+                    // ROUND 6: Track voice message playback started (use audioUrl as identifier)
+                    com.nongtri.app.analytics.Events.logVoiceMessagePlaybackStarted(
+                        messageId = audioUrl,
+                        durationMs = mp.duration.toLong()
+                    )
                 }
                 setOnCompletionListener {
                     positionUpdateJob?.cancel()  // Stop position updates
                     _isPlaying.value = false
 
-                    // ROUND 6 TODO: Track voice message playback completed
-                    // Requires messageId which is not available in VoiceMessagePlayer
-                    // Need to pass messageId through the play() function or add to state
-                    // com.nongtri.app.analytics.Events.logVoiceMessagePlaybackCompleted(messageId, _duration.value.toLong(), true)
+                    // ROUND 6: Track voice message playback completed (use currentUrl as identifier)
+                    com.nongtri.app.analytics.Events.logVoiceMessagePlaybackCompleted(
+                        messageId = _currentUrl.value ?: "unknown",
+                        playbackDurationMs = _duration.value.toLong(),
+                        listenedToEnd = true  // OnCompletionListener only fires when fully completed
+                    )
 
                     _position.value = 0
                     Log.d(TAG, "Playback completed")
