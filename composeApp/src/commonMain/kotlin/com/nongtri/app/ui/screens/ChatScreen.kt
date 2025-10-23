@@ -81,8 +81,14 @@ fun ChatScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     var currentOptimisticMessageId by remember { mutableStateOf<String?>(null) }
 
+    // ROUND 10: Track screen display time
+    val screenDisplayTime = remember { System.currentTimeMillis() }
+
     // Track first view for analytics
     LaunchedEffect(Unit) {
+        // ROUND 10: Track generic screen view
+        com.nongtri.app.analytics.Events.logScreenViewed("chat")
+
         val hasWelcomeCard = uiState.messages.isEmpty()
         val locationDisplayed = locationState.currentLocation != null || locationState.ipLocation != null
         val locationType = when {
@@ -99,6 +105,14 @@ fun ChatScreen(
             locationType = locationType,
             timeSinceLanguageSelectionMs = 0L // TODO: Track from language selection screen
         )
+    }
+
+    // ROUND 10: Track screen time spent
+    DisposableEffect(Unit) {
+        onDispose {
+            val timeSpentMs = System.currentTimeMillis() - screenDisplayTime
+            com.nongtri.app.analytics.Events.logScreenTimeSpent("chat", timeSpentMs)
+        }
     }
 
     // Handle voice recording errors - remove optimistic message

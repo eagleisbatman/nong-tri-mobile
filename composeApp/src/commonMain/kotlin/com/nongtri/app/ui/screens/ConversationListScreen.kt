@@ -35,9 +35,22 @@ fun ConversationListScreen(
     val uiState by viewModel.uiState.collectAsState()
     val strings = com.nongtri.app.l10n.LocalizationProvider.getStrings(language)
 
+    // ROUND 10: Track screen display time
+    val screenDisplayTime = remember { System.currentTimeMillis() }
+
     // ROUND 8: Track conversations screen opened
     LaunchedEffect(Unit) {
+        // ROUND 10: Track generic screen view
+        com.nongtri.app.analytics.Events.logScreenViewed("conversation_list")
         com.nongtri.app.analytics.Events.logConversationsScreenOpened()
+    }
+
+    // ROUND 10: Track screen time spent
+    DisposableEffect(Unit) {
+        onDispose {
+            val timeSpentMs = System.currentTimeMillis() - screenDisplayTime
+            com.nongtri.app.analytics.Events.logScreenTimeSpent("conversation_list", timeSpentMs)
+        }
     }
 
     // ROUND 8: Track conversations list viewed when threads are loaded

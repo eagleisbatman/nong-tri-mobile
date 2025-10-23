@@ -46,7 +46,17 @@ fun LanguageSelectionScreen(
             "vi" -> "vi"
             else -> "en"
         }
+        // ROUND 10: Track generic screen view
+        Events.logScreenViewed("language_selection")
         Events.logOnboardingLanguageScreenViewed(defaultSuggestion)
+    }
+
+    // ROUND 10: Track screen time spent
+    DisposableEffect(Unit) {
+        onDispose {
+            val timeSpentMs = System.currentTimeMillis() - screenDisplayTime
+            Events.logScreenTimeSpent("language_selection", timeSpentMs)
+        }
     }
 
     Surface(
