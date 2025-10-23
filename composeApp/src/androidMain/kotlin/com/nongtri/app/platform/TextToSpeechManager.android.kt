@@ -34,6 +34,12 @@ actual class TextToSpeechManager(private val context: Context) {
     private var currentAudioFile: File? = null  // Track current audio file for resume
     private var pausedPosition: Int = 0  // Track playback position for resume
 
+    // Analytics tracking
+    private var playbackStartTime = 0L
+    private var currentMessageLength = 0
+    private var currentLanguage = ""
+    private var audioDurationMs = 0L
+
     private val client = OkHttpClient.Builder()
         .connectTimeout(15, TimeUnit.SECONDS)
         .readTimeout(60, TimeUnit.SECONDS)
@@ -102,6 +108,10 @@ actual class TextToSpeechManager(private val context: Context) {
                 Log.d(TAG, "TTS: First use tracked")
             }
 
+            // Store message context for analytics
+            currentMessageLength = text.length
+            currentLanguage = language
+
             // Play the audio
             withContext(Dispatchers.Main) {
                 mediaPlayer = MediaPlayer().apply {
@@ -116,6 +126,18 @@ actual class TextToSpeechManager(private val context: Context) {
                     setDataSource(audioFile.absolutePath)
                     setOnCompletionListener {
                         Log.d(TAG, "TTS: Playback completed")
+
+                        // Track playback completed event
+                        val playbackDuration = if (playbackStartTime > 0) {
+                            System.currentTimeMillis() - playbackStartTime
+                        } else 0L
+                        val listenedToEnd = (pausedPosition == 0 || pausedPosition >= (audioDurationMs - 500))
+                        com.nongtri.app.analytics.Events.logTtsPlaybackCompleted(
+                            messageIndex = 0, // Default, caller should set context
+                            playbackDuration = playbackDuration,
+                            listenedToEnd = listenedToEnd
+                        )
+
                         release()
                         mediaPlayer = null
                         isProcessing = false
@@ -123,6 +145,13 @@ actual class TextToSpeechManager(private val context: Context) {
                     }
                     setOnErrorListener { _, what, extra ->
                         Log.e(TAG, "TTS: MediaPlayer error - what: $what, extra: $extra")
+
+                        // Track TTS playback error
+                        com.nongtri.app.analytics.Events.logTtsPlaybackError(
+                            errorType = "media_player_error",
+                            errorMessage = "what: $what, extra: $extra"
+                        )
+
                         release()
                         mediaPlayer = null
                         isProcessing = false
@@ -134,7 +163,20 @@ actual class TextToSpeechManager(private val context: Context) {
                     setVolume(1.0f, 1.0f)
 
                     prepare()
+
+                    // Get audio duration after prepare
+                    audioDurationMs = duration.toLong()
+
                     start()
+
+                    // Track playback started event
+                    playbackStartTime = System.currentTimeMillis()
+                    com.nongtri.app.analytics.Events.logTtsPlaybackStarted(
+                        messageIndex = 0, // Default, caller should set context
+                        audioDuration = audioDurationMs,
+                        language = currentLanguage
+                    )
+
                     Log.d(TAG, "TTS: Playback started with audio attributes and max volume")
                 }
             }
@@ -145,6 +187,13 @@ actual class TextToSpeechManager(private val context: Context) {
             isProcessing = false
             _state.value = TtsState.ERROR
             Log.e(TAG, "TTS error: ${e.message}", e)
+
+            // Track TTS error
+            com.nongtri.app.analytics.Events.logTtsPlaybackError(
+                errorType = "tts_generation_error",
+                errorMessage = e.message ?: "Unknown error"
+            )
+
             withContext(Dispatchers.Main) {
                 Toast.makeText(context, "${strings.toastTtsError}: ${e.message}", Toast.LENGTH_LONG).show()
             }
@@ -264,6 +313,14 @@ actual class TextToSpeechManager(private val context: Context) {
                 pausedPosition = it.currentPosition
                 it.pause()
                 _state.value = TtsState.PAUSED
+
+                // Track playback paused event
+                com.nongtri.app.analytics.Events.logTtsPlaybackPaused(
+                    messageIndex = 0, // Default, caller should set context
+                    playbackPosition = pausedPosition.toLong(),
+                    audioDuration = audioDurationMs
+                )
+
                 Log.d(TAG, "TTS: Paused at position $pausedPosition ms")
             }
         }

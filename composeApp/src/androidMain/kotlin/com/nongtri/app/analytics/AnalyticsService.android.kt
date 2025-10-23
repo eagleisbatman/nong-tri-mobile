@@ -86,8 +86,9 @@ actual object AnalyticsService {
             // User language
             bundle.putString("user_language", prefs.language.value.code)
 
-            // Location availability
-            val hasLocation = false // TODO: Get from LocationManager when available
+            // Location availability - get actual state from LocationRepository
+            val locationRepo = com.nongtri.app.data.repository.LocationRepository.getInstance()
+            val hasLocation = locationRepo.hasLocation()
             bundle.putBoolean("has_location", hasLocation)
 
             // Platform

@@ -24,6 +24,10 @@ actual class VoicePermissionViewModel actual constructor() : ViewModel() {
     private val userPreferences = UserPreferences.getInstance()
     private val strings get() = LocalizationProvider.getStrings(userPreferences.language.value)
 
+    // Permission tracking for analytics
+    private var permissionRequestTime = 0L
+    private var denialCount = 0
+
     companion object {
         var permissionLauncher: (() -> Unit)? = null
         var permissionResultCallback: ((Boolean) -> Unit)? = null
@@ -118,6 +122,10 @@ actual class VoicePermissionViewModel actual constructor() : ViewModel() {
 
             _permissionState.update { it.copy(permissionRequested = true) }
 
+            // Track permission request for analytics
+            permissionRequestTime = System.currentTimeMillis()
+            com.nongtri.app.analytics.Events.logVoicePermissionRequested("voice_button")
+
             println("[VoicePermission] Requesting RECORD_AUDIO permission...")
             permissionLauncher?.invoke()
         }
@@ -126,9 +134,15 @@ actual class VoicePermissionViewModel actual constructor() : ViewModel() {
     actual fun onPermissionResult(granted: Boolean) {
         println("[VoicePermission] Permission result: granted=$granted")
 
+        val timeToGrantMs = if (permissionRequestTime > 0) System.currentTimeMillis() - permissionRequestTime else 0L
+
         if (granted) {
             // Track voice funnel step 2: Permission granted
             com.nongtri.app.analytics.Funnels.voiceAdoptionFunnel.step2_PermissionGranted()
+
+            // Track detailed permission granted event
+            val isFirstGrant = !userPreferences.hasUsedVoice.value
+            com.nongtri.app.analytics.Events.logVoicePermissionGranted(timeToGrantMs, isFirstGrant)
 
             // Permission granted, reset state
             _permissionState.update {
@@ -140,8 +154,17 @@ actual class VoicePermissionViewModel actual constructor() : ViewModel() {
                 )
             }
         } else {
+            // Track denial
+            denialCount++
+
             // Permission denied - check if user has exhausted requests
             val shouldShowRationale = shouldShowRequestPermissionRationale()
+
+            // Track permission denial event
+            com.nongtri.app.analytics.Events.logVoicePermissionDenied(
+                denialCount = denialCount,
+                canRequestAgain = shouldShowRationale
+            )
 
             println("[VoicePermission] Permission denied: shouldShowRationale=$shouldShowRationale")
 

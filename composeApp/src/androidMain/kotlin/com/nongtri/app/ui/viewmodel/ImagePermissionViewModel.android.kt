@@ -25,6 +25,12 @@ actual class ImagePermissionViewModel actual constructor() : ViewModel() {
     private val userPreferences = UserPreferences.getInstance()
     private val strings get() = LocalizationProvider.getStrings(userPreferences.language.value)
 
+    // Permission tracking for analytics
+    private var cameraPermissionRequestTime = 0L
+    private var storagePermissionRequestTime = 0L
+    private var cameraDenialCount = 0
+    private var storageDenialCount = 0
+
     companion object {
         var cameraPermissionLauncher: (() -> Unit)? = null
         var storagePermissionLauncher: (() -> Unit)? = null
@@ -154,6 +160,10 @@ actual class ImagePermissionViewModel actual constructor() : ViewModel() {
 
             _permissionState.update { it.copy(permissionRequested = true) }
 
+            // Track permission request for analytics
+            cameraPermissionRequestTime = System.currentTimeMillis()
+            com.nongtri.app.analytics.Events.logImagePermissionRequested("camera")
+
             println("[ImagePermission] Requesting CAMERA permission...")
             cameraPermissionLauncher?.invoke()
         }
@@ -174,6 +184,11 @@ actual class ImagePermissionViewModel actual constructor() : ViewModel() {
 
             _permissionState.update { it.copy(permissionRequested = true) }
 
+            // Track permission request for analytics
+            val permissionType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) "media_images" else "storage"
+            storagePermissionRequestTime = System.currentTimeMillis()
+            com.nongtri.app.analytics.Events.logImagePermissionRequested(permissionType)
+
             println("[ImagePermission] Requesting ${getStoragePermission()} permission...")
             storagePermissionLauncher?.invoke()
         }
@@ -182,7 +197,17 @@ actual class ImagePermissionViewModel actual constructor() : ViewModel() {
     actual fun onCameraPermissionResult(granted: Boolean) {
         println("[ImagePermission] Camera permission result: granted=$granted")
 
+        val timeToGrantMs = if (cameraPermissionRequestTime > 0) {
+            System.currentTimeMillis() - cameraPermissionRequestTime
+        } else 0L
+
         if (granted) {
+            // Track permission granted event
+            com.nongtri.app.analytics.Events.logImagePermissionGranted(
+                permissionType = "camera",
+                timeToGrantMs = timeToGrantMs
+            )
+
             _permissionState.update {
                 it.copy(
                     hasCameraPermission = true,
@@ -196,7 +221,18 @@ actual class ImagePermissionViewModel actual constructor() : ViewModel() {
                 com.nongtri.app.analytics.Funnels.imageDiagnosisFunnel.step2_PermissionGranted()
             }
         } else {
+            // Track denial
+            cameraDenialCount++
+
             val shouldShowRationale = shouldShowCameraRationale()
+
+            // Track permission denied event
+            com.nongtri.app.analytics.Events.logImagePermissionDenied(
+                permissionType = "camera",
+                denialCount = cameraDenialCount,
+                canRequestAgain = shouldShowRationale
+            )
+
             println("[ImagePermission] Camera denied: shouldShowRationale=$shouldShowRationale")
 
             if (!shouldShowRationale) {
@@ -224,7 +260,19 @@ actual class ImagePermissionViewModel actual constructor() : ViewModel() {
     actual fun onStoragePermissionResult(granted: Boolean) {
         println("[ImagePermission] Storage permission result: granted=$granted")
 
+        val timeToGrantMs = if (storagePermissionRequestTime > 0) {
+            System.currentTimeMillis() - storagePermissionRequestTime
+        } else 0L
+
+        val permissionType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) "media_images" else "storage"
+
         if (granted) {
+            // Track permission granted event
+            com.nongtri.app.analytics.Events.logImagePermissionGranted(
+                permissionType = permissionType,
+                timeToGrantMs = timeToGrantMs
+            )
+
             _permissionState.update {
                 it.copy(
                     hasStoragePermission = true,
@@ -238,7 +286,18 @@ actual class ImagePermissionViewModel actual constructor() : ViewModel() {
                 com.nongtri.app.analytics.Funnels.imageDiagnosisFunnel.step2_PermissionGranted()
             }
         } else {
+            // Track denial
+            storageDenialCount++
+
             val shouldShowRationale = shouldShowStorageRationale()
+
+            // Track permission denied event
+            com.nongtri.app.analytics.Events.logImagePermissionDenied(
+                permissionType = permissionType,
+                denialCount = storageDenialCount,
+                canRequestAgain = shouldShowRationale
+            )
+
             println("[ImagePermission] Storage denied: shouldShowRationale=$shouldShowRationale")
 
             if (!shouldShowRationale) {

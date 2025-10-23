@@ -37,6 +37,10 @@ actual class LocationViewModel actual constructor() : ViewModel() {
     private val userPreferences = UserPreferences.getInstance()
     private val strings get() = LocalizationProvider.getStrings(userPreferences.language.value)
 
+    // Permission tracking for analytics
+    private var permissionRequestTime = 0L
+    private var denialCount = 0
+
     companion object {
         var permissionLauncher: ((Array<String>) -> Unit)? = null
         var permissionResultCallback: ((Boolean) -> Unit)? = null
@@ -184,6 +188,10 @@ actual class LocationViewModel actual constructor() : ViewModel() {
 
                 _locationState.update { it.copy(permissionRequested = true) }
 
+                // Track permission request for analytics
+                permissionRequestTime = System.currentTimeMillis()
+                com.nongtri.app.analytics.Events.logLocationPermissionRequested("location_button")
+
                 println("Requesting location permission...")
                 permissionLauncher?.invoke(
                     arrayOf(
@@ -198,7 +206,18 @@ actual class LocationViewModel actual constructor() : ViewModel() {
     actual fun onPermissionResult(granted: Boolean) {
         println("Permission result: granted=$granted")
 
+        val timeToGrantMs = if (permissionRequestTime > 0) {
+            System.currentTimeMillis() - permissionRequestTime
+        } else 0L
+
         if (granted) {
+            // Track permission granted event
+            val permissionType = "fine_and_coarse"
+            com.nongtri.app.analytics.Events.logLocationPermissionGranted(
+                permissionType = permissionType,
+                timeToGrantMs = timeToGrantMs
+            )
+
             // Permission granted, reset state and share location
             _locationState.update {
                 it.copy(
@@ -209,8 +228,17 @@ actual class LocationViewModel actual constructor() : ViewModel() {
             }
             shareCurrentLocation()
         } else {
+            // Track denial
+            denialCount++
+
             // Permission denied - check if user has exhausted requests
             val shouldShowRationale = shouldShowRequestPermissionRationale()
+
+            // Track permission denied event
+            com.nongtri.app.analytics.Events.logLocationPermissionDenied(
+                denialCount = denialCount,
+                canRequestAgain = shouldShowRationale
+            )
 
             println("Permission denied: shouldShowRationale=$shouldShowRationale")
 

@@ -470,6 +470,19 @@ class ChatViewModel(
                     }
                 },
                 onFailure = { error ->
+                    // Track API error for analytics
+                    val errorType = when {
+                        error.message?.contains("timeout", ignoreCase = true) == true -> "timeout"
+                        error.message?.contains("network", ignoreCase = true) == true -> "network"
+                        error.message?.contains("connect", ignoreCase = true) == true -> "connection"
+                        else -> "api_error"
+                    }
+                    Events.logApiError(
+                        endpoint = "/api/chat",
+                        statusCode = 0, // Unknown status code for network errors
+                        errorMessage = error.message ?: "Unknown error"
+                    )
+
                     // Remove the placeholder message and show error
                     val strings = LocalizationProvider.getStrings(userPreferences.language.value)
                     _uiState.update { state ->
@@ -797,6 +810,14 @@ class ChatViewModel(
             )
         }
 
+        // Track upload started for analytics
+        val uploadStartTime = System.currentTimeMillis()
+        val fileSizeKb = (estimatedSizeBytes / 1024).toInt()
+        Events.logDiagnosisUploadStarted(
+            fileSizeKb = fileSizeKb,
+            networkType = "unknown" // TODO: Get actual network type
+        )
+
         // Submit diagnosis job (async)
         viewModelScope.launch {
             api.submitDiagnosisJob(
@@ -806,6 +827,14 @@ class ChatViewModel(
             ).fold(
                 onSuccess = { response ->
                     println("[ImageDiagnosis] ✓ Job submitted: jobId=${response.jobId}")
+
+                    // Track upload completed for analytics
+                    val uploadTime = System.currentTimeMillis() - uploadStartTime
+                    Events.logDiagnosisUploadCompleted(
+                        fileSizeKb = fileSizeKb,
+                        uploadTimeMs = uploadTime,
+                        networkType = "unknown" // TODO: Get actual network type
+                    )
 
                     // Clear loading state on user's image message
                     _uiState.update { state ->
@@ -843,6 +872,20 @@ class ChatViewModel(
                 },
                 onFailure = { error ->
                     println("[ImageDiagnosis] ✗ Error submitting job: ${error.message}")
+
+                    // Track upload failed for analytics
+                    val errorType = when {
+                        error.message?.contains("timeout", ignoreCase = true) == true -> "timeout"
+                        error.message?.contains("network", ignoreCase = true) == true -> "network"
+                        error.message?.contains("size", ignoreCase = true) == true -> "file_too_large"
+                        else -> "upload_error"
+                    }
+                    Events.logDiagnosisUploadFailed(
+                        fileSizeKb = fileSizeKb,
+                        errorType = errorType,
+                        errorMessage = error.message ?: "Unknown error"
+                    )
+
                     val strings = LocalizationProvider.getStrings(userPreferences.language.value)
                     _uiState.update { state ->
                         state.copy(

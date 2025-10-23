@@ -81,6 +81,26 @@ fun ChatScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     var currentOptimisticMessageId by remember { mutableStateOf<String?>(null) }
 
+    // Track first view for analytics
+    LaunchedEffect(Unit) {
+        val hasWelcomeCard = uiState.messages.isEmpty()
+        val locationDisplayed = locationState.currentLocation != null || locationState.ipLocation != null
+        val locationType = when {
+            locationState.gpsLocation != null -> "gps"
+            locationState.ipLocation != null -> "ip"
+            else -> "none"
+        }
+
+        com.nongtri.app.analytics.Events.logChatScreenFirstView(
+            hasWelcomeCard = hasWelcomeCard,
+            hasStarterQuestions = false, // Starter questions not implemented yet
+            starterQuestionsCount = 0,
+            locationDisplayed = locationDisplayed,
+            locationType = locationType,
+            timeSinceLanguageSelectionMs = 0L // TODO: Track from language selection screen
+        )
+    }
+
     // Handle voice recording errors - remove optimistic message
     // Permission errors are handled via bottom sheet, not Snackbar
     LaunchedEffect(voiceRecordingState) {

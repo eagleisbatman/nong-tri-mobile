@@ -330,4 +330,415 @@ object Events {
             println("[Events] ❌ Error logging location_first_share: ${e.message}")
         }
     }
+
+    // ============================================================================
+    // PERMISSION EVENTS
+    // ============================================================================
+
+    /**
+     * Voice permission requested
+     */
+    fun logVoicePermissionRequested(trigger: String = "voice_button") {
+        try {
+            AnalyticsService.logEvent("voice_permission_requested", mapOf(
+                "trigger" to trigger
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging voice_permission_requested: ${e.message}")
+        }
+    }
+
+    /**
+     * Voice permission granted
+     */
+    fun logVoicePermissionGranted(timeToGrantMs: Long, firstGrant: Boolean) {
+        try {
+            AnalyticsService.logEvent("voice_permission_granted", mapOf(
+                "time_to_grant_ms" to timeToGrantMs,
+                "first_grant" to firstGrant
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging voice_permission_granted: ${e.message}")
+        }
+    }
+
+    /**
+     * Voice permission denied
+     */
+    fun logVoicePermissionDenied(denialCount: Int, canRequestAgain: Boolean) {
+        try {
+            AnalyticsService.logEvent("voice_permission_denied", mapOf(
+                "denial_count" to denialCount,
+                "can_request_again" to canRequestAgain
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging voice_permission_denied: ${e.message}")
+        }
+    }
+
+    /**
+     * Image permission requested
+     */
+    fun logImagePermissionRequested(permissionType: String) {
+        try {
+            AnalyticsService.logEvent("image_permission_requested", mapOf(
+                "permission_type" to permissionType
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging image_permission_requested: ${e.message}")
+        }
+    }
+
+    /**
+     * Image permission granted
+     */
+    fun logImagePermissionGranted(permissionType: String, timeToGrantMs: Long) {
+        try {
+            AnalyticsService.logEvent("image_permission_granted", mapOf(
+                "permission_type" to permissionType,
+                "time_to_grant_ms" to timeToGrantMs
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging image_permission_granted: ${e.message}")
+        }
+    }
+
+    /**
+     * Image permission denied
+     */
+    fun logImagePermissionDenied(permissionType: String, denialCount: Int, canRequestAgain: Boolean) {
+        try {
+            AnalyticsService.logEvent("image_permission_denied", mapOf(
+                "permission_type" to permissionType,
+                "denial_count" to denialCount,
+                "can_request_again" to canRequestAgain
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging image_permission_denied: ${e.message}")
+        }
+    }
+
+    /**
+     * Location permission requested
+     */
+    fun logLocationPermissionRequested(trigger: String = "location_button") {
+        try {
+            AnalyticsService.logEvent("location_permission_requested", mapOf(
+                "trigger" to trigger
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging location_permission_requested: ${e.message}")
+        }
+    }
+
+    /**
+     * Location permission granted
+     */
+    fun logLocationPermissionGranted(permissionType: String, timeToGrantMs: Long) {
+        try {
+            AnalyticsService.logEvent("location_permission_granted", mapOf(
+                "permission_type" to permissionType,
+                "time_to_grant_ms" to timeToGrantMs
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging location_permission_granted: ${e.message}")
+        }
+    }
+
+    /**
+     * Location permission denied
+     */
+    fun logLocationPermissionDenied(denialCount: Int, canRequestAgain: Boolean) {
+        try {
+            AnalyticsService.logEvent("location_permission_denied", mapOf(
+                "denial_count" to denialCount,
+                "can_request_again" to canRequestAgain
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging location_permission_denied: ${e.message}")
+        }
+    }
+
+    // ============================================================================
+    // ERROR TRACKING EVENTS
+    // ============================================================================
+
+    /**
+     * Network request failed
+     */
+    fun logNetworkError(endpoint: String, errorType: String, errorMessage: String) {
+        try {
+            AnalyticsService.logEvent("network_request_failed", mapOf(
+                "endpoint" to endpoint,
+                "error_type" to errorType,
+                "error_message" to errorMessage
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging network_request_failed: ${e.message}")
+        }
+    }
+
+    /**
+     * API error occurred
+     */
+    fun logApiError(endpoint: String, statusCode: Int, errorMessage: String) {
+        try {
+            AnalyticsService.logEvent("api_error_occurred", mapOf(
+                "endpoint" to endpoint,
+                "status_code" to statusCode,
+                "error_message" to errorMessage
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging api_error_occurred: ${e.message}")
+        }
+    }
+
+    /**
+     * Voice recording error
+     */
+    fun logVoiceRecordingError(errorType: String, errorMessage: String) {
+        try {
+            AnalyticsService.logEvent("voice_recording_error", mapOf(
+                "error_type" to errorType,
+                "error_message" to errorMessage
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging voice_recording_error: ${e.message}")
+        }
+    }
+
+    /**
+     * Image upload error
+     */
+    fun logImageUploadError(errorType: String, errorMessage: String, fileSize: Long = 0) {
+        try {
+            AnalyticsService.logEvent("image_upload_error", mapOf(
+                "error_type" to errorType,
+                "error_message" to errorMessage,
+                "file_size_kb" to (fileSize / 1024).toInt()
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging image_upload_error: ${e.message}")
+        }
+    }
+
+    /**
+     * TTS playback error
+     */
+    fun logTtsPlaybackError(errorType: String, errorMessage: String) {
+        try {
+            AnalyticsService.logEvent("tts_playback_error", mapOf(
+                "error_type" to errorType,
+                "error_message" to errorMessage
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging tts_playback_error: ${e.message}")
+        }
+    }
+
+    // ============================================================================
+    // TTS LIFECYCLE EVENTS
+    // ============================================================================
+
+    /**
+     * TTS button clicked
+     */
+    fun logTtsButtonClicked(messageIndex: Int, messageLength: Int, language: String) {
+        try {
+            AnalyticsService.logEvent("tts_button_clicked", mapOf(
+                "message_index" to messageIndex,
+                "message_length_chars" to messageLength,
+                "language" to language
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging tts_button_clicked: ${e.message}")
+        }
+    }
+
+    /**
+     * TTS playback started
+     */
+    fun logTtsPlaybackStarted(messageIndex: Int, audioDuration: Long, language: String) {
+        try {
+            AnalyticsService.logEvent("tts_playback_started", mapOf(
+                "message_index" to messageIndex,
+                "audio_duration_ms" to audioDuration,
+                "language" to language
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging tts_playback_started: ${e.message}")
+        }
+    }
+
+    /**
+     * TTS playback completed
+     */
+    fun logTtsPlaybackCompleted(messageIndex: Int, playbackDuration: Long, listenedToEnd: Boolean) {
+        try {
+            AnalyticsService.logEvent("tts_playback_completed", mapOf(
+                "message_index" to messageIndex,
+                "playback_duration_ms" to playbackDuration,
+                "listened_to_end" to listenedToEnd
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging tts_playback_completed: ${e.message}")
+        }
+    }
+
+    /**
+     * TTS playback paused
+     */
+    fun logTtsPlaybackPaused(messageIndex: Int, playbackPosition: Long, audioDuration: Long) {
+        try {
+            val completionPercent = if (audioDuration > 0) (playbackPosition.toFloat() / audioDuration * 100) else 0f
+            AnalyticsService.logEvent("tts_playback_paused", mapOf(
+                "message_index" to messageIndex,
+                "playback_position_ms" to playbackPosition,
+                "audio_duration_ms" to audioDuration,
+                "completion_percent" to completionPercent
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging tts_playback_paused: ${e.message}")
+        }
+    }
+
+    // ============================================================================
+    // CHAT ACTIVATION EVENTS
+    // ============================================================================
+
+    /**
+     * Chat screen first view (critical activation metric)
+     */
+    fun logChatScreenFirstView(
+        hasWelcomeCard: Boolean,
+        hasStarterQuestions: Boolean,
+        starterQuestionsCount: Int,
+        locationDisplayed: Boolean,
+        locationType: String,
+        timeSinceLanguageSelectionMs: Long
+    ) {
+        try {
+            AnalyticsService.logEvent("chat_screen_first_view", mapOf(
+                "has_welcome_card" to hasWelcomeCard,
+                "has_starter_questions" to hasStarterQuestions,
+                "starter_questions_count" to starterQuestionsCount,
+                "location_displayed" to locationDisplayed,
+                "location_type" to locationType,
+                "time_since_language_selection_ms" to timeSinceLanguageSelectionMs
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging chat_screen_first_view: ${e.message}")
+        }
+    }
+
+    /**
+     * First message sent (Time To First Message - TTFM)
+     */
+    fun logChatFirstMessageSent(
+        messageType: String,
+        timeSinceAppOpenMs: Long,
+        timeSinceChatViewMs: Long,
+        messageLength: Int,
+        usedStarterQuestion: Boolean,
+        hasLocationContext: Boolean
+    ) {
+        try {
+            AnalyticsService.logEvent("chat_first_message_sent", mapOf(
+                "message_type" to messageType,
+                "time_since_app_open_ms" to timeSinceAppOpenMs,
+                "time_since_chat_view_ms" to timeSinceChatViewMs,
+                "message_length_chars" to messageLength,
+                "used_starter_question" to usedStarterQuestion,
+                "has_location_context" to hasLocationContext
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging chat_first_message_sent: ${e.message}")
+        }
+    }
+
+    /**
+     * First response received (Time To First Value - TTFV)
+     */
+    fun logChatFirstResponseReceived(
+        responseTimeMs: Long,
+        timeSinceAppOpenMs: Long,
+        responseLength: Int,
+        hasFollowUpQuestions: Boolean,
+        followUpCount: Int
+    ) {
+        try {
+            AnalyticsService.logEvent("chat_first_response_received", mapOf(
+                "response_time_ms" to responseTimeMs,
+                "time_since_app_open_ms" to timeSinceAppOpenMs,
+                "response_length_chars" to responseLength,
+                "has_follow_up_questions" to hasFollowUpQuestions,
+                "follow_up_count" to followUpCount
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging chat_first_response_received: ${e.message}")
+        }
+    }
+
+    // ============================================================================
+    // IMAGE UPLOAD EVENTS
+    // ============================================================================
+
+    /**
+     * Diagnosis upload started
+     */
+    fun logDiagnosisUploadStarted(fileSizeKb: Int, networkType: String) {
+        try {
+            AnalyticsService.logEvent("diagnosis_upload_started", mapOf(
+                "file_size_kb" to fileSizeKb,
+                "network_type" to networkType
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging diagnosis_upload_started: ${e.message}")
+        }
+    }
+
+    /**
+     * Diagnosis upload completed
+     */
+    fun logDiagnosisUploadCompleted(fileSizeKb: Int, uploadTimeMs: Long, networkType: String) {
+        try {
+            AnalyticsService.logEvent("diagnosis_upload_completed", mapOf(
+                "file_size_kb" to fileSizeKb,
+                "upload_time_ms" to uploadTimeMs,
+                "network_type" to networkType,
+                "upload_speed_kbps" to if (uploadTimeMs > 0) (fileSizeKb * 1000 / uploadTimeMs).toInt() else 0
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging diagnosis_upload_completed: ${e.message}")
+        }
+    }
+
+    /**
+     * Diagnosis upload failed
+     */
+    fun logDiagnosisUploadFailed(fileSizeKb: Int, errorType: String, errorMessage: String) {
+        try {
+            AnalyticsService.logEvent("diagnosis_upload_failed", mapOf(
+                "file_size_kb" to fileSizeKb,
+                "error_type" to errorType,
+                "error_message" to errorMessage
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging diagnosis_upload_failed: ${e.message}")
+        }
+    }
+
+    /**
+     * Diagnosis processing completed
+     */
+    fun logDiagnosisCompleted(processingTimeMs: Long, resultLength: Int) {
+        try {
+            AnalyticsService.logEvent("diagnosis_completed", mapOf(
+                "processing_time_ms" to processingTimeMs,
+                "result_length_chars" to resultLength
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging diagnosis_completed: ${e.message}")
+        }
+    }
 }
