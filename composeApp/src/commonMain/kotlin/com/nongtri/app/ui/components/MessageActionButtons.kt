@@ -57,6 +57,12 @@ fun MessageActionButtons(
             // Copy button (only for agricultural responses)
             IconButton(
                 onClick = {
+                    // BATCH 1: Track copy button clicked
+                    com.nongtri.app.analytics.Events.logCopyButtonClicked(
+                        messageIndex = 0,
+                        messageLength = messageContent.length
+                    )
+
                     clipboardManager.setText(AnnotatedString(messageContent))
                     showCopiedSnackbar = true
 
@@ -82,6 +88,13 @@ fun MessageActionButtons(
             // Share button (only for agricultural responses)
             IconButton(
                 onClick = {
+                    // BATCH 1: Track share button clicked
+                    com.nongtri.app.analytics.Events.logShareButtonClicked(
+                        messageIndex = 0,
+                        messageLength = messageContent.length,
+                        shareType = "text"
+                    )
+
                     // ROUND 4: Track chat message share opened event
                     com.nongtri.app.analytics.Events.logChatMessageShareOpened(
                         messageIndex = 0, // TODO: Pass message index from parent
@@ -196,6 +209,12 @@ fun MessageActionButtons(
             // Thumbs up (only for agricultural responses)
             IconButton(
                 onClick = {
+                    // BATCH 1: Track positive feedback
+                    com.nongtri.app.analytics.Events.logMessageFeedbackPositive(
+                        messageIndex = 0, // TODO: Pass from parent
+                        messageLength = messageContent.length,
+                        conversationId = null
+                    )
                     feedbackGiven = true
                     onFeedback(true)
                 },
@@ -213,6 +232,12 @@ fun MessageActionButtons(
             // Thumbs down (only for agricultural responses)
             IconButton(
                 onClick = {
+                    // BATCH 1: Track negative feedback
+                    com.nongtri.app.analytics.Events.logMessageFeedbackNegative(
+                        messageIndex = 0, // TODO: Pass from parent
+                        messageLength = messageContent.length,
+                        conversationId = null
+                    )
                     feedbackGiven = false
                     onFeedback(false)
                 },

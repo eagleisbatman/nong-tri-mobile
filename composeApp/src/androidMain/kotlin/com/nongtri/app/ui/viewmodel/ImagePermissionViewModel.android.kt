@@ -233,6 +233,14 @@ actual class ImagePermissionViewModel actual constructor() : ViewModel() {
                 canRequestAgain = shouldShowRationale
             )
 
+            // BATCH 1: Track permission friction point (2+ denials)
+            if (cameraDenialCount >= 2) {
+                com.nongtri.app.analytics.Events.logPermissionFrictionPoint(
+                    permissionType = "camera",
+                    featureBlocked = "image_diagnosis"
+                )
+            }
+
             println("[ImagePermission] Camera denied: shouldShowRationale=$shouldShowRationale")
 
             if (!shouldShowRationale) {
@@ -297,6 +305,14 @@ actual class ImagePermissionViewModel actual constructor() : ViewModel() {
                 denialCount = storageDenialCount,
                 canRequestAgain = shouldShowRationale
             )
+
+            // BATCH 1: Track permission friction point (2+ denials)
+            if (storageDenialCount >= 2) {
+                com.nongtri.app.analytics.Events.logPermissionFrictionPoint(
+                    permissionType = permissionType,
+                    featureBlocked = "image_diagnosis"
+                )
+            }
 
             println("[ImagePermission] Storage denied: shouldShowRationale=$shouldShowRationale")
 

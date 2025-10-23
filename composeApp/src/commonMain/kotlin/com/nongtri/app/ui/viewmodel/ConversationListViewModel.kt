@@ -28,6 +28,9 @@ class ConversationListViewModel(
     private val _uiState = MutableStateFlow(ConversationListUiState())
     val uiState: StateFlow<ConversationListUiState> = _uiState.asStateFlow()
 
+    // BATCH 1: Track retry attempts for success analytics
+    private var retryAttempts = 0
+
     init {
         loadThreads()
     }
@@ -42,6 +45,15 @@ class ConversationListViewModel(
             try {
                 api.getThreads(userId, includeInactive).fold(
                     onSuccess = { threads ->
+                        // BATCH 1: Track retry success if this follows failed attempts
+                        if (retryAttempts > 0) {
+                            com.nongtri.app.analytics.Events.logFeatureRetrySucceeded(
+                                featureName = "conversation_list_load",
+                                retryAttempt = retryAttempts
+                            )
+                            retryAttempts = 0
+                        }
+
                         _uiState.update {
                             it.copy(
                                 threads = threads,
@@ -52,6 +64,9 @@ class ConversationListViewModel(
                     },
                     onFailure = { error ->
                         val strings = LocalizationProvider.getStrings(userPreferences.language.value)
+
+                        // BATCH 1: Increment retry attempts counter
+                        retryAttempts++
 
                         // ROUND 11: Track feature failure
                         com.nongtri.app.analytics.Events.logFeatureFailed(
@@ -70,6 +85,9 @@ class ConversationListViewModel(
                 )
             } catch (e: Exception) {
                 val strings = LocalizationProvider.getStrings(userPreferences.language.value)
+
+                // BATCH 1: Increment retry attempts counter
+                retryAttempts++
 
                 // ROUND 11: Track feature failure
                 com.nongtri.app.analytics.Events.logFeatureFailed(

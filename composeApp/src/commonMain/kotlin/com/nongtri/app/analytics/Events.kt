@@ -1080,6 +1080,65 @@ object Events {
         }
     }
 
+    /**
+     * User gave positive feedback (thumbs up) on AI response
+     */
+    fun logMessageFeedbackPositive(messageIndex: Int, messageLength: Int, conversationId: Int?) {
+        try {
+            AnalyticsService.logEvent("message_feedback_positive", mapOf(
+                "message_index" to messageIndex,
+                "message_length_chars" to messageLength,
+                "conversation_id" to (conversationId ?: 0)
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging message_feedback_positive: ${e.message}")
+        }
+    }
+
+    /**
+     * User gave negative feedback (thumbs down) on AI response
+     */
+    fun logMessageFeedbackNegative(messageIndex: Int, messageLength: Int, conversationId: Int?) {
+        try {
+            AnalyticsService.logEvent("message_feedback_negative", mapOf(
+                "message_index" to messageIndex,
+                "message_length_chars" to messageLength,
+                "conversation_id" to (conversationId ?: 0)
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging message_feedback_negative: ${e.message}")
+        }
+    }
+
+    /**
+     * User clicked copy button on AI response
+     */
+    fun logCopyButtonClicked(messageIndex: Int, messageLength: Int) {
+        try {
+            AnalyticsService.logEvent("copy_button_clicked", mapOf(
+                "message_index" to messageIndex,
+                "message_length_chars" to messageLength
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging copy_button_clicked: ${e.message}")
+        }
+    }
+
+    /**
+     * User clicked share button on AI response
+     */
+    fun logShareButtonClicked(messageIndex: Int, messageLength: Int, shareType: String) {
+        try {
+            AnalyticsService.logEvent("share_button_clicked", mapOf(
+                "message_index" to messageIndex,
+                "message_length_chars" to messageLength,
+                "share_type" to shareType // "text" or "image"
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging share_button_clicked: ${e.message}")
+        }
+    }
+
     // ============================================================================
     // ROUND 5: IMPORTANT EVENTS - IMAGE DIAGNOSIS (7 events)
     // ============================================================================

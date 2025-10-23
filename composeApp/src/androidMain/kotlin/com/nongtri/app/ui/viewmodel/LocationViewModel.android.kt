@@ -240,6 +240,14 @@ actual class LocationViewModel actual constructor() : ViewModel() {
                 canRequestAgain = shouldShowRationale
             )
 
+            // BATCH 1: Track permission friction point (2+ denials)
+            if (denialCount >= 2) {
+                com.nongtri.app.analytics.Events.logPermissionFrictionPoint(
+                    permissionType = "location",
+                    featureBlocked = "location_sharing"
+                )
+            }
+
             println("Permission denied: shouldShowRationale=$shouldShowRationale")
 
             // If shouldShowRationale=false, user has exhausted permission requests

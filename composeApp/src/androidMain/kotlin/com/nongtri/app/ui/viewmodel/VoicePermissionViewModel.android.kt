@@ -166,6 +166,14 @@ actual class VoicePermissionViewModel actual constructor() : ViewModel() {
                 canRequestAgain = shouldShowRationale
             )
 
+            // BATCH 1: Track permission friction point (2+ denials)
+            if (denialCount >= 2) {
+                com.nongtri.app.analytics.Events.logPermissionFrictionPoint(
+                    permissionType = "voice",
+                    featureBlocked = "voice_recording"
+                )
+            }
+
             println("[VoicePermission] Permission denied: shouldShowRationale=$shouldShowRationale")
 
             // If shouldShowRationale=false, user has exhausted permission requests
