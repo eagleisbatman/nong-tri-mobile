@@ -70,6 +70,11 @@ fun App() {
                         showConversationList = true
                     },
                     onThemeModeChange = { mode ->
+                        // ROUND 10: Track theme change
+                        com.nongtri.app.analytics.Events.logThemeChanged(
+                            fromTheme = themeMode.name.lowercase(),
+                            toTheme = mode.name.lowercase()
+                        )
                         userPreferences.setThemeMode(mode)
                     },
                     currentThemeMode = themeMode
