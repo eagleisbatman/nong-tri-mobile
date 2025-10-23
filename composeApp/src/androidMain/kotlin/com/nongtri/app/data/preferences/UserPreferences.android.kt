@@ -28,6 +28,31 @@ actual class UserPreferences private constructor(context: Context) {
     private val _hasCompletedOnboarding = MutableStateFlow(false)
     actual val hasCompletedOnboarding: StateFlow<Boolean> = _hasCompletedOnboarding.asStateFlow()
 
+    // Analytics tracking properties
+    private val _sessionCount = MutableStateFlow(0)
+    actual val sessionCount: StateFlow<Int> = _sessionCount.asStateFlow()
+
+    private val _messageCount = MutableStateFlow(0)
+    actual val messageCount: StateFlow<Int> = _messageCount.asStateFlow()
+
+    private val _voiceMessageCount = MutableStateFlow(0)
+    actual val voiceMessageCount: StateFlow<Int> = _voiceMessageCount.asStateFlow()
+
+    private val _imageMessageCount = MutableStateFlow(0)
+    actual val imageMessageCount: StateFlow<Int> = _imageMessageCount.asStateFlow()
+
+    private val _hasUsedVoice = MutableStateFlow(false)
+    actual val hasUsedVoice: StateFlow<Boolean> = _hasUsedVoice.asStateFlow()
+
+    private val _hasUsedImageDiagnosis = MutableStateFlow(false)
+    actual val hasUsedImageDiagnosis: StateFlow<Boolean> = _hasUsedImageDiagnosis.asStateFlow()
+
+    private val _hasSharedGpsLocation = MutableStateFlow(false)
+    actual val hasSharedGpsLocation: StateFlow<Boolean> = _hasSharedGpsLocation.asStateFlow()
+
+    private val _hasUsedTts = MutableStateFlow(false)
+    actual val hasUsedTts: StateFlow<Boolean> = _hasUsedTts.asStateFlow()
+
     init {
         // Load preferences from local storage on initialization
         loadPreferencesFromLocal()
@@ -70,6 +95,26 @@ actual class UserPreferences private constructor(context: Context) {
         // Load onboarding status
         _hasCompletedOnboarding.value = prefs.getBoolean("onboarding_completed", false)
         println("UserPreferences: Loaded onboarding status: ${_hasCompletedOnboarding.value}")
+
+        // Load analytics tracking properties
+        _sessionCount.value = prefs.getInt("session_count", 0)
+        _messageCount.value = prefs.getInt("message_count", 0)
+        _voiceMessageCount.value = prefs.getInt("voice_message_count", 0)
+        _imageMessageCount.value = prefs.getInt("image_message_count", 0)
+        _hasUsedVoice.value = prefs.getBoolean("has_used_voice", false)
+        _hasUsedImageDiagnosis.value = prefs.getBoolean("has_used_image_diagnosis", false)
+        _hasSharedGpsLocation.value = prefs.getBoolean("has_shared_gps_location", false)
+        _hasUsedTts.value = prefs.getBoolean("has_used_tts", false)
+
+        // Set install date if first launch
+        if (!prefs.contains("install_date")) {
+            val currentDate = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US)
+                .format(java.util.Date())
+            prefs.edit().putString("install_date", currentDate).apply()
+            println("UserPreferences: Set install date: $currentDate")
+        }
+
+        println("UserPreferences: Loaded analytics - sessions: ${_sessionCount.value}, messages: ${_messageCount.value}")
     }
 
     actual fun setLanguage(language: Language) {
@@ -261,6 +306,107 @@ actual class UserPreferences private constructor(context: Context) {
         val jobId = prefs.getString("pending_diagnosis_job_id", null)
         println("UserPreferences: Retrieved pending diagnosis job ID: $jobId")
         return jobId
+    }
+
+    // Analytics tracking methods
+    actual fun incrementSessionCount() {
+        _sessionCount.value += 1
+        prefs.edit().putInt("session_count", _sessionCount.value).apply()
+        println("UserPreferences: Incremented session count to ${_sessionCount.value}")
+    }
+
+    actual fun incrementMessageCount() {
+        _messageCount.value += 1
+        prefs.edit().putInt("message_count", _messageCount.value).apply()
+        println("UserPreferences: Incremented message count to ${_messageCount.value}")
+    }
+
+    actual fun incrementVoiceMessageCount() {
+        _voiceMessageCount.value += 1
+        prefs.edit().putInt("voice_message_count", _voiceMessageCount.value).apply()
+        println("UserPreferences: Incremented voice message count to ${_voiceMessageCount.value}")
+    }
+
+    actual fun incrementImageMessageCount() {
+        _imageMessageCount.value += 1
+        prefs.edit().putInt("image_message_count", _imageMessageCount.value).apply()
+        println("UserPreferences: Incremented image message count to ${_imageMessageCount.value}")
+    }
+
+    actual fun setHasUsedVoice(used: Boolean) {
+        _hasUsedVoice.value = used
+        prefs.edit().putBoolean("has_used_voice", used).apply()
+        println("UserPreferences: Set has used voice to $used")
+    }
+
+    actual fun setHasUsedImageDiagnosis(used: Boolean) {
+        _hasUsedImageDiagnosis.value = used
+        prefs.edit().putBoolean("has_used_image_diagnosis", used).apply()
+        println("UserPreferences: Set has used image diagnosis to $used")
+    }
+
+    actual fun setHasSharedGpsLocation(shared: Boolean) {
+        _hasSharedGpsLocation.value = shared
+        prefs.edit().putBoolean("has_shared_gps_location", shared).apply()
+        println("UserPreferences: Set has shared GPS location to $shared")
+    }
+
+    actual fun setHasUsedTts(used: Boolean) {
+        _hasUsedTts.value = used
+        prefs.edit().putBoolean("has_used_tts", used).apply()
+        println("UserPreferences: Set has used TTS to $used")
+    }
+
+    actual fun getInstallDate(): String {
+        return prefs.getString("install_date", "") ?: ""
+    }
+
+    actual fun getLastSessionDate(): String {
+        return prefs.getString("last_session_date", "") ?: ""
+    }
+
+    actual fun setLastSessionDate(date: String) {
+        prefs.edit().putString("last_session_date", date).apply()
+    }
+
+    actual fun getLastSessionDuration(): Long {
+        return prefs.getLong("last_session_duration", 0L)
+    }
+
+    actual fun setLastSessionDuration(durationMs: Long) {
+        prefs.edit().putLong("last_session_duration", durationMs).apply()
+    }
+
+    actual fun daysSinceInstall(): Int {
+        val installDate = getInstallDate()
+        if (installDate.isEmpty()) return 0
+
+        try {
+            val format = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US)
+            val install = format.parse(installDate)
+            val now = java.util.Date()
+            val diffMs = now.time - (install?.time ?: 0)
+            return (diffMs / (1000 * 60 * 60 * 24)).toInt()
+        } catch (e: Exception) {
+            println("UserPreferences: Error calculating days since install: ${e.message}")
+            return 0
+        }
+    }
+
+    actual fun daysSinceLastSession(): Int {
+        val lastSessionDate = getLastSessionDate()
+        if (lastSessionDate.isEmpty()) return 0
+
+        try {
+            val format = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US)
+            val lastSession = format.parse(lastSessionDate)
+            val now = java.util.Date()
+            val diffMs = now.time - (lastSession?.time ?: 0)
+            return (diffMs / (1000 * 60 * 60 * 24)).toInt()
+        } catch (e: Exception) {
+            println("UserPreferences: Error calculating days since last session: ${e.message}")
+            return 0
+        }
     }
 
     actual companion object {

@@ -94,7 +94,7 @@ actual class ImagePicker(private val context: Context) {
         try {
             if (success && imageUri != null) {
                 println("[ImagePicker] Camera capture successful, processing image...")
-                val result = processImageUri(imageUri)
+                val result = processImageUri(imageUri, "camera")
                 callback?.invoke(result)
             } else {
                 println("[ImagePicker] Camera capture cancelled or failed")
@@ -120,7 +120,7 @@ actual class ImagePicker(private val context: Context) {
         try {
             if (uri != null) {
                 println("[ImagePicker] Gallery image selected: $uri")
-                val result = processImageUri(uri)
+                val result = processImageUri(uri, "gallery")
                 callback?.invoke(result)
             } else {
                 println("[ImagePicker] Gallery selection cancelled")
@@ -137,8 +137,10 @@ actual class ImagePicker(private val context: Context) {
     
     /**
      * Process image URI and create ImagePickerResult
+     * @param uri Image URI to process
+     * @param source "camera" or "gallery" for analytics tracking
      */
-    private fun processImageUri(uri: Uri): ImagePickerResult? {
+    private fun processImageUri(uri: Uri, source: String): ImagePickerResult? {
         try {
             // Load bitmap
             val inputStream = context.contentResolver.openInputStream(uri)
@@ -151,6 +153,7 @@ actual class ImagePicker(private val context: Context) {
                     width = 0,
                     height = 0,
                     mimeType = null,
+                    source = source,
                     error = strings.errorCannotAccessImageFile
                 )
             }
@@ -167,6 +170,7 @@ actual class ImagePicker(private val context: Context) {
                     width = 0,
                     height = 0,
                     mimeType = null,
+                    source = source,
                     error = strings.errorCannotReadImage
                 )
             }
@@ -201,7 +205,8 @@ actual class ImagePicker(private val context: Context) {
                 sizeBytes = sizeBytes,
                 width = originalWidth,
                 height = originalHeight,
-                mimeType = mimeType
+                mimeType = mimeType,
+                source = source
             )
         } catch (e: Exception) {
             println("[ImagePicker] Error processing image: ${e.message}")

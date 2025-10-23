@@ -13,9 +13,12 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.nongtri.app.analytics.Events
+import com.nongtri.app.analytics.Funnels
 import com.nongtri.app.l10n.Language
 import com.nongtri.app.l10n.LocalizationProvider
 import com.nongtri.app.ui.components.TestTags
+import java.util.Locale
 
 @Composable
 fun LanguageSelectionScreen(
@@ -24,6 +27,27 @@ fun LanguageSelectionScreen(
 ) {
     var selectedLanguage by remember { mutableStateOf<Language?>(null) }
     val strings = LocalizationProvider.getStrings(selectedLanguage ?: Language.ENGLISH)
+
+    // Track screen view time for analytics
+    val screenDisplayTime = remember { System.currentTimeMillis() }
+
+    // Detect device locale for analytics
+    val deviceLocale = remember {
+        try {
+            Locale.getDefault().language
+        } catch (e: Exception) {
+            "en"
+        }
+    }
+
+    // Log screen viewed event once
+    LaunchedEffect(Unit) {
+        val defaultSuggestion = when (deviceLocale) {
+            "vi" -> "vi"
+            else -> "en"
+        }
+        Events.logOnboardingLanguageScreenViewed(defaultSuggestion)
+    }
 
     Surface(
         modifier = modifier.fillMaxSize().testTag(TestTags.LANGUAGE_SELECTION_SCREEN),
@@ -67,7 +91,22 @@ fun LanguageSelectionScreen(
                 LanguageOption(
                     language = language,
                     isSelected = selectedLanguage == language,
-                    onClick = { selectedLanguage = language },
+                    onClick = {
+                        // Calculate time to decide
+                        val timeToDecideMs = System.currentTimeMillis() - screenDisplayTime
+
+                        // Check if matches device locale
+                        val matchesDeviceLocale = language.code == deviceLocale
+
+                        // Log language selected event
+                        Events.logOnboardingLanguageSelected(
+                            languageChosen = language.code,
+                            matchesDeviceLocale = matchesDeviceLocale,
+                            timeToDecideMs = timeToDecideMs
+                        )
+
+                        selectedLanguage = language
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 6.dp)
@@ -79,7 +118,19 @@ fun LanguageSelectionScreen(
             // Continue button
             Button(
                 onClick = {
-                    selectedLanguage?.let { onLanguageSelected(it) }
+                    selectedLanguage?.let { language ->
+                        // Log continue button click
+                        Events.logOnboardingLanguageContinueClicked(language.code)
+
+                        // Track onboarding funnel step 2: Language selected
+                        Funnels.onboardingFunnel.step2_LanguageSelected(language.code)
+
+                        // Log onboarding completed
+                        Events.logOnboardingCompleted()
+
+                        // Callback to parent
+                        onLanguageSelected(language)
+                    }
                 },
                 enabled = selectedLanguage != null,
                 modifier = Modifier

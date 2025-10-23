@@ -95,6 +95,13 @@ actual class TextToSpeechManager(private val context: Context) {
             pausedPosition = 0  // Reset position for new audio
             _state.value = TtsState.PLAYING
 
+            // Track first TTS use for analytics
+            if (!userPreferences.hasUsedTts.value) {
+                userPreferences.setHasUsedTts(true)
+                com.nongtri.app.analytics.Events.logTtsFirstUse()
+                Log.d(TAG, "TTS: First use tracked")
+            }
+
             // Play the audio
             withContext(Dispatchers.Main) {
                 mediaPlayer = MediaPlayer().apply {

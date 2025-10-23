@@ -2,6 +2,7 @@ package com.nongtri.app.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.nongtri.app.analytics.Events
 import com.nongtri.app.data.api.NongTriApi
 import com.nongtri.app.data.model.ChatMessage
 import com.nongtri.app.data.model.MessageRole
@@ -40,6 +41,16 @@ class ChatViewModel(
     val uiState: StateFlow<ChatUiState> = _uiState.asStateFlow()
 
     private val locationRepository by lazy { LocationRepository.getInstance() }
+
+    // Session tracking for analytics
+    private var sessionMessageCount = 0
+    private var sessionVoiceMessageCount = 0
+    private var sessionImageCount = 0
+
+    // Getters for MainActivity to access session stats
+    fun getSessionMessageCount() = sessionMessageCount
+    fun getSessionVoiceMessageCount() = sessionVoiceMessageCount
+    fun getSessionImageCount() = sessionImageCount
 
     init {
         // Initialize location for first message
@@ -260,6 +271,12 @@ class ChatViewModel(
                                 response.diagnosis?.let { diagnosis ->
                                     println("[ChatViewModel] Diagnosis completed, adding to messages")
 
+                                    // Track image funnel step 6: Diagnosis completed
+                                    // Note: processing time not tracked from backend, using 0
+                                    com.nongtri.app.analytics.Funnels.imageDiagnosisFunnel.step6_DiagnosisCompleted(
+                                        processingTimeMs = 0
+                                    )
+
                                     // Remove "diagnosis_pending" message with this jobId if it exists
                                     _uiState.update { state ->
                                         state.copy(
@@ -334,6 +351,24 @@ class ChatViewModel(
         // Clear input field
         _uiState.update { it.copy(currentMessage = "") }
 
+        // Track analytics: message sent
+        sessionMessageCount++
+        userPreferences.incrementMessageCount()
+
+        // Log message sent event
+        // TODO: Add location context when LocationRepository provides sync location status
+        Events.logChatMessageSent(
+            messageLength = message.trim().length,
+            hasLocation = locationRepository.hasLocation(),
+            locationType = locationRepository.getLocationType(),
+            sessionMessageNumber = sessionMessageCount
+        )
+
+        // Track onboarding funnel step 3: First message sent (only for first message ever)
+        if (userPreferences.messageCount.value == 1) {
+            com.nongtri.app.analytics.Funnels.onboardingFunnel.step3_FirstMessageSent()
+        }
+
         // Add user message
         val userMessage = ChatMessage(
             role = MessageRole.USER,
@@ -362,6 +397,9 @@ class ChatViewModel(
         _uiState.update { state ->
             state.copy(messages = state.messages + initialAssistantMessage)
         }
+
+        // Track response time
+        val messageStartTime = System.currentTimeMillis()
 
         // Send to API with streaming
         viewModelScope.launch {
@@ -404,6 +442,19 @@ class ChatViewModel(
                 }
             ).fold(
                 onSuccess = { fullResponse ->
+                    // Track analytics: response received
+                    val responseTime = System.currentTimeMillis() - messageStartTime
+                    Events.logChatMessageReceived(
+                        responseTimeMs = responseTime,
+                        responseLength = fullResponse.length,
+                        messageNumber = sessionMessageCount
+                    )
+
+                    // Track onboarding funnel step 4: First response received (only for first message ever)
+                    if (userPreferences.messageCount.value == 1) {
+                        com.nongtri.app.analytics.Funnels.onboardingFunnel.step4_FirstResponseReceived(responseTime)
+                    }
+
                     // Mark loading as complete and mark message as not loading
                     _uiState.update { state ->
                         state.copy(
@@ -501,9 +552,28 @@ class ChatViewModel(
      * Voice messages are displayed with audio playback controls
      * @param transcription Transcribed text from Whisper
      * @param voiceAudioUrl MinIO URL for voice recording
+     * @param durationMs Recording duration in milliseconds (for analytics)
      */
-    fun sendVoiceMessage(transcription: String, voiceAudioUrl: String?) {
+    fun sendVoiceMessage(transcription: String, voiceAudioUrl: String?, durationMs: Long = 0) {
         if (transcription.isBlank()) return
+
+        // Track analytics: voice message sent
+        sessionMessageCount++
+        sessionVoiceMessageCount++
+        userPreferences.incrementMessageCount()
+        userPreferences.incrementVoiceMessageCount()
+        userPreferences.setHasUsedVoice(true)
+
+        // Log voice message event
+        Events.logVoiceMessageSent(
+            durationMs = durationMs,
+            hasLocation = locationRepository.hasLocation(),
+            locationType = locationRepository.getLocationType(),
+            sessionMessageNumber = sessionMessageCount
+        )
+
+        // Track voice funnel step 5: Message sent (funnel completed)
+        com.nongtri.app.analytics.Funnels.voiceAdoptionFunnel.step5_MessageSent()
 
         // Note: This method is now called AFTER optimistic message is shown
         // The optimistic message is already in the UI, we just need to trigger AI response
@@ -669,8 +739,9 @@ class ChatViewModel(
      * Image messages show plant image with diagnosis results
      * @param imageData Base64 data URL (data:image/jpeg;base64,...)
      * @param question User's question about the plant
+     * @param imageSource "camera" or "gallery" for analytics tracking
      */
-    fun sendImageDiagnosis(imageData: String, question: String) {
+    fun sendImageDiagnosis(imageData: String, question: String, imageSource: String = "unknown") {
         if (imageData.isBlank() || question.isBlank()) {
             println("[ImageDiagnosis] ✗ Invalid input: imageData or question is blank")
             return
@@ -694,6 +765,23 @@ class ChatViewModel(
             }
             return
         }
+
+        // Track analytics: image diagnosis requested
+        sessionMessageCount++
+        sessionImageCount++
+        userPreferences.incrementMessageCount()
+        userPreferences.incrementImageMessageCount()
+        userPreferences.setHasUsedImageDiagnosis(true)
+
+        // Log image diagnosis event
+        Events.logImageDiagnosisRequested(
+            imageSource = imageSource,
+            hasLocation = locationRepository.hasLocation(),
+            locationType = locationRepository.getLocationType()
+        )
+
+        // Track image funnel step 5: Diagnosis submitted
+        com.nongtri.app.analytics.Funnels.imageDiagnosisFunnel.step5_DiagnosisSubmitted()
 
         println("[ImageDiagnosis] Starting async diagnosis upload...")
         println("[ImageDiagnosis] Question: $question")

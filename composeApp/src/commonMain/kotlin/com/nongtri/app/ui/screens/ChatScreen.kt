@@ -73,6 +73,7 @@ fun ChatScreen(
     var selectedImageUri by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<String?>(null) }  // Display URI
     // Note: selectedImageBase64 cannot use rememberSaveable (too large for savedInstanceState)
     var selectedImageBase64 by remember { mutableStateOf<String?>(null) }  // Base64 data for upload
+    var selectedImageSource by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf("unknown") }  // "camera" or "gallery" for analytics
     var isImageProcessing by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }  // Prevent multiple simultaneous operations
     var showFullscreenImage by remember { mutableStateOf<String?>(null) }  // Image URL to show fullscreen
 
@@ -331,13 +332,27 @@ fun ChatScreen(
                 }
             }
 
-            // Populate input box when transcription completes successfully
+            // Auto-send voice message when transcription completes successfully
             LaunchedEffect(isTranscribing, transcriptionText) {
-                // When transcription completes and we have text, populate the input box
+                // When transcription completes and we have text, auto-send voice message
                 val text = transcriptionText
                 if (!isTranscribing && text != null && text.isNotEmpty() && recordedAudioFile != null) {
                     println("[ChatScreen] Transcription complete: $text")
-                    viewModel.updateMessage(text)
+
+                    // Get transcription result (includes voiceAudioUrl from MinIO)
+                    val result = voiceRecordingViewModel.getTranscriptionResult()
+                    val voiceAudioUrl = result?.second
+
+                    // Get recording duration for analytics
+                    val durationMs = voiceRecordingViewModel.getLastRecordingDurationMs()
+
+                    // Auto-send voice message with transcription
+                    viewModel.sendVoiceMessage(
+                        transcription = text,
+                        voiceAudioUrl = voiceAudioUrl,
+                        durationMs = durationMs
+                    )
+
                     // Clean up audio file
                     recordedAudioFile?.delete()
                     recordedAudioFile = null
@@ -364,6 +379,9 @@ fun ChatScreen(
                                 viewModel.sendMessage(uiState.currentMessage)
                             },
                             onImageClick = {
+                                // Track image funnel step 1: Image button clicked
+                                com.nongtri.app.analytics.Funnels.imageDiagnosisFunnel.step1_ImageButtonClicked()
+
                                 // Prevent multiple simultaneous operations
                                 if (isImageProcessing) {
                                     println("[ChatScreen] Image already being processed, ignoring click")
@@ -380,6 +398,9 @@ fun ChatScreen(
                                 }
                             },
                             onVoiceClick = {
+                                // Track voice funnel step 1: Voice button clicked
+                                com.nongtri.app.analytics.Funnels.voiceAdoptionFunnel.step1_VoiceButtonClicked()
+
                                 // Single tap - check permission and start recording
                                 if (voicePermissionState.hasPermission) {
                                     voiceRecordingViewModel.startRecording()
@@ -676,15 +697,23 @@ fun ChatScreen(
         ImageSourceBottomSheet(
             language = language,
             onCameraClick = {
+                // Track image funnel step 3: Source selected
+                com.nongtri.app.analytics.Funnels.imageDiagnosisFunnel.step3_SourceSelected("camera")
+
                 showImageSourceSelector = false
                 isImageProcessing = true
                 println("[ChatScreen] Launching camera...")
 
                 imagePicker.launchCamera { result ->
                     if (result != null && result.base64Data != null) {
-                        println("[ChatScreen] Camera image captured: ${result.width}x${result.height}, ${result.sizeBytes / 1024}KB")
+                        println("[ChatScreen] Camera image captured: ${result.width}x${result.height}, ${result.sizeBytes / 1024}KB, source: ${result.source}")
+
+                        // Track image funnel step 4: Image captured
+                        com.nongtri.app.analytics.Funnels.imageDiagnosisFunnel.step4_ImageCaptured()
+
                         selectedImageUri = result.uri
                         selectedImageBase64 = result.base64Data
+                        selectedImageSource = result.source
                         showImagePreviewDialog = true
                     } else {
                         println("[ChatScreen] Camera capture cancelled or failed: base64Data=${result?.base64Data != null}")
@@ -702,15 +731,23 @@ fun ChatScreen(
                 }
             },
             onGalleryClick = {
+                // Track image funnel step 3: Source selected
+                com.nongtri.app.analytics.Funnels.imageDiagnosisFunnel.step3_SourceSelected("gallery")
+
                 showImageSourceSelector = false
                 isImageProcessing = true
                 println("[ChatScreen] Launching gallery...")
 
                 imagePicker.launchGallery { result ->
                     if (result != null && result.base64Data != null) {
-                        println("[ChatScreen] Gallery image selected: ${result.width}x${result.height}, ${result.sizeBytes / 1024}KB")
+                        println("[ChatScreen] Gallery image selected: ${result.width}x${result.height}, ${result.sizeBytes / 1024}KB, source: ${result.source}")
+
+                        // Track image funnel step 4: Image captured
+                        com.nongtri.app.analytics.Funnels.imageDiagnosisFunnel.step4_ImageCaptured()
+
                         selectedImageUri = result.uri
                         selectedImageBase64 = result.base64Data
+                        selectedImageSource = result.source
                         showImagePreviewDialog = true
                     } else {
                         println("[ChatScreen] Gallery selection cancelled or failed: base64Data=${result?.base64Data != null}")
@@ -773,7 +810,8 @@ fun ChatScreen(
                 // Send image to backend for diagnosis
                 viewModel.sendImageDiagnosis(
                     imageData = base64Data,  // Use base64 for upload
-                    question = question
+                    question = question,
+                    imageSource = selectedImageSource
                 )
 
                 // Close dialog and clear state

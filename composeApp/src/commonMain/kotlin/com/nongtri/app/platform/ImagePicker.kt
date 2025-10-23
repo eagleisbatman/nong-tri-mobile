@@ -12,6 +12,7 @@ data class ImagePickerResult(
     val width: Int,
     val height: Int,
     val mimeType: String?,
+    val source: String = "unknown",  // "camera" or "gallery" (for analytics)
     val error: String? = null  // Error message if processing failed
 )
 

@@ -127,6 +127,9 @@ actual class VoicePermissionViewModel actual constructor() : ViewModel() {
         println("[VoicePermission] Permission result: granted=$granted")
 
         if (granted) {
+            // Track voice funnel step 2: Permission granted
+            com.nongtri.app.analytics.Funnels.voiceAdoptionFunnel.step2_PermissionGranted()
+
             // Permission granted, reset state
             _permissionState.update {
                 it.copy(

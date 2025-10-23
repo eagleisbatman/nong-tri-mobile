@@ -190,6 +190,11 @@ actual class ImagePermissionViewModel actual constructor() : ViewModel() {
                     error = null
                 )
             }
+
+            // Track image funnel step 2 if both permissions are now granted
+            if (hasStoragePermission()) {
+                com.nongtri.app.analytics.Funnels.imageDiagnosisFunnel.step2_PermissionGranted()
+            }
         } else {
             val shouldShowRationale = shouldShowCameraRationale()
             println("[ImagePermission] Camera denied: shouldShowRationale=$shouldShowRationale")
@@ -226,6 +231,11 @@ actual class ImagePermissionViewModel actual constructor() : ViewModel() {
                     permissionRequested = true,
                     error = null
                 )
+            }
+
+            // Track image funnel step 2 if both permissions are now granted
+            if (hasCameraPermission()) {
+                com.nongtri.app.analytics.Funnels.imageDiagnosisFunnel.step2_PermissionGranted()
             }
         } else {
             val shouldShowRationale = shouldShowStorageRationale()

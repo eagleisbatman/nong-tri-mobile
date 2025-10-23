@@ -19,6 +19,36 @@ class LocationRepository private constructor() {
     // Get localized strings based on user's current language preference
     private val strings get() = LocalizationProvider.getStrings(userPreferences.language.value)
 
+    // Cached location state for synchronous access (needed for analytics)
+    @Volatile
+    private var cachedIpLocation: UserLocation? = null
+    @Volatile
+    private var cachedGpsLocation: UserLocation? = null
+
+    /**
+     * Synchronous location status methods for analytics
+     * These use cached location state to avoid suspend functions in analytics calls
+     */
+    fun hasLocation(): Boolean {
+        return cachedGpsLocation != null || cachedIpLocation != null
+    }
+
+    fun getLocationType(): String {
+        return when {
+            cachedGpsLocation != null -> "gps"
+            cachedIpLocation != null -> "ip"
+            else -> "none"
+        }
+    }
+
+    fun hasGpsLocation(): Boolean {
+        return cachedGpsLocation != null
+    }
+
+    fun hasIpLocation(): Boolean {
+        return cachedIpLocation != null
+    }
+
     companion object {
         @Volatile
         private var instance: LocationRepository? = null
@@ -94,7 +124,12 @@ class LocationRepository private constructor() {
                 }
 
                 if (body.success && body.location != null) {
-                    Result.success(body.location.toUserLocation())
+                    val location = body.location.toUserLocation()
+                    // Update cache for analytics
+                    if (location.source == "ip") {
+                        cachedIpLocation = location
+                    }
+                    Result.success(location)
                 } else {
                     Result.success(null)
                 }
@@ -122,6 +157,9 @@ class LocationRepository private constructor() {
                 if (body.success) {
                     val ipLocation = body.ipLocation?.toUserLocation()
                     val gpsLocation = body.gpsLocation?.toUserLocation()
+                    // Update cache for analytics
+                    cachedIpLocation = ipLocation
+                    cachedGpsLocation = gpsLocation
                     Result.success(Pair(ipLocation, gpsLocation))
                 } else {
                     Result.success(Pair(null, null))
@@ -210,7 +248,18 @@ class LocationRepository private constructor() {
             if (response.status.isSuccess()) {
                 val body = response.body<ShareLocationResponse>()
                 if (body.success && body.location != null) {
-                    Result.success(body.location.toUserLocation())
+                    val location = body.location.toUserLocation()
+                    // Update cache for analytics (GPS location)
+                    cachedGpsLocation = location
+
+                    // Track first GPS location share for analytics
+                    if (!userPreferences.hasSharedGpsLocation.value) {
+                        userPreferences.setHasSharedGpsLocation(true)
+                        com.nongtri.app.analytics.Events.logLocationFirstShare()
+                        println("[LocationRepository] First GPS location share tracked")
+                    }
+
+                    Result.success(location)
                 } else {
                     Result.failure(Exception(strings.errorFailedToSaveLocation))
                 }

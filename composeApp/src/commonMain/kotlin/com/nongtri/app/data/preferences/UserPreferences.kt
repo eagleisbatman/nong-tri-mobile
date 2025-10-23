@@ -15,6 +15,16 @@ expect class UserPreferences {
     val themeMode: StateFlow<ThemeMode>
     val hasCompletedOnboarding: StateFlow<Boolean>
 
+    // Analytics tracking properties
+    val sessionCount: StateFlow<Int>
+    val messageCount: StateFlow<Int>
+    val voiceMessageCount: StateFlow<Int>
+    val imageMessageCount: StateFlow<Int>
+    val hasUsedVoice: StateFlow<Boolean>
+    val hasUsedImageDiagnosis: StateFlow<Boolean>
+    val hasSharedGpsLocation: StateFlow<Boolean>
+    val hasUsedTts: StateFlow<Boolean>
+
     fun setLanguage(language: Language)
     fun setThemeMode(mode: ThemeMode)
     fun completeOnboarding()
@@ -27,6 +37,23 @@ expect class UserPreferences {
     // Pending diagnosis job (for notification tap handling)
     fun setPendingDiagnosisJobId(jobId: String?)
     fun getPendingDiagnosisJobId(): String?
+
+    // Analytics tracking methods
+    fun incrementSessionCount()
+    fun incrementMessageCount()
+    fun incrementVoiceMessageCount()
+    fun incrementImageMessageCount()
+    fun setHasUsedVoice(used: Boolean)
+    fun setHasUsedImageDiagnosis(used: Boolean)
+    fun setHasSharedGpsLocation(shared: Boolean)
+    fun setHasUsedTts(used: Boolean)
+    fun getInstallDate(): String
+    fun getLastSessionDate(): String
+    fun setLastSessionDate(date: String)
+    fun getLastSessionDuration(): Long
+    fun setLastSessionDuration(durationMs: Long)
+    fun daysSinceInstall(): Int
+    fun daysSinceLastSession(): Int
 
     companion object {
         fun getInstance(): UserPreferences

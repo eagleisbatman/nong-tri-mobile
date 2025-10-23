@@ -30,6 +30,12 @@ class MainActivity : ComponentActivity() {
     private lateinit var voiceMessagePlayer: VoiceMessagePlayer
     private lateinit var imagePicker: ImagePicker
 
+    // Session tracking
+    private var sessionStartTime = 0L
+    private var sessionMessagesCount = 0
+    private var sessionVoiceMessagesCount = 0
+    private var sessionImagesCount = 0
+
     // Location permission launcher
     private val locationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -120,6 +126,30 @@ class MainActivity : ComponentActivity() {
         // Initialize UserPreferences with device info provider
         UserPreferences.initialize(applicationContext)
 
+        // Initialize Firebase Analytics
+        com.nongtri.app.analytics.AnalyticsService.initialize()
+
+        // Set user ID for analytics
+        val deviceId = UserPreferences.getInstance().getDeviceId()
+        com.nongtri.app.analytics.AnalyticsService.setUserId(deviceId)
+
+        // Update user properties
+        com.nongtri.app.analytics.AnalyticsService.updateUserProperties()
+
+        // Track session start
+        sessionStartTime = System.currentTimeMillis()
+        UserPreferences.getInstance().incrementSessionCount()
+        com.nongtri.app.analytics.Events.logSessionStarted(
+            entryPoint = if (intent?.action == android.content.Intent.ACTION_VIEW) "deeplink"
+            else if (intent?.hasExtra("jobId") == true) "notification"
+            else "launcher"
+        )
+
+        // Track onboarding funnel step 1 (for first-time users only)
+        if (UserPreferences.getInstance().sessionCount.value == 1) {
+            com.nongtri.app.analytics.Funnels.onboardingFunnel.step1_AppLaunched()
+        }
+
         ttsManager = TextToSpeechManager(applicationContext)
         audioRecorder = AudioRecorder(applicationContext)
         voiceMessagePlayer = VoiceMessagePlayer(applicationContext)
@@ -207,6 +237,31 @@ class MainActivity : ComponentActivity() {
                 UserPreferences.getInstance().setPendingDiagnosisJobId(jobId)
             }
         }
+    }
+
+    override fun onStop() {
+        super.onStop()
+
+        // Track session end
+        val sessionDuration = System.currentTimeMillis() - sessionStartTime
+
+        // Save session data for next session
+        val prefs = UserPreferences.getInstance()
+        prefs.setLastSessionDate(
+            java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US)
+                .format(java.util.Date())
+        )
+        prefs.setLastSessionDuration(sessionDuration)
+
+        // Log session ended event
+        com.nongtri.app.analytics.Events.logSessionEnded(
+            sessionDurationMs = sessionDuration,
+            messagesSent = sessionMessagesCount,
+            voiceMessagesSent = sessionVoiceMessagesCount,
+            imagesSent = sessionImagesCount
+        )
+
+        println("[MainActivity] Session ended - duration: ${sessionDuration}ms, messages: $sessionMessagesCount")
     }
 
     override fun onDestroy() {

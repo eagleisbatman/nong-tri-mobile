@@ -43,6 +43,7 @@ class VoiceRecordingViewModel(
     private var recordingJob: Job? = null
     private var amplitudeJob: Job? = null
     private var recordingStartTime: Long = 0
+    private var lastRecordingDurationMs: Long = 0  // Store duration for analytics
 
     // Background transcription internal state
     private var backgroundTranscription: String? = null
@@ -61,6 +62,9 @@ class VoiceRecordingViewModel(
                 startRecordingTimer()
                 startAmplitudePolling()
                 println("[VoiceRecording] Started recording: $filePath")
+
+                // Track voice funnel step 3: Recording started
+                com.nongtri.app.analytics.Funnels.voiceAdoptionFunnel.step3_RecordingStarted()
             },
             onFailure = { error ->
                 val strings = LocalizationProvider.getStrings(userPreferences.language.value)
@@ -91,6 +95,7 @@ class VoiceRecordingViewModel(
                 // ✅ VALIDATION #1: Check recording duration (minimum 0.5 seconds)
                 val strings = LocalizationProvider.getStrings(userPreferences.language.value)
                 val durationMs = System.currentTimeMillis() - recordingStartTime
+                lastRecordingDurationMs = durationMs  // Store for analytics
                 if (durationMs < 500) {
                     _state.value = VoiceRecordingState.Error(strings.errorRecordingTooShort)
                     println("[VoiceRecording] Recording too short: ${durationMs}ms")
@@ -134,7 +139,11 @@ class VoiceRecordingViewModel(
         audioRecorder.stopRecording().fold(
             onSuccess = { audioFile ->
                 val durationMs = System.currentTimeMillis() - recordingStartTime
+                lastRecordingDurationMs = durationMs  // Store for analytics
                 println("[VoiceRecording] Stopped for preview: ${audioFile.absolutePath} (${audioFile.length()} bytes, ${durationMs}ms)")
+
+                // Track voice funnel step 4: Recording completed
+                com.nongtri.app.analytics.Funnels.voiceAdoptionFunnel.step4_RecordingCompleted(durationMs)
 
                 // ALWAYS return the file for preview - let user decide whether to accept/reject
                 // Don't validate here - user should see the preview UI regardless
@@ -194,6 +203,11 @@ class VoiceRecordingViewModel(
      * Check if transcription is still in progress
      */
     fun isTranscriptionInProgress(): Boolean = _isTranscribing.value
+
+    /**
+     * Get last recording duration in milliseconds (for analytics)
+     */
+    fun getLastRecordingDurationMs(): Long = lastRecordingDurationMs
 
     /**
      * Transcribe a saved audio file

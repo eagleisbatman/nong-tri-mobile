@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.kotlinx.serialization)
     alias(libs.plugins.google.services)
+    alias(libs.plugins.firebase.crashlytics)
 }
 
 kotlin {
@@ -37,6 +38,8 @@ kotlin {
             // Firebase
             implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
             implementation("com.google.firebase:firebase-messaging-ktx")
+            implementation("com.google.firebase:firebase-analytics-ktx")
+            implementation("com.google.firebase:firebase-crashlytics-ktx")
         }
         commonMain.dependencies {
             implementation(compose.runtime)
