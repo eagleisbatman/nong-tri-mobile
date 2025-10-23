@@ -222,6 +222,14 @@ actual class ImagePicker(private val context: Context) {
     private fun compressBitmapIfNeeded(bitmap: Bitmap): Pair<Bitmap, Int> {
         var scaledBitmap = bitmap
 
+        // ROUND 7: Track compression started
+        val compressionStartTime = System.currentTimeMillis()
+        val originalSizeKb = (bitmap.byteCount / 1024)
+        com.nongtri.app.analytics.Events.logImageCompressionStarted(
+            originalSizeKb = originalSizeKb,
+            targetSizeKb = 2048 // 2MB target
+        )
+
         try {
             // First, check if dimensions are too large
             val maxDimension = 2048
@@ -253,6 +261,16 @@ actual class ImagePicker(private val context: Context) {
 
                 quality -= 10
             } while (true)
+
+            // ROUND 7: Track compression completed
+            val compressionTimeMs = System.currentTimeMillis() - compressionStartTime
+            val compressedSizeKb = (outputStream.size() / 1024)
+
+            com.nongtri.app.analytics.Events.logImageCompressionCompleted(
+                originalSizeKb = originalSizeKb,
+                compressedSizeKb = compressedSizeKb,
+                compressionTimeMs = compressionTimeMs
+            )
 
             return Pair(scaledBitmap, quality)
         } catch (e: Exception) {

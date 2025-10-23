@@ -157,10 +157,10 @@ class LocationRepository private constructor() {
                     Result.success(null)
                 }
             } else {
-                // ROUND 6: Track API error occurred
-                com.nongtri.app.analytics.Events.logApiError(
+                // ROUND 7: Track network error (replaced logApiError)
+                com.nongtri.app.analytics.Events.logNetworkError(
                     endpoint = "/api/location/init",
-                    statusCode = response.status.value,
+                    errorType = "http_${response.status.value}",
                     errorMessage = strings.errorFailedToInitializeLocation
                 )
                 Result.failure(Exception(strings.errorFailedToInitializeLocation))

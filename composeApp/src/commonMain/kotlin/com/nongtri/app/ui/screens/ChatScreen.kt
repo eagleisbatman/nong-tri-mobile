@@ -444,6 +444,8 @@ fun ChatScreen(
                                 }
                             },
                             onVoiceClick = {
+                                // ROUND 7: Track voice button clicked (individual event)
+                                com.nongtri.app.analytics.Events.logVoiceButtonClicked()
                                 // Track voice funnel step 1: Voice button clicked
                                 com.nongtri.app.analytics.Funnels.voiceAdoptionFunnel.step1_VoiceButtonClicked()
 

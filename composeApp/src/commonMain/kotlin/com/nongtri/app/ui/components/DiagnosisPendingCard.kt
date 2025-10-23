@@ -9,7 +9,9 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,6 +34,13 @@ fun DiagnosisPendingCard(
     strings: com.nongtri.app.l10n.Strings,
     modifier: Modifier = Modifier
 ) {
+    // ROUND 7: Track pending card viewed
+    LaunchedEffect(jobId) {
+        com.nongtri.app.analytics.Events.logDiagnosisPendingCardViewed(
+            jobId = jobId
+        )
+    }
+
     // Pulsing animation for the status indicator
     val infiniteTransition = rememberInfiniteTransition()
     val alpha by infiniteTransition.animateFloat(

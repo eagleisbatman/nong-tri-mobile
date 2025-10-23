@@ -274,6 +274,9 @@ actual class LocationViewModel actual constructor() : ViewModel() {
 
 
     actual fun openLocationSettings() {
+        // ROUND 7: Track location settings opened
+        com.nongtri.app.analytics.Events.logLocationPermissionSettingsOpened()
+
         try {
             val intent = android.content.Intent(
                 android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,

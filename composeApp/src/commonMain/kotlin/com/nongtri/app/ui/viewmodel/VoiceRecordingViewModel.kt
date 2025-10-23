@@ -352,6 +352,13 @@ class VoiceRecordingViewModel(
                             errorType = "transcription_failed",
                             errorMessage = errorMsg
                         )
+                        // ROUND 7: Track specific transcription failure event
+                        com.nongtri.app.analytics.Events.logVoiceTranscriptionFailed(
+                            errorType = "api_error",
+                            errorMessage = errorMsg,
+                            fileSizeKb = (audioFile.length() / 1024).toInt(),
+                            durationMs = lastRecordingDurationMs
+                        )
 
                         resetToIdle()
                     }
@@ -365,6 +372,13 @@ class VoiceRecordingViewModel(
                     com.nongtri.app.analytics.Events.logVoiceRecordingError(
                         errorType = "transcription_network_error",
                         errorMessage = errorMsg
+                    )
+                    // ROUND 7: Track specific transcription failure event
+                    com.nongtri.app.analytics.Events.logVoiceTranscriptionFailed(
+                        errorType = "network_error",
+                        errorMessage = errorMsg,
+                        fileSizeKb = (audioFile.length() / 1024).toInt(),
+                        durationMs = lastRecordingDurationMs
                     )
 
                     println("[VoiceRecording] Transcription error: ${error.message}")

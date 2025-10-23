@@ -332,6 +332,22 @@ object Events {
     }
 
     // ============================================================================
+    // VOICE INTERACTION EVENTS
+    // ============================================================================
+
+    /**
+     * Voice button clicked (user initiates voice recording)
+     * ROUND 7: Added missing event from strategy
+     */
+    fun logVoiceButtonClicked() {
+        try {
+            AnalyticsService.logEvent("voice_button_clicked", mapOf<String, Any>())
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging voice_button_clicked: ${e.message}")
+        }
+    }
+
+    // ============================================================================
     // PERMISSION EVENTS
     // ============================================================================
 
@@ -479,21 +495,6 @@ object Events {
     }
 
     /**
-     * API error occurred
-     */
-    fun logApiError(endpoint: String, statusCode: Int, errorMessage: String) {
-        try {
-            AnalyticsService.logEvent("api_error_occurred", mapOf(
-                "endpoint" to endpoint,
-                "status_code" to statusCode,
-                "error_message" to errorMessage
-            ))
-        } catch (e: Exception) {
-            println("[Events] ❌ Error logging api_error_occurred: ${e.message}")
-        }
-    }
-
-    /**
      * Voice recording error
      */
     fun logVoiceRecordingError(errorType: String, errorMessage: String) {
@@ -504,21 +505,6 @@ object Events {
             ))
         } catch (e: Exception) {
             println("[Events] ❌ Error logging voice_recording_error: ${e.message}")
-        }
-    }
-
-    /**
-     * Image upload error
-     */
-    fun logImageUploadError(errorType: String, errorMessage: String, fileSize: Long = 0) {
-        try {
-            AnalyticsService.logEvent("image_upload_error", mapOf(
-                "error_type" to errorType,
-                "error_message" to errorMessage,
-                "file_size_kb" to (fileSize / 1024).toInt()
-            ))
-        } catch (e: Exception) {
-            println("[Events] ❌ Error logging image_upload_error: ${e.message}")
         }
     }
 
@@ -1204,6 +1190,23 @@ object Events {
             ))
         } catch (e: Exception) {
             println("[Events] ❌ Error logging voice_transcription_started: ${e.message}")
+        }
+    }
+
+    /**
+     * Voice transcription failed
+     * ROUND 7: Added missing event from strategy
+     */
+    fun logVoiceTranscriptionFailed(errorType: String, errorMessage: String, fileSizeKb: Int = 0, durationMs: Long = 0) {
+        try {
+            AnalyticsService.logEvent("voice_transcription_failed", mapOf(
+                "error_type" to errorType,
+                "error_message" to errorMessage,
+                "file_size_kb" to fileSizeKb,
+                "duration_ms" to durationMs
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging voice_transcription_failed: ${e.message}")
         }
     }
 
