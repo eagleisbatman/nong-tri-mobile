@@ -35,6 +35,20 @@ fun ConversationListScreen(
     val uiState by viewModel.uiState.collectAsState()
     val strings = com.nongtri.app.l10n.LocalizationProvider.getStrings(language)
 
+    // ROUND 8: Track conversations screen opened
+    LaunchedEffect(Unit) {
+        com.nongtri.app.analytics.Events.logConversationsScreenOpened()
+    }
+
+    // ROUND 8: Track conversations list viewed when threads are loaded
+    LaunchedEffect(uiState.threads) {
+        if (uiState.threads.isNotEmpty()) {
+            com.nongtri.app.analytics.Events.logConversationsListViewed(
+                conversationCount = uiState.threads.size
+            )
+        }
+    }
+
     Scaffold(
         modifier = modifier.fillMaxSize().testTag(TestTags.CONVERSATIONS_SCREEN),
         topBar = {
@@ -68,6 +82,10 @@ fun ConversationListScreen(
             FloatingActionButton(
                 onClick = {
                     viewModel.createNewThread { thread ->
+                        // ROUND 8: Track conversation created (in callback when we have the ID)
+                        com.nongtri.app.analytics.Events.logConversationCreated(
+                            conversationId = thread.id.toString()
+                        )
                         onNewConversation(thread.id)
                     }
                 },
@@ -153,8 +171,21 @@ fun ConversationListScreen(
                         ) { thread ->
                             ConversationThreadItem(
                                 thread = thread,
-                                onClick = { onThreadSelected(thread.id, thread.title) },
-                                onDelete = { viewModel.deleteThread(thread.id) },
+                                onClick = {
+                                    // ROUND 8: Track conversation item clicked (position unknown in items() block)
+                                    com.nongtri.app.analytics.Events.logConversationItemClicked(
+                                        conversationId = thread.id.toString(),
+                                        position = 0 // Position not available without itemsIndexed
+                                    )
+                                    onThreadSelected(thread.id, thread.title)
+                                },
+                                onDelete = {
+                                    // ROUND 8: Track conversation delete clicked
+                                    com.nongtri.app.analytics.Events.logConversationDeleteClicked(
+                                        conversationId = thread.id.toString()
+                                    )
+                                    viewModel.deleteThread(thread.id)
+                                },
                                 strings = strings
                             )
                         }
@@ -184,6 +215,11 @@ private fun ConversationThreadItem(
             confirmButton = {
                 TextButton(
                     onClick = {
+                        // ROUND 8: Track conversation delete confirmed
+                        com.nongtri.app.analytics.Events.logConversationDeleteConfirmed(
+                            conversationId = thread.id.toString(),
+                            messageCount = thread.messageCount
+                        )
                         showDeleteDialog = false
                         onDelete()
                     },
@@ -194,7 +230,13 @@ private fun ConversationThreadItem(
             },
             dismissButton = {
                 TextButton(
-                    onClick = { showDeleteDialog = false },
+                    onClick = {
+                        // ROUND 8: Track conversation delete cancelled
+                        com.nongtri.app.analytics.Events.logConversationDeleteCancelled(
+                            conversationId = thread.id.toString()
+                        )
+                        showDeleteDialog = false
+                    },
                     modifier = Modifier.testTag(TestTags.DELETE_CANCEL_BUTTON)
                 ) {
                     Text(strings.cancel)
