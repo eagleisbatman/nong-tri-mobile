@@ -191,6 +191,14 @@ fun MessageBubble(
 
                         // Follow-up question chips (only for agricultural responses with questions)
                         if (!message.isLoading && !message.isGenericResponse && message.followUpQuestions.isNotEmpty()) {
+                            // ROUND 9: Track follow-up questions displayed
+                            LaunchedEffect(message.id, message.followUpQuestions.size) {
+                                com.nongtri.app.analytics.Events.logFollowUpQuestionsDisplayed(
+                                    count = message.followUpQuestions.size,
+                                    messageIndex = 0 // Message index not available in this context
+                                )
+                            }
+
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -212,7 +220,15 @@ fun MessageBubble(
                                 ) {
                                     message.followUpQuestions.forEachIndexed { questionIndex, question ->
                                         SuggestionChip(
-                                            onClick = { onFollowUpClick(question) },
+                                            onClick = {
+                                                // ROUND 9: Track follow-up question clicked
+                                                com.nongtri.app.analytics.Events.logFollowUpQuestionClicked(
+                                                    questionIndex = questionIndex,
+                                                    questionText = question,
+                                                    messageIndex = 0 // Message index not available in this context
+                                                )
+                                                onFollowUpClick(question)
+                                            },
                                             label = {
                                                 Text(
                                                     text = question,
