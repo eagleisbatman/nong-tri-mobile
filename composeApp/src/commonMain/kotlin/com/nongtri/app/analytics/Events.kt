@@ -1093,4 +1093,831 @@ object Events {
             println("[Events] ❌ Error logging chat_message_shared: ${e.message}")
         }
     }
+
+    // ============================================================================
+    // ROUND 5: IMPORTANT EVENTS - IMAGE DIAGNOSIS (7 events)
+    // ============================================================================
+
+    /**
+     * Image source selection bottom sheet opened
+     */
+    fun logImageSourceSheetOpened() {
+        try {
+            AnalyticsService.logEvent("image_source_sheet_opened", emptyMap())
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging image_source_sheet_opened: ${e.message}")
+        }
+    }
+
+    /**
+     * Camera app opened for image capture
+     */
+    fun logImageCameraOpened() {
+        try {
+            AnalyticsService.logEvent("image_camera_opened", emptyMap())
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging image_camera_opened: ${e.message}")
+        }
+    }
+
+    /**
+     * Gallery app opened for image selection
+     */
+    fun logImageGalleryOpened() {
+        try {
+            AnalyticsService.logEvent("image_gallery_opened", emptyMap())
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging image_gallery_opened: ${e.message}")
+        }
+    }
+
+    /**
+     * Image preview dialog displayed
+     */
+    fun logImagePreviewDisplayed(fileSizeKb: Int, imageWidth: Int, imageHeight: Int) {
+        try {
+            AnalyticsService.logEvent("image_preview_displayed", mapOf(
+                "file_size_kb" to fileSizeKb,
+                "image_width" to imageWidth,
+                "image_height" to imageHeight
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging image_preview_displayed: ${e.message}")
+        }
+    }
+
+    /**
+     * User edited diagnosis question in preview
+     */
+    fun logImageQuestionEdited(originalLength: Int, newLength: Int) {
+        try {
+            AnalyticsService.logEvent("image_question_edited", mapOf(
+                "original_length" to originalLength,
+                "new_length" to newLength
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging image_question_edited: ${e.message}")
+        }
+    }
+
+    /**
+     * User read diagnosis result (scroll tracking)
+     */
+    fun logDiagnosisResultRead(jobId: String, readTimeMs: Long, scrollPercent: Int) {
+        try {
+            AnalyticsService.logEvent("diagnosis_result_read", mapOf(
+                "job_id" to jobId,
+                "read_time_ms" to readTimeMs,
+                "scroll_percent" to scrollPercent
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging diagnosis_result_read: ${e.message}")
+        }
+    }
+
+    /**
+     * User played TTS for diagnosis advice
+     */
+    fun logDiagnosisAdviceTtsPlayed(jobId: String, adviceLength: Int) {
+        try {
+            AnalyticsService.logEvent("diagnosis_advice_tts_played", mapOf(
+                "job_id" to jobId,
+                "advice_length_chars" to adviceLength
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging diagnosis_advice_tts_played: ${e.message}")
+        }
+    }
+
+    // ============================================================================
+    // ROUND 5: IMPORTANT EVENTS - VOICE (4 events)
+    // ============================================================================
+
+    /**
+     * Voice transcription started
+     */
+    fun logVoiceTranscriptionStarted(fileSizeKb: Int, durationMs: Long) {
+        try {
+            AnalyticsService.logEvent("voice_transcription_started", mapOf(
+                "file_size_kb" to fileSizeKb,
+                "duration_ms" to durationMs
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging voice_transcription_started: ${e.message}")
+        }
+    }
+
+    /**
+     * Voice recording amplitude captured (waveform data point)
+     */
+    fun logVoiceRecordingAmplitudeCaptured(amplitude: Int, durationMs: Long) {
+        try {
+            AnalyticsService.logEvent("voice_recording_amplitude_captured", mapOf(
+                "amplitude" to amplitude,
+                "duration_ms" to durationMs
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging voice_recording_amplitude_captured: ${e.message}")
+        }
+    }
+
+    /**
+     * User started playing back their voice message
+     */
+    fun logVoiceMessagePlaybackStarted(messageId: String, durationMs: Long) {
+        try {
+            AnalyticsService.logEvent("voice_message_playback_started", mapOf(
+                "message_id" to messageId,
+                "duration_ms" to durationMs
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging voice_message_playback_started: ${e.message}")
+        }
+    }
+
+    /**
+     * User completed playing back their voice message
+     */
+    fun logVoiceMessagePlaybackCompleted(messageId: String, playbackDurationMs: Long, listenedToEnd: Boolean) {
+        try {
+            AnalyticsService.logEvent("voice_message_playback_completed", mapOf(
+                "message_id" to messageId,
+                "playback_duration_ms" to playbackDurationMs,
+                "listened_to_end" to listenedToEnd
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging voice_message_playback_completed: ${e.message}")
+        }
+    }
+
+    // ============================================================================
+    // ROUND 5: IMPORTANT EVENTS - LOCATION (4 events)
+    // ============================================================================
+
+    /**
+     * Location initialization completed successfully
+     */
+    fun logLocationInitializationCompleted(hasIpLocation: Boolean, initTimeMs: Long) {
+        try {
+            AnalyticsService.logEvent("location_initialization_completed", mapOf(
+                "has_ip_location" to hasIpLocation,
+                "init_time_ms" to initTimeMs
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging location_initialization_completed: ${e.message}")
+        }
+    }
+
+    /**
+     * User clicked share location button
+     */
+    fun logLocationShareButtonClicked() {
+        try {
+            AnalyticsService.logEvent("location_share_button_clicked", emptyMap())
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging location_share_button_clicked: ${e.message}")
+        }
+    }
+
+    /**
+     * GPS location request initiated
+     */
+    fun logLocationGpsRequested() {
+        try {
+            AnalyticsService.logEvent("location_gps_requested", emptyMap())
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging location_gps_requested: ${e.message}")
+        }
+    }
+
+    /**
+     * User opened settings from location permission denial
+     */
+    fun logLocationPermissionSettingsOpened() {
+        try {
+            AnalyticsService.logEvent("location_permission_settings_opened", emptyMap())
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging location_permission_settings_opened: ${e.message}")
+        }
+    }
+
+    // ============================================================================
+    // ROUND 5: NICE TO HAVE EVENTS - IMAGE DIAGNOSIS (4 events)
+    // ============================================================================
+
+    /**
+     * Image compression started
+     */
+    fun logImageCompressionStarted(originalSizeKb: Int, targetSizeKb: Int) {
+        try {
+            AnalyticsService.logEvent("image_compression_started", mapOf(
+                "original_size_kb" to originalSizeKb,
+                "target_size_kb" to targetSizeKb
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging image_compression_started: ${e.message}")
+        }
+    }
+
+    /**
+     * Image compression completed
+     */
+    fun logImageCompressionCompleted(originalSizeKb: Int, compressedSizeKb: Int, compressionTimeMs: Long) {
+        try {
+            AnalyticsService.logEvent("image_compression_completed", mapOf(
+                "original_size_kb" to originalSizeKb,
+                "compressed_size_kb" to compressedSizeKb,
+                "compression_time_ms" to compressionTimeMs,
+                "compression_ratio" to if (originalSizeKb > 0) (compressedSizeKb.toFloat() / originalSizeKb * 100).toInt() else 0
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging image_compression_completed: ${e.message}")
+        }
+    }
+
+    /**
+     * Diagnosis upload progress update
+     */
+    fun logDiagnosisUploadProgress(jobId: String, progressPercent: Int, uploadedKb: Int) {
+        try {
+            AnalyticsService.logEvent("diagnosis_upload_progress", mapOf(
+                "job_id" to jobId,
+                "progress_percent" to progressPercent,
+                "uploaded_kb" to uploadedKb
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging diagnosis_upload_progress: ${e.message}")
+        }
+    }
+
+    /**
+     * Diagnosis pending card viewed by user
+     */
+    fun logDiagnosisPendingCardViewed(jobId: String) {
+        try {
+            AnalyticsService.logEvent("diagnosis_pending_card_viewed", mapOf(
+                "job_id" to jobId
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging diagnosis_pending_card_viewed: ${e.message}")
+        }
+    }
+
+    // ============================================================================
+    // ROUND 5: NICE TO HAVE EVENTS - CHAT (3 events)
+    // ============================================================================
+
+    /**
+     * Chat message displayed on screen
+     */
+    fun logChatMessageDisplayed(messageIndex: Int, messageType: String, messageLength: Int) {
+        try {
+            AnalyticsService.logEvent("chat_message_displayed", mapOf(
+                "message_index" to messageIndex,
+                "message_type" to messageType,
+                "message_length_chars" to messageLength
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging chat_message_displayed: ${e.message}")
+        }
+    }
+
+    /**
+     * User read message (scroll into view + dwell time)
+     */
+    fun logChatMessageRead(messageIndex: Int, messageType: String, dwellTimeMs: Long) {
+        try {
+            AnalyticsService.logEvent("chat_message_read", mapOf(
+                "message_index" to messageIndex,
+                "message_type" to messageType,
+                "dwell_time_ms" to dwellTimeMs
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging chat_message_read: ${e.message}")
+        }
+    }
+
+    /**
+     * User read first response (engagement metric)
+     */
+    fun logChatFirstResponseRead(readTimeMs: Long, responseLength: Int) {
+        try {
+            AnalyticsService.logEvent("chat_first_response_read", mapOf(
+                "read_time_ms" to readTimeMs,
+                "response_length_chars" to responseLength
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging chat_first_response_read: ${e.message}")
+        }
+    }
+
+    // ============================================================================
+    // ROUND 5: FOLLOW-UP QUESTIONS (2 events)
+    // ============================================================================
+
+    /**
+     * Follow-up questions displayed to user
+     */
+    fun logFollowUpQuestionsDisplayed(count: Int, messageIndex: Int) {
+        try {
+            AnalyticsService.logEvent("follow_up_questions_displayed", mapOf(
+                "count" to count,
+                "message_index" to messageIndex
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging follow_up_questions_displayed: ${e.message}")
+        }
+    }
+
+    /**
+     * User clicked a follow-up question
+     */
+    fun logFollowUpQuestionClicked(questionIndex: Int, questionText: String, messageIndex: Int) {
+        try {
+            AnalyticsService.logEvent("follow_up_question_clicked", mapOf(
+                "question_index" to questionIndex,
+                "question_text" to questionText,
+                "message_index" to messageIndex
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging follow_up_question_clicked: ${e.message}")
+        }
+    }
+
+    // ============================================================================
+    // ROUND 5: FUTURE FEATURES - NOTIFICATIONS (2 events)
+    // ============================================================================
+
+    /**
+     * Diagnosis notification sent (FUTURE FEATURE)
+     */
+    fun logDiagnosisNotificationSent(jobId: String, notificationType: String) {
+        try {
+            AnalyticsService.logEvent("diagnosis_notification_sent", mapOf(
+                "job_id" to jobId,
+                "notification_type" to notificationType
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging diagnosis_notification_sent: ${e.message}")
+        }
+    }
+
+    /**
+     * User opened diagnosis from notification (FUTURE FEATURE)
+     */
+    fun logDiagnosisNotificationOpened(jobId: String, timeSinceSentMs: Long) {
+        try {
+            AnalyticsService.logEvent("diagnosis_notification_opened", mapOf(
+                "job_id" to jobId,
+                "time_since_sent_ms" to timeSinceSentMs
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging diagnosis_notification_opened: ${e.message}")
+        }
+    }
+
+    // ============================================================================
+    // ROUND 5: FUTURE FEATURES - CONVERSATIONS LIST (7 events)
+    // ============================================================================
+
+    /**
+     * Conversations screen opened (FUTURE FEATURE)
+     */
+    fun logConversationsScreenOpened() {
+        try {
+            AnalyticsService.logEvent("conversations_screen_opened", emptyMap())
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging conversations_screen_opened: ${e.message}")
+        }
+    }
+
+    /**
+     * Conversations list viewed (FUTURE FEATURE)
+     */
+    fun logConversationsListViewed(conversationCount: Int) {
+        try {
+            AnalyticsService.logEvent("conversations_list_viewed", mapOf(
+                "conversation_count" to conversationCount
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging conversations_list_viewed: ${e.message}")
+        }
+    }
+
+    /**
+     * User clicked a conversation item (FUTURE FEATURE)
+     */
+    fun logConversationItemClicked(conversationId: String, position: Int) {
+        try {
+            AnalyticsService.logEvent("conversation_item_clicked", mapOf(
+                "conversation_id" to conversationId,
+                "position" to position
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging conversation_item_clicked: ${e.message}")
+        }
+    }
+
+    /**
+     * New conversation created (FUTURE FEATURE)
+     */
+    fun logConversationCreated(conversationId: String) {
+        try {
+            AnalyticsService.logEvent("conversation_created", mapOf(
+                "conversation_id" to conversationId
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging conversation_created: ${e.message}")
+        }
+    }
+
+    /**
+     * User clicked delete on conversation (FUTURE FEATURE)
+     */
+    fun logConversationDeleteClicked(conversationId: String) {
+        try {
+            AnalyticsService.logEvent("conversation_delete_clicked", mapOf(
+                "conversation_id" to conversationId
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging conversation_delete_clicked: ${e.message}")
+        }
+    }
+
+    /**
+     * User confirmed conversation deletion (FUTURE FEATURE)
+     */
+    fun logConversationDeleteConfirmed(conversationId: String, messageCount: Int) {
+        try {
+            AnalyticsService.logEvent("conversation_delete_confirmed", mapOf(
+                "conversation_id" to conversationId,
+                "message_count" to messageCount
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging conversation_delete_confirmed: ${e.message}")
+        }
+    }
+
+    /**
+     * User cancelled conversation deletion (FUTURE FEATURE)
+     */
+    fun logConversationDeleteCancelled(conversationId: String) {
+        try {
+            AnalyticsService.logEvent("conversation_delete_cancelled", mapOf(
+                "conversation_id" to conversationId
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging conversation_delete_cancelled: ${e.message}")
+        }
+    }
+
+    // ============================================================================
+    // ROUND 5: FUTURE FEATURES - A/B TESTING (1 event)
+    // ============================================================================
+
+    /**
+     * A/B test variant assigned (FUTURE FEATURE)
+     */
+    fun logAbTestVariantAssigned(testName: String, variantName: String) {
+        try {
+            AnalyticsService.logEvent("ab_test_variant_assigned", mapOf(
+                "test_name" to testName,
+                "variant_name" to variantName
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging ab_test_variant_assigned: ${e.message}")
+        }
+    }
+
+    // ============================================================================
+    // ROUND 5: ADVANCED ANALYTICS - APP LIFECYCLE (4 events)
+    // ============================================================================
+
+    /**
+     * App first launch (handled by Firebase automatically, but can be overridden)
+     */
+    fun logAppFirstLaunch(installSource: String = "unknown") {
+        try {
+            AnalyticsService.logEvent("app_first_launch", mapOf(
+                "install_source" to installSource
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging app_first_launch: ${e.message}")
+        }
+    }
+
+    /**
+     * App install completed (for tracking install attribution)
+     */
+    fun logAppInstallCompleted(installSource: String, referrer: String?) {
+        try {
+            AnalyticsService.logEvent("app_install_completed", mapOf(
+                "install_source" to installSource,
+                "referrer" to (referrer ?: "unknown")
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging app_install_completed: ${e.message}")
+        }
+    }
+
+    /**
+     * Campaign details received (marketing attribution)
+     */
+    fun logCampaignDetails(source: String, medium: String, campaign: String) {
+        try {
+            AnalyticsService.logEvent("campaign_details", mapOf(
+                "source" to source,
+                "medium" to medium,
+                "campaign" to campaign
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging campaign_details: ${e.message}")
+        }
+    }
+
+    /**
+     * Splash screen viewed
+     */
+    fun logSplashScreenViewed(durationMs: Long) {
+        try {
+            AnalyticsService.logEvent("splash_screen_viewed", mapOf(
+                "duration_ms" to durationMs
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging splash_screen_viewed: ${e.message}")
+        }
+    }
+
+    // ============================================================================
+    // ROUND 5: ADVANCED ANALYTICS - UI INTERACTIONS (12 events)
+    // ============================================================================
+
+    /**
+     * Welcome card displayed
+     */
+    fun logWelcomeCardDisplayed() {
+        try {
+            AnalyticsService.logEvent("welcome_card_displayed", emptyMap())
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging welcome_card_displayed: ${e.message}")
+        }
+    }
+
+    /**
+     * Welcome card read time
+     */
+    fun logWelcomeCardReadTime(readTimeMs: Long) {
+        try {
+            AnalyticsService.logEvent("welcome_card_read_time_ms", mapOf(
+                "read_time_ms" to readTimeMs
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging welcome_card_read_time_ms: ${e.message}")
+        }
+    }
+
+    /**
+     * Starter questions displayed
+     */
+    fun logStarterQuestionsDisplayed(count: Int) {
+        try {
+            AnalyticsService.logEvent("starter_questions_displayed", mapOf(
+                "count" to count
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging starter_questions_displayed: ${e.message}")
+        }
+    }
+
+    /**
+     * User clicked a starter question
+     */
+    fun logStarterQuestionClicked(questionIndex: Int, questionText: String) {
+        try {
+            AnalyticsService.logEvent("starter_question_clicked", mapOf(
+                "question_index" to questionIndex,
+                "question_text" to questionText
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging starter_question_clicked: ${e.message}")
+        }
+    }
+
+    /**
+     * Menu opened
+     */
+    fun logMenuOpened() {
+        try {
+            AnalyticsService.logEvent("menu_opened", emptyMap())
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging menu_opened: ${e.message}")
+        }
+    }
+
+    /**
+     * Menu item clicked
+     */
+    fun logMenuItemClicked(itemName: String) {
+        try {
+            AnalyticsService.logEvent("menu_item_clicked", mapOf(
+                "item_name" to itemName
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging menu_item_clicked: ${e.message}")
+        }
+    }
+
+    /**
+     * Language change clicked
+     */
+    fun logLanguageChangeClicked(currentLanguage: String) {
+        try {
+            AnalyticsService.logEvent("language_change_clicked", mapOf(
+                "current_language" to currentLanguage
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging language_change_clicked: ${e.message}")
+        }
+    }
+
+    /**
+     * Language changed
+     */
+    fun logLanguageChanged(fromLanguage: String, toLanguage: String) {
+        try {
+            AnalyticsService.logEvent("language_changed", mapOf(
+                "from_language" to fromLanguage,
+                "to_language" to toLanguage
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging language_changed: ${e.message}")
+        }
+    }
+
+    /**
+     * Theme changed
+     */
+    fun logThemeChanged(fromTheme: String, toTheme: String) {
+        try {
+            AnalyticsService.logEvent("theme_changed", mapOf(
+                "from_theme" to fromTheme,
+                "to_theme" to toTheme
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging theme_changed: ${e.message}")
+        }
+    }
+
+    /**
+     * Location update clicked (user wants to change location)
+     */
+    fun logLocationUpdateClicked() {
+        try {
+            AnalyticsService.logEvent("location_update_clicked", emptyMap())
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging location_update_clicked: ${e.message}")
+        }
+    }
+
+    /**
+     * Screen viewed (generic screen tracking)
+     */
+    fun logScreenViewed(screenName: String) {
+        try {
+            AnalyticsService.logEvent("screen_viewed", mapOf(
+                "screen_name" to screenName
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging screen_viewed: ${e.message}")
+        }
+    }
+
+    /**
+     * Screen time spent
+     */
+    fun logScreenTimeSpent(screenName: String, timeSpentMs: Long) {
+        try {
+            AnalyticsService.logEvent("screen_time_spent", mapOf(
+                "screen_name" to screenName,
+                "time_spent_ms" to timeSpentMs
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging screen_time_spent: ${e.message}")
+        }
+    }
+
+    // ============================================================================
+    // ROUND 5: ADVANCED ANALYTICS - ERROR & ENGAGEMENT (6 events)
+    // ============================================================================
+
+    /**
+     * Generic app error occurred
+     */
+    fun logAppErrorOccurred(errorType: String, errorMessage: String, stackTrace: String?) {
+        try {
+            AnalyticsService.logEvent("app_error_occurred", mapOf(
+                "error_type" to errorType,
+                "error_message" to errorMessage,
+                "stack_trace" to (stackTrace ?: "")
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging app_error_occurred: ${e.message}")
+        }
+    }
+
+    /**
+     * App crash detected (Crashlytics handles this, but can track custom info)
+     */
+    fun logAppCrashDetected(crashType: String, crashMessage: String) {
+        try {
+            AnalyticsService.logEvent("app_crash_detected", mapOf(
+                "crash_type" to crashType,
+                "crash_message" to crashMessage
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging app_crash_detected: ${e.message}")
+        }
+    }
+
+    /**
+     * Feature failed (generic feature failure)
+     */
+    fun logFeatureFailed(featureName: String, errorType: String) {
+        try {
+            AnalyticsService.logEvent("feature_failed", mapOf(
+                "feature_name" to featureName,
+                "error_type" to errorType
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging feature_failed: ${e.message}")
+        }
+    }
+
+    /**
+     * User clicked retry after feature failure
+     */
+    fun logFeatureRetryClicked(featureName: String) {
+        try {
+            AnalyticsService.logEvent("feature_retry_clicked", mapOf(
+                "feature_name" to featureName
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging feature_retry_clicked: ${e.message}")
+        }
+    }
+
+    /**
+     * Feature retry succeeded
+     */
+    fun logFeatureRetrySucceeded(featureName: String, retryAttempt: Int) {
+        try {
+            AnalyticsService.logEvent("feature_retry_succeeded", mapOf(
+                "feature_name" to featureName,
+                "retry_attempt" to retryAttempt
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging feature_retry_succeeded: ${e.message}")
+        }
+    }
+
+    /**
+     * Network reconnected after disconnection
+     */
+    fun logNetworkReconnected(disconnectionDurationMs: Long) {
+        try {
+            AnalyticsService.logEvent("network_reconnected", mapOf(
+                "disconnection_duration_ms" to disconnectionDurationMs
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging network_reconnected: ${e.message}")
+        }
+    }
+
+    /**
+     * Permission friction point (user denied but feature requires it)
+     */
+    fun logPermissionFrictionPoint(permissionType: String, featureBlocked: String) {
+        try {
+            AnalyticsService.logEvent("permission_friction_point", mapOf(
+                "permission_type" to permissionType,
+                "feature_blocked" to featureBlocked
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging permission_friction_point: ${e.message}")
+        }
+    }
+
+    /**
+     * Milestone reached (user engagement milestone)
+     */
+    fun logMilestoneReached(milestoneName: String, milestoneValue: Int) {
+        try {
+            AnalyticsService.logEvent("milestone_reached", mapOf(
+                "milestone_name" to milestoneName,
+                "milestone_value" to milestoneValue
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging milestone_reached: ${e.message}")
+        }
+    }
 }

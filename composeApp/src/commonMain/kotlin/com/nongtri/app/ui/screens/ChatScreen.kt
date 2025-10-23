@@ -720,6 +720,11 @@ fun ChatScreen(
 
     // Image Source Selector Bottom Sheet
     if (showImageSourceSelector) {
+        // ROUND 5: Track image source sheet opened
+        LaunchedEffect(Unit) {
+            com.nongtri.app.analytics.Events.logImageSourceSheetOpened()
+        }
+
         ImageSourceBottomSheet(
             language = language,
             onCameraClick = {
@@ -728,6 +733,9 @@ fun ChatScreen(
 
                 // ROUND 4: Track standalone image source selected event
                 com.nongtri.app.analytics.Events.logImageSourceSelected("camera")
+
+                // ROUND 5: Track camera opened
+                com.nongtri.app.analytics.Events.logImageCameraOpened()
 
                 showImageSourceSelector = false
                 isImageProcessing = true
@@ -772,6 +780,9 @@ fun ChatScreen(
 
                 // ROUND 4: Track standalone image source selected event
                 com.nongtri.app.analytics.Events.logImageSourceSelected("gallery")
+
+                // ROUND 5: Track gallery opened
+                com.nongtri.app.analytics.Events.logImageGalleryOpened()
 
                 showImageSourceSelector = false
                 isImageProcessing = true
