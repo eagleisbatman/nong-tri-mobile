@@ -147,6 +147,10 @@ class MainActivity : ComponentActivity() {
 
         // Track onboarding funnel step 1 (for first-time users only)
         if (UserPreferences.getInstance().sessionCount.value == 1) {
+            // ROUND 10: Track app first launch
+            com.nongtri.app.analytics.Events.logAppFirstLaunch(
+                installSource = packageManager.getInstallerPackageName(packageName) ?: "unknown"
+            )
             com.nongtri.app.analytics.Funnels.onboardingFunnel.step1_AppLaunched()
         }
 
