@@ -307,6 +307,12 @@ class ChatViewModel(
                                     _uiState.update { state ->
                                         state.copy(messages = state.messages + diagnosisMessage)
                                     }
+
+                                    // ROUND 4: Track diagnosis result viewed event
+                                    Events.logDiagnosisResultViewed(
+                                        jobId = jobId,
+                                        resultLength = diagnosis.aiResponse?.length ?: 0
+                                    )
                                 }
                             }
                             "pending", "processing" -> {
@@ -801,6 +807,13 @@ class ChatViewModel(
 
         if (validationResult is com.nongtri.app.util.ImageValidationResult.Invalid) {
             println("[ImageDiagnosis] ✗ Image validation failed: ${validationResult.reason}")
+
+            // ROUND 4: Track image validation failed event
+            Events.logImageValidationFailed(
+                reason = validationResult.reason,
+                fileSizeKb = (estimatedSizeBytes / 1024).toInt()
+            )
+
             _uiState.update { state ->
                 state.copy(
                     error = validationResult.reason,
@@ -826,6 +839,13 @@ class ChatViewModel(
 
         // Track image funnel step 5: Diagnosis submitted
         com.nongtri.app.analytics.Funnels.imageDiagnosisFunnel.step5_DiagnosisSubmitted()
+
+        // ROUND 4: Track diagnosis submission started event with full context
+        Events.logDiagnosisSubmissionStarted(
+            fileSizeKb = (estimatedSizeBytes / 1024).toInt(),
+            hasQuestion = question.trim().isNotEmpty(),
+            questionLength = question.trim().length
+        )
 
         println("[ImageDiagnosis] Starting async diagnosis upload...")
         println("[ImageDiagnosis] Question: $question")
@@ -858,6 +878,9 @@ class ChatViewModel(
             ).fold(
                 onSuccess = { response ->
                     println("[ImageDiagnosis] ✓ Job submitted: jobId=${response.jobId}")
+
+                    // ROUND 4: Track diagnosis job created event
+                    Events.logDiagnosisJobCreated(jobId = response.jobId ?: "unknown")
 
                     // Track upload completed for analytics
                     val uploadTime = System.currentTimeMillis() - uploadStartTime
@@ -900,12 +923,28 @@ class ChatViewModel(
                     _uiState.update { state ->
                         state.copy(messages = state.messages + pendingMessage)
                     }
+
+                    // ROUND 4: Track diagnosis processing card displayed event
+                    Events.logDiagnosisProcessingDisplayed(jobId = response.jobId ?: "unknown")
                 },
                 onFailure = { error ->
                     println("[ImageDiagnosis] ✗ Error submitting job: ${error.message}")
 
-                    // Track upload failed for analytics
+                    // ROUND 4: Track diagnosis failed event
                     val errorType = when {
+                        error.message?.contains("timeout", ignoreCase = true) == true -> "timeout"
+                        error.message?.contains("network", ignoreCase = true) == true -> "network"
+                        error.message?.contains("size", ignoreCase = true) == true -> "file_too_large"
+                        else -> "upload_error"
+                    }
+                    Events.logDiagnosisFailed(
+                        jobId = "unknown", // Job wasn't created yet
+                        errorType = errorType,
+                        errorMessage = error.message ?: "Unknown error"
+                    )
+
+                    // Track upload failed for analytics
+                    val uploadErrorType = when {
                         error.message?.contains("timeout", ignoreCase = true) == true -> "timeout"
                         error.message?.contains("network", ignoreCase = true) == true -> "network"
                         error.message?.contains("size", ignoreCase = true) == true -> "file_too_large"

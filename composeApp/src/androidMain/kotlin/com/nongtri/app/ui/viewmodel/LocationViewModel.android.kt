@@ -302,6 +302,13 @@ actual class LocationViewModel actual constructor() : ViewModel() {
                 val location = getCurrentGPSLocation()
 
                 if (location != null) {
+                    // ROUND 4: Track GPS location obtained
+                    com.nongtri.app.analytics.Events.logLocationGpsObtained(
+                        latitude = location.latitude,
+                        longitude = location.longitude,
+                        accuracy = location.accuracy
+                    )
+
                     // Reverse geocode to get address
                     val addressInfo = reverseGeocode(location.latitude, location.longitude)
 
@@ -337,6 +344,12 @@ actual class LocationViewModel actual constructor() : ViewModel() {
                         }
                     }
                 } else {
+                    // ROUND 4: Track GPS location failed
+                    com.nongtri.app.analytics.Events.logLocationGpsFailed(
+                        errorType = "location_null",
+                        errorMessage = "GPS returned null location"
+                    )
+
                     _locationState.update {
                         it.copy(
                             isLoading = false,

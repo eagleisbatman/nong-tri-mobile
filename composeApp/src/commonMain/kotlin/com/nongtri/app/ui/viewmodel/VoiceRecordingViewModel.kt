@@ -65,6 +65,9 @@ class VoiceRecordingViewModel(
 
                 // Track voice funnel step 3: Recording started
                 com.nongtri.app.analytics.Funnels.voiceAdoptionFunnel.step3_RecordingStarted()
+
+                // ROUND 4: Track standalone voice recording started event
+                com.nongtri.app.analytics.Events.logVoiceRecordingStarted()
             },
             onFailure = { error ->
                 val strings = LocalizationProvider.getStrings(userPreferences.language.value)
@@ -177,6 +180,12 @@ class VoiceRecordingViewModel(
                 // Track voice funnel step 4: Recording completed
                 com.nongtri.app.analytics.Funnels.voiceAdoptionFunnel.step4_RecordingCompleted(durationMs)
 
+                // ROUND 4: Track standalone voice recording completed event
+                com.nongtri.app.analytics.Events.logVoiceRecordingCompleted(
+                    durationMs = durationMs,
+                    fileSizeKb = (audioFile.length() / 1024).toInt()
+                )
+
                 // ALWAYS return the file for preview - let user decide whether to accept/reject
                 // Don't validate here - user should see the preview UI regardless
                 savedFile = audioFile
@@ -273,6 +282,14 @@ class VoiceRecordingViewModel(
         audioRecorder.cancelRecording()
         _state.value = VoiceRecordingState.Cancelled
         println("[VoiceRecording] Cancelled recording")
+
+        // ROUND 4: Track voice recording cancelled event
+        val durationMs = System.currentTimeMillis() - recordingStartTime
+        com.nongtri.app.analytics.Events.logVoiceRecordingCancelled(
+            durationMs = durationMs,
+            reason = "user_cancelled"
+        )
+
         resetToIdle()
     }
 
@@ -292,6 +309,14 @@ class VoiceRecordingViewModel(
                     if (transcriptionResponse.success) {
                         val transcription = transcriptionResponse.text
                         println("[VoiceRecording] Transcription successful: $transcription")
+
+                        // ROUND 4: Track voice transcription completed event
+                        val transcriptionTime = System.currentTimeMillis() - recordingStartTime
+                        com.nongtri.app.analytics.Events.logVoiceTranscriptionCompleted(
+                            durationMs = lastRecordingDurationMs,
+                            transcriptionLength = transcription.length,
+                            transcriptionTimeMs = transcriptionTime
+                        )
 
                         // Step 2: Save voice message to backend
                         viewModelScope.launch {

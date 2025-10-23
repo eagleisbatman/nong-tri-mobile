@@ -59,6 +59,14 @@ fun MessageActionButtons(
                 onClick = {
                     clipboardManager.setText(AnnotatedString(messageContent))
                     showCopiedSnackbar = true
+
+                    // ROUND 4: Track chat message copied event
+                    com.nongtri.app.analytics.Events.logChatMessageCopied(
+                        messageIndex = 0, // TODO: Pass message index from parent
+                        messageLength = messageContent.length,
+                        messageType = "assistant"
+                    )
+
                     onCopy()
                 },
                 modifier = Modifier.size(32.dp).testTag(TestTags.COPY_BUTTON)
@@ -73,7 +81,16 @@ fun MessageActionButtons(
 
             // Share button (only for agricultural responses)
             IconButton(
-                onClick = { showShareSheet = true },
+                onClick = {
+                    // ROUND 4: Track chat message share opened event
+                    com.nongtri.app.analytics.Events.logChatMessageShareOpened(
+                        messageIndex = 0, // TODO: Pass message index from parent
+                        messageLength = messageContent.length,
+                        messageType = "assistant"
+                    )
+
+                    showShareSheet = true
+                },
                 modifier = Modifier.size(32.dp).testTag(TestTags.SHARE_BUTTON)
             ) {
                 Icon(
@@ -231,6 +248,15 @@ fun MessageActionButtons(
                     text = messageContent,
                     title = strings.shareAiResponse
                 )
+
+                // ROUND 4: Track chat message shared event
+                com.nongtri.app.analytics.Events.logChatMessageShared(
+                    messageIndex = 0, // TODO: Pass message index from parent
+                    messageLength = messageContent.length,
+                    messageType = "assistant",
+                    shareTarget = "text" // vs "image" when screenshot share is implemented
+                )
+
                 onShare()
             },
             onShareAsImage = {

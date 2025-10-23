@@ -741,4 +741,356 @@ object Events {
             println("[Events] ❌ Error logging diagnosis_completed: ${e.message}")
         }
     }
+
+    // ============================================================================
+    // ROUND 4: CRITICAL MISSING EVENTS - IMAGE DIAGNOSIS (11 events)
+    // ============================================================================
+
+    /**
+     * Image button clicked (funnel step 1 - standalone event)
+     */
+    fun logImageButtonClicked() {
+        try {
+            AnalyticsService.logEvent("image_button_clicked", mapOf(
+                "session_message_number" to UserPreferences.getInstance().messageCount.value
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging image_button_clicked: ${e.message}")
+        }
+    }
+
+    /**
+     * Image source selected (camera vs gallery)
+     */
+    fun logImageSourceSelected(source: String) {
+        try {
+            AnalyticsService.logEvent("image_source_selected", mapOf(
+                "source" to source
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging image_source_selected: ${e.message}")
+        }
+    }
+
+    /**
+     * Image captured from camera
+     */
+    fun logImageCaptured(fileSizeKb: Int, imageWidth: Int, imageHeight: Int) {
+        try {
+            AnalyticsService.logEvent("image_captured", mapOf(
+                "file_size_kb" to fileSizeKb,
+                "image_width" to imageWidth,
+                "image_height" to imageHeight
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging image_captured: ${e.message}")
+        }
+    }
+
+    /**
+     * Image selected from gallery
+     */
+    fun logImageSelectedFromGallery(fileSizeKb: Int, imageWidth: Int, imageHeight: Int) {
+        try {
+            AnalyticsService.logEvent("image_selected_from_gallery", mapOf(
+                "file_size_kb" to fileSizeKb,
+                "image_width" to imageWidth,
+                "image_height" to imageHeight
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging image_selected_from_gallery: ${e.message}")
+        }
+    }
+
+    /**
+     * Image validation failed
+     */
+    fun logImageValidationFailed(reason: String, fileSizeKb: Int) {
+        try {
+            AnalyticsService.logEvent("image_validation_failed", mapOf(
+                "reason" to reason,
+                "file_size_kb" to fileSizeKb
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging image_validation_failed: ${e.message}")
+        }
+    }
+
+    /**
+     * Diagnosis submission started (before upload)
+     */
+    fun logDiagnosisSubmissionStarted(fileSizeKb: Int, hasQuestion: Boolean, questionLength: Int) {
+        try {
+            AnalyticsService.logEvent("diagnosis_submission_started", mapOf(
+                "file_size_kb" to fileSizeKb,
+                "has_question" to hasQuestion,
+                "question_length" to questionLength
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging diagnosis_submission_started: ${e.message}")
+        }
+    }
+
+    /**
+     * Diagnosis job created (backend job ID received)
+     */
+    fun logDiagnosisJobCreated(jobId: String) {
+        try {
+            AnalyticsService.logEvent("diagnosis_job_created", mapOf(
+                "job_id" to jobId
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging diagnosis_job_created: ${e.message}")
+        }
+    }
+
+    /**
+     * Diagnosis processing card displayed
+     */
+    fun logDiagnosisProcessingDisplayed(jobId: String) {
+        try {
+            AnalyticsService.logEvent("diagnosis_processing_displayed", mapOf(
+                "job_id" to jobId
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging diagnosis_processing_displayed: ${e.message}")
+        }
+    }
+
+    /**
+     * Diagnosis result viewed by user
+     */
+    fun logDiagnosisResultViewed(jobId: String, resultLength: Int) {
+        try {
+            AnalyticsService.logEvent("diagnosis_result_viewed", mapOf(
+                "job_id" to jobId,
+                "result_length_chars" to resultLength
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging diagnosis_result_viewed: ${e.message}")
+        }
+    }
+
+    /**
+     * Diagnosis failed
+     */
+    fun logDiagnosisFailed(jobId: String, errorType: String, errorMessage: String) {
+        try {
+            AnalyticsService.logEvent("diagnosis_failed", mapOf(
+                "job_id" to jobId,
+                "error_type" to errorType,
+                "error_message" to errorMessage
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging diagnosis_failed: ${e.message}")
+        }
+    }
+
+    /**
+     * Diagnosis image fullscreen opened
+     */
+    fun logDiagnosisImageFullscreenOpened(jobId: String) {
+        try {
+            AnalyticsService.logEvent("diagnosis_image_fullscreen_opened", mapOf(
+                "job_id" to jobId
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging diagnosis_image_fullscreen_opened: ${e.message}")
+        }
+    }
+
+    // ============================================================================
+    // ROUND 4: CRITICAL MISSING EVENTS - LOCATION (6 events)
+    // ============================================================================
+
+    /**
+     * Location initialization started (on app startup)
+     */
+    fun logLocationInitializationStarted() {
+        try {
+            AnalyticsService.logEvent("location_initialization_started", emptyMap())
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging location_initialization_started: ${e.message}")
+        }
+    }
+
+    /**
+     * IP-based location detected
+     */
+    fun logLocationIpDetected(city: String, country: String) {
+        try {
+            AnalyticsService.logEvent("location_ip_detected", mapOf(
+                "city" to city,
+                "country" to country
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging location_ip_detected: ${e.message}")
+        }
+    }
+
+    /**
+     * GPS location obtained
+     */
+    fun logLocationGpsObtained(latitude: Double, longitude: Double, accuracy: Float) {
+        try {
+            AnalyticsService.logEvent("location_gps_obtained", mapOf(
+                "latitude" to latitude,
+                "longitude" to longitude,
+                "accuracy_meters" to accuracy
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging location_gps_obtained: ${e.message}")
+        }
+    }
+
+    /**
+     * GPS location failed
+     */
+    fun logLocationGpsFailed(errorType: String, errorMessage: String) {
+        try {
+            AnalyticsService.logEvent("location_gps_failed", mapOf(
+                "error_type" to errorType,
+                "error_message" to errorMessage
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging location_gps_failed: ${e.message}")
+        }
+    }
+
+    /**
+     * Location shared to backend successfully
+     */
+    fun logLocationShared(locationType: String, city: String) {
+        try {
+            AnalyticsService.logEvent("location_shared", mapOf(
+                "location_type" to locationType,
+                "city" to city
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging location_shared: ${e.message}")
+        }
+    }
+
+    /**
+     * Location bottom sheet opened
+     */
+    fun logLocationBottomSheetOpened(trigger: String) {
+        try {
+            AnalyticsService.logEvent("location_bottom_sheet_opened", mapOf(
+                "trigger" to trigger
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging location_bottom_sheet_opened: ${e.message}")
+        }
+    }
+
+    // ============================================================================
+    // ROUND 4: CRITICAL MISSING EVENTS - VOICE (4 events)
+    // ============================================================================
+
+    /**
+     * Voice recording started (standalone event with full parameters)
+     */
+    fun logVoiceRecordingStarted() {
+        try {
+            AnalyticsService.logEvent("voice_recording_started", mapOf(
+                "session_voice_messages" to UserPreferences.getInstance().voiceMessageCount.value
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging voice_recording_started: ${e.message}")
+        }
+    }
+
+    /**
+     * Voice recording completed (standalone event with full parameters)
+     */
+    fun logVoiceRecordingCompleted(durationMs: Long, fileSizeKb: Int) {
+        try {
+            AnalyticsService.logEvent("voice_recording_completed", mapOf(
+                "duration_ms" to durationMs,
+                "file_size_kb" to fileSizeKb
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging voice_recording_completed: ${e.message}")
+        }
+    }
+
+    /**
+     * Voice recording cancelled by user
+     */
+    fun logVoiceRecordingCancelled(durationMs: Long, reason: String) {
+        try {
+            AnalyticsService.logEvent("voice_recording_cancelled", mapOf(
+                "duration_ms" to durationMs,
+                "reason" to reason
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging voice_recording_cancelled: ${e.message}")
+        }
+    }
+
+    /**
+     * Voice transcription completed successfully
+     */
+    fun logVoiceTranscriptionCompleted(durationMs: Long, transcriptionLength: Int, transcriptionTimeMs: Long) {
+        try {
+            AnalyticsService.logEvent("voice_transcription_completed", mapOf(
+                "audio_duration_ms" to durationMs,
+                "transcription_length_chars" to transcriptionLength,
+                "transcription_time_ms" to transcriptionTimeMs
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging voice_transcription_completed: ${e.message}")
+        }
+    }
+
+    // ============================================================================
+    // ROUND 4: CRITICAL MISSING EVENTS - CHAT ACTIONS (3 events)
+    // ============================================================================
+
+    /**
+     * Chat message copied to clipboard
+     */
+    fun logChatMessageCopied(messageIndex: Int, messageLength: Int, messageType: String) {
+        try {
+            AnalyticsService.logEvent("chat_message_copied", mapOf(
+                "message_index" to messageIndex,
+                "message_length_chars" to messageLength,
+                "message_type" to messageType
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging chat_message_copied: ${e.message}")
+        }
+    }
+
+    /**
+     * Chat message share dialog opened
+     */
+    fun logChatMessageShareOpened(messageIndex: Int, messageLength: Int, messageType: String) {
+        try {
+            AnalyticsService.logEvent("chat_message_share_opened", mapOf(
+                "message_index" to messageIndex,
+                "message_length_chars" to messageLength,
+                "message_type" to messageType
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging chat_message_share_opened: ${e.message}")
+        }
+    }
+
+    /**
+     * Chat message shared via system share
+     */
+    fun logChatMessageShared(messageIndex: Int, messageLength: Int, messageType: String, shareTarget: String) {
+        try {
+            AnalyticsService.logEvent("chat_message_shared", mapOf(
+                "message_index" to messageIndex,
+                "message_length_chars" to messageLength,
+                "message_type" to messageType,
+                "share_target" to shareTarget
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging chat_message_shared: ${e.message}")
+        }
+    }
 }

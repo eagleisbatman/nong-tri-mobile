@@ -231,6 +231,9 @@ fun ChatScreen(
                                     Icon(Icons.Default.LocationOn, contentDescription = null)
                                 },
                                 onClick = {
+                                    // ROUND 4: Track location bottom sheet opened
+                                    com.nongtri.app.analytics.Events.logLocationBottomSheetOpened(trigger = "menu_item")
+
                                     showLocationBottomSheet = true
                                     showMenu = false
                                 },
@@ -401,6 +404,9 @@ fun ChatScreen(
                             onImageClick = {
                                 // Track image funnel step 1: Image button clicked
                                 com.nongtri.app.analytics.Funnels.imageDiagnosisFunnel.step1_ImageButtonClicked()
+
+                                // ROUND 4: Track standalone image button clicked event
+                                com.nongtri.app.analytics.Events.logImageButtonClicked()
 
                                 // Prevent multiple simultaneous operations
                                 if (isImageProcessing) {
@@ -720,6 +726,9 @@ fun ChatScreen(
                 // Track image funnel step 3: Source selected
                 com.nongtri.app.analytics.Funnels.imageDiagnosisFunnel.step3_SourceSelected("camera")
 
+                // ROUND 4: Track standalone image source selected event
+                com.nongtri.app.analytics.Events.logImageSourceSelected("camera")
+
                 showImageSourceSelector = false
                 isImageProcessing = true
                 println("[ChatScreen] Launching camera...")
@@ -730,6 +739,13 @@ fun ChatScreen(
 
                         // Track image funnel step 4: Image captured
                         com.nongtri.app.analytics.Funnels.imageDiagnosisFunnel.step4_ImageCaptured()
+
+                        // ROUND 4: Track standalone image captured event with full details
+                        com.nongtri.app.analytics.Events.logImageCaptured(
+                            fileSizeKb = (result.sizeBytes / 1024).toInt(),
+                            imageWidth = result.width,
+                            imageHeight = result.height
+                        )
 
                         selectedImageUri = result.uri
                         selectedImageBase64 = result.base64Data
@@ -754,6 +770,9 @@ fun ChatScreen(
                 // Track image funnel step 3: Source selected
                 com.nongtri.app.analytics.Funnels.imageDiagnosisFunnel.step3_SourceSelected("gallery")
 
+                // ROUND 4: Track standalone image source selected event
+                com.nongtri.app.analytics.Events.logImageSourceSelected("gallery")
+
                 showImageSourceSelector = false
                 isImageProcessing = true
                 println("[ChatScreen] Launching gallery...")
@@ -764,6 +783,13 @@ fun ChatScreen(
 
                         // Track image funnel step 4: Image captured
                         com.nongtri.app.analytics.Funnels.imageDiagnosisFunnel.step4_ImageCaptured()
+
+                        // ROUND 4: Track standalone image selected from gallery event with full details
+                        com.nongtri.app.analytics.Events.logImageSelectedFromGallery(
+                            fileSizeKb = (result.sizeBytes / 1024).toInt(),
+                            imageWidth = result.width,
+                            imageHeight = result.height
+                        )
 
                         selectedImageUri = result.uri
                         selectedImageBase64 = result.base64Data

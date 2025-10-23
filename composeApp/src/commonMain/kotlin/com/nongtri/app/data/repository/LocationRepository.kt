@@ -66,6 +66,9 @@ class LocationRepository private constructor() {
      */
     suspend fun initializeLocation(): Result<UserLocation?> {
         return try {
+            // ROUND 4: Track location initialization started
+            com.nongtri.app.analytics.Events.logLocationInitializationStarted()
+
             val deviceInfo = userPreferences.getDeviceInfo()
             val response = apiClient.client.post("/api/location/init") {
                 contentType(ContentType.Application.Json)
@@ -128,6 +131,12 @@ class LocationRepository private constructor() {
                     // Update cache for analytics
                     if (location.source == "ip") {
                         cachedIpLocation = location
+
+                        // ROUND 4: Track IP location detected
+                        com.nongtri.app.analytics.Events.logLocationIpDetected(
+                            city = location.geoLevel3 ?: location.city ?: "Unknown",
+                            country = location.geoLevel1 ?: location.country ?: "Unknown"
+                        )
                     }
                     Result.success(location)
                 } else {
@@ -251,6 +260,12 @@ class LocationRepository private constructor() {
                     val location = body.location.toUserLocation()
                     // Update cache for analytics (GPS location)
                     cachedGpsLocation = location
+
+                    // ROUND 4: Track location shared event (every share, not just first)
+                    com.nongtri.app.analytics.Events.logLocationShared(
+                        locationType = "gps",
+                        city = location.geoLevel3 ?: location.city ?: "Unknown"
+                    )
 
                     // Track first GPS location share for analytics
                     if (!userPreferences.hasSharedGpsLocation.value) {
