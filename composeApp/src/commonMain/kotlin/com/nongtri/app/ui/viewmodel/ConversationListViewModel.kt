@@ -52,6 +52,13 @@ class ConversationListViewModel(
                     },
                     onFailure = { error ->
                         val strings = LocalizationProvider.getStrings(userPreferences.language.value)
+
+                        // ROUND 11: Track feature failure
+                        com.nongtri.app.analytics.Events.logFeatureFailed(
+                            featureName = "conversation_list_load",
+                            errorType = error.message?.take(50) ?: "unknown_error"
+                        )
+
                         _uiState.update {
                             it.copy(
                                 error = error.message ?: strings.errorFailedToLoadConversations,
@@ -63,6 +70,13 @@ class ConversationListViewModel(
                 )
             } catch (e: Exception) {
                 val strings = LocalizationProvider.getStrings(userPreferences.language.value)
+
+                // ROUND 11: Track feature failure
+                com.nongtri.app.analytics.Events.logFeatureFailed(
+                    featureName = "conversation_list_load",
+                    errorType = e.message?.take(50) ?: "unknown_error"
+                )
+
                 _uiState.update {
                     it.copy(
                         error = e.message ?: strings.errorUnknown,

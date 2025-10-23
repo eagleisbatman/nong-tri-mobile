@@ -144,7 +144,13 @@ fun ConversationListScreen(
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Button(
-                            onClick = { viewModel.loadThreads() },
+                            onClick = {
+                                // ROUND 11: Track retry button clicked
+                                com.nongtri.app.analytics.Events.logFeatureRetryClicked(
+                                    featureName = "conversation_list_load"
+                                )
+                                viewModel.loadThreads()
+                            },
                             modifier = Modifier.testTag(TestTags.RETRY_BUTTON)
                         ) {
                             Text(strings.retry)
