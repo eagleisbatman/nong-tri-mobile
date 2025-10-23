@@ -37,6 +37,14 @@ fun ImagePreviewDialog(
 ) {
     val strings = LocalizationProvider.getStrings(language)
     var question by remember { mutableStateOf(strings.defaultPlantQuestion) }
+    val initialQuestion = remember { strings.defaultPlantQuestion }
+
+    // ROUND 6 TODO: Track image preview displayed
+    // Requires: fileSizeKb, imageWidth, imageHeight
+    // Need to extract image metadata from imageUri
+    // LaunchedEffect(Unit) {
+    //     com.nongtri.app.analytics.Events.logImagePreviewDisplayed(fileSizeKb, width, height)
+    // }
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -117,7 +125,16 @@ fun ImagePreviewDialog(
 
                     OutlinedTextField(
                         value = question,
-                        onValueChange = { question = it },
+                        onValueChange = { newValue ->
+                            // ROUND 6: Track question edited with both lengths
+                            if (newValue != question && newValue != initialQuestion) {
+                                com.nongtri.app.analytics.Events.logImageQuestionEdited(
+                                    originalLength = question.length,
+                                    newLength = newValue.length
+                                )
+                            }
+                            question = newValue
+                        },
                         modifier = Modifier.fillMaxWidth().testTag(TestTags.QUESTION_INPUT),
                         placeholder = { Text(strings.defaultPlantQuestion) },
                         minLines = 2,

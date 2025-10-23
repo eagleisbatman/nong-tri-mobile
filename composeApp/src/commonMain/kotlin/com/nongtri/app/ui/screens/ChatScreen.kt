@@ -183,7 +183,11 @@ fun ChatScreen(
                 actions = {
                     Box {
                         IconButton(
-                            onClick = { showMenu = true },
+                            onClick = {
+                                // ROUND 6: Track menu opened
+                                com.nongtri.app.analytics.Events.logMenuOpened()
+                                showMenu = true
+                            },
                             modifier = Modifier.testTag(TestTags.PROFILE_BUTTON)
                         ) {
                             Icon(
@@ -203,6 +207,8 @@ fun ChatScreen(
                                     Icon(Icons.AutoMirrored.Filled.List, contentDescription = null)
                                 },
                                 onClick = {
+                                    // ROUND 6: Track menu item clicked
+                                    com.nongtri.app.analytics.Events.logMenuItemClicked("conversations")
                                     onViewConversations()
                                     showMenu = false
                                 },
@@ -216,6 +222,8 @@ fun ChatScreen(
                                     Icon(Icons.Default.Add, contentDescription = null)
                                 },
                                 onClick = {
+                                    // ROUND 6: Track menu item clicked
+                                    com.nongtri.app.analytics.Events.logMenuItemClicked("new_chat")
                                     viewModel.createNewThread()
                                     showMenu = false
                                 },
@@ -231,6 +239,9 @@ fun ChatScreen(
                                     Icon(Icons.Default.LocationOn, contentDescription = null)
                                 },
                                 onClick = {
+                                    // ROUND 6: Track menu item clicked
+                                    com.nongtri.app.analytics.Events.logMenuItemClicked("share_location")
+
                                     // ROUND 4: Track location bottom sheet opened
                                     com.nongtri.app.analytics.Events.logLocationBottomSheetOpened(trigger = "menu_item")
 
@@ -277,6 +288,15 @@ fun ChatScreen(
                                         }
                                     },
                                     onClick = {
+                                        // ROUND 6: Track language changed
+                                        com.nongtri.app.analytics.Events.logLanguageChanged(
+                                            fromLanguage = language.code,
+                                            toLanguage = lang.code
+                                        )
+
+                                        // ROUND 6: Track menu item clicked
+                                        com.nongtri.app.analytics.Events.logMenuItemClicked("language_${lang.code}")
+
                                         onLanguageChange(lang)
                                         showMenu = false
                                     },

@@ -30,6 +30,11 @@ fun DiagnosisResponseBubble(
     onTtsClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
+    // ROUND 6 TODO: Track diagnosis result read (engagement tracking)
+    // Requires: jobId, readTimeMs (dwell time), scrollPercent
+    // Need to track scroll position and time spent reading
+    // LaunchedEffect(message.diagnosisData) { ... }
+
     Column(
         modifier = modifier
             .widthIn(max = 320.dp)
@@ -207,7 +212,13 @@ fun DiagnosisResponseBubble(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     TextButton(
-                        onClick = onTtsClick,
+                        onClick = {
+                            // ROUND 6 TODO: Track diagnosis advice TTS played
+                            // Requires jobId which is not available in DiagnosisResponseBubble
+                            // Need to add jobId to ChatMessage or DiagnosisData
+                            // com.nongtri.app.analytics.Events.logDiagnosisAdviceTtsPlayed(jobId, message.content.length)
+                            onTtsClick()
+                        },
                         modifier = Modifier.fillMaxWidth().testTag(TestTags.DIAGNOSIS_TTS_BUTTON)
                     ) {
                         Icon(

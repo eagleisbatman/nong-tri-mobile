@@ -45,6 +45,13 @@ fun FullscreenImageDialog(
     var scale by remember { mutableStateOf(1f) }
     var offset by remember { mutableStateOf(Offset.Zero) }
 
+    // ROUND 6 TODO: Track fullscreen image opened
+    // Requires jobId which is not available in FullscreenImageDialog
+    // Need to pass jobId as parameter or extract from diagnosisData
+    // LaunchedEffect(Unit) {
+    //     com.nongtri.app.analytics.Events.logDiagnosisImageFullscreenOpened(jobId)
+    // }
+
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(

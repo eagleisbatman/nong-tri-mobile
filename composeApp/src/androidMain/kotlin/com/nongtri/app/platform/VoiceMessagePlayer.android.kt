@@ -92,10 +92,21 @@ actual class VoiceMessagePlayer(private val context: Context) {
                     _isPlaying.value = true
                     startPositionUpdates()  // Start position updates on playback
                     Log.d(TAG, "Started playback: $audioUrl (${mp.duration}ms)")
+
+                    // ROUND 6 TODO: Track voice message playback started
+                    // Requires messageId which is not available in VoiceMessagePlayer
+                    // Need to pass messageId through the play() function or add to state
+                    // com.nongtri.app.analytics.Events.logVoiceMessagePlaybackStarted(messageId, mp.duration.toLong())
                 }
                 setOnCompletionListener {
                     positionUpdateJob?.cancel()  // Stop position updates
                     _isPlaying.value = false
+
+                    // ROUND 6 TODO: Track voice message playback completed
+                    // Requires messageId which is not available in VoiceMessagePlayer
+                    // Need to pass messageId through the play() function or add to state
+                    // com.nongtri.app.analytics.Events.logVoiceMessagePlaybackCompleted(messageId, _duration.value.toLong(), true)
+
                     _position.value = 0
                     Log.d(TAG, "Playback completed")
                 }

@@ -193,6 +193,13 @@ class VoiceRecordingViewModel(
 
                 // ✅ START TRANSCRIPTION IN BACKGROUND IMMEDIATELY
                 println("[VoiceRecording] Starting background transcription...")
+
+                // ROUND 6: Track transcription started
+                com.nongtri.app.analytics.Events.logVoiceTranscriptionStarted(
+                    fileSizeKb = (audioFile.length() / 1024).toInt(),
+                    durationMs = durationMs
+                )
+
                 startBackgroundTranscription(userId, audioFile, language)
             },
             onFailure = { error ->

@@ -67,6 +67,7 @@ class LocationRepository private constructor() {
     suspend fun initializeLocation(): Result<UserLocation?> {
         return try {
             // ROUND 4: Track location initialization started
+            val startTime = System.currentTimeMillis()
             com.nongtri.app.analytics.Events.logLocationInitializationStarted()
 
             val deviceInfo = userPreferences.getDeviceInfo()
@@ -137,12 +138,31 @@ class LocationRepository private constructor() {
                             city = location.geoLevel3 ?: location.city ?: "Unknown",
                             country = location.geoLevel1 ?: location.country ?: "Unknown"
                         )
+
+                        // ROUND 6: Track location initialization completed
+                        val initTime = System.currentTimeMillis() - startTime
+                        com.nongtri.app.analytics.Events.logLocationInitializationCompleted(
+                            hasIpLocation = true,
+                            initTimeMs = initTime
+                        )
                     }
                     Result.success(location)
                 } else {
+                    // ROUND 6: Track location initialization completed (no IP location)
+                    val initTime = System.currentTimeMillis() - startTime
+                    com.nongtri.app.analytics.Events.logLocationInitializationCompleted(
+                        hasIpLocation = false,
+                        initTimeMs = initTime
+                    )
                     Result.success(null)
                 }
             } else {
+                // ROUND 6: Track API error occurred
+                com.nongtri.app.analytics.Events.logApiError(
+                    endpoint = "/api/location/init",
+                    statusCode = response.status.value,
+                    errorMessage = strings.errorFailedToInitializeLocation
+                )
                 Result.failure(Exception(strings.errorFailedToInitializeLocation))
             }
         } catch (e: Exception) {

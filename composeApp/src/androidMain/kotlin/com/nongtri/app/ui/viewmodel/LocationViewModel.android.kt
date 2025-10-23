@@ -298,6 +298,9 @@ actual class LocationViewModel actual constructor() : ViewModel() {
             _locationState.update { it.copy(isLoading = true) }
 
             try {
+                // ROUND 6: Track GPS location requested
+                com.nongtri.app.analytics.Events.logLocationGpsRequested()
+
                 // Get current GPS location
                 val location = getCurrentGPSLocation()
 
