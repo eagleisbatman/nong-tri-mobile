@@ -680,6 +680,8 @@ fun ChatScreen(
             ipLocation = locationState.ipLocation,
             gpsLocation = locationState.gpsLocation,
             onShareLocation = {
+                // ROUND 10: Track location update button clicked
+                com.nongtri.app.analytics.Events.logLocationUpdateClicked()
                 locationViewModel.requestLocationPermission()
             },
             onSetPrimary = { locationId ->
