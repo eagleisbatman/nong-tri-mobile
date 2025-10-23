@@ -93,6 +93,10 @@ actual class VoicePermissionViewModel actual constructor() : ViewModel() {
         // If we were showing settings button but permission is now granted, reset state
         if (_permissionState.value.shouldShowSettings && hasRecordPermission()) {
             println("[VoicePermission] Permission granted in settings! Resetting state")
+
+            // BATCH 2: Track permission granted from settings
+            com.nongtri.app.analytics.Events.logPermissionGrantedFromSettings("voice")
+
             _permissionState.update {
                 it.copy(
                     hasPermission = true,
@@ -171,6 +175,14 @@ actual class VoicePermissionViewModel actual constructor() : ViewModel() {
                 com.nongtri.app.analytics.Events.logPermissionFrictionPoint(
                     permissionType = "voice",
                     featureBlocked = "voice_recording"
+                )
+            }
+
+            // BATCH 2: Track denial count milestones
+            if (denialCount in listOf(2, 3, 5, 10)) {
+                com.nongtri.app.analytics.Events.logPermissionDenialCountMilestone(
+                    permissionType = "voice",
+                    count = denialCount
                 )
             }
 

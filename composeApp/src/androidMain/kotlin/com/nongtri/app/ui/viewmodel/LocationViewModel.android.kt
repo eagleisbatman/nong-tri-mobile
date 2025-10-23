@@ -109,6 +109,10 @@ actual class LocationViewModel actual constructor() : ViewModel() {
         // If we were showing settings button but permission is now granted, reset state
         if (_locationState.value.shouldShowSettings && hasLocationPermission()) {
             println("Permission granted in settings! Resetting to 'Share My Location'")
+
+            // BATCH 2: Track permission granted from settings
+            com.nongtri.app.analytics.Events.logPermissionGrantedFromSettings("location")
+
             _locationState.update {
                 it.copy(
                     shouldShowSettings = false,
@@ -245,6 +249,14 @@ actual class LocationViewModel actual constructor() : ViewModel() {
                 com.nongtri.app.analytics.Events.logPermissionFrictionPoint(
                     permissionType = "location",
                     featureBlocked = "location_sharing"
+                )
+            }
+
+            // BATCH 2: Track denial count milestones
+            if (denialCount in listOf(2, 3, 5, 10)) {
+                com.nongtri.app.analytics.Events.logPermissionDenialCountMilestone(
+                    permissionType = "location",
+                    count = denialCount
                 )
             }
 

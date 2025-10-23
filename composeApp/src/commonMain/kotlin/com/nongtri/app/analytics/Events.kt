@@ -1969,6 +1969,94 @@ object Events {
         }
     }
 
+    // ========== BATCH 2: Permission Detail Events ==========
+
+    /**
+     * Permission bottom sheet opened
+     * BATCH 2: Track when permission bottom sheet is shown to user
+     */
+    fun logPermissionBottomSheetOpened(permissionType: String, trigger: String) {
+        try {
+            AnalyticsService.logEvent("permission_bottom_sheet_opened", mapOf(
+                "permission_type" to permissionType, // "voice", "camera", "storage", "location"
+                "trigger" to trigger // "first_request", "rationale", "settings_prompt"
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging permission_bottom_sheet_opened: ${e.message}")
+        }
+    }
+
+    /**
+     * Permission allow button clicked
+     * BATCH 2: Track when user clicks "Allow" button in permission bottom sheet
+     */
+    fun logPermissionAllowButtonClicked(permissionType: String) {
+        try {
+            AnalyticsService.logEvent("permission_allow_button_clicked", mapOf(
+                "permission_type" to permissionType
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging permission_allow_button_clicked: ${e.message}")
+        }
+    }
+
+    /**
+     * Permission deny button clicked
+     * BATCH 2: Track when user clicks "Deny" or dismisses permission bottom sheet
+     */
+    fun logPermissionDenyButtonClicked(permissionType: String) {
+        try {
+            AnalyticsService.logEvent("permission_deny_button_clicked", mapOf(
+                "permission_type" to permissionType
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging permission_deny_button_clicked: ${e.message}")
+        }
+    }
+
+    /**
+     * Permission open settings clicked
+     * BATCH 2: Track when user clicks "Open Settings" button after exhausting requests
+     */
+    fun logPermissionOpenSettingsClicked(permissionType: String) {
+        try {
+            AnalyticsService.logEvent("permission_open_settings_clicked", mapOf(
+                "permission_type" to permissionType
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging permission_open_settings_clicked: ${e.message}")
+        }
+    }
+
+    /**
+     * Permission denial count milestone
+     * BATCH 2: Track denial count milestones (not every denial, just key thresholds)
+     */
+    fun logPermissionDenialCountMilestone(permissionType: String, count: Int) {
+        try {
+            AnalyticsService.logEvent("permission_denial_count_milestone", mapOf(
+                "permission_type" to permissionType,
+                "denial_count" to count // Track at 2, 3, 5, 10 denials
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging permission_denial_count_milestone: ${e.message}")
+        }
+    }
+
+    /**
+     * Permission granted from settings
+     * BATCH 2: Track when user returns from settings with permission granted
+     */
+    fun logPermissionGrantedFromSettings(permissionType: String) {
+        try {
+            AnalyticsService.logEvent("permission_granted_from_settings", mapOf(
+                "permission_type" to permissionType
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging permission_granted_from_settings: ${e.message}")
+        }
+    }
+
     /**
      * Milestone reached (user engagement milestone)
      */

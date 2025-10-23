@@ -26,8 +26,29 @@ fun ImagePermissionBottomSheet(
     modifier: Modifier = Modifier
 ) {
     val strings = LocalizationProvider.getStrings(language)
+
+    // BATCH 2: Track bottom sheet opened for missing permissions
+    LaunchedEffect(Unit) {
+        val trigger = if (shouldShowSettings) "settings_prompt" else "rationale"
+        if (!hasCameraPermission) {
+            com.nongtri.app.analytics.Events.logPermissionBottomSheetOpened("camera", trigger)
+        }
+        if (!hasStoragePermission) {
+            com.nongtri.app.analytics.Events.logPermissionBottomSheetOpened("storage", trigger)
+        }
+    }
+
     ModalBottomSheet(
-        onDismissRequest = onDismiss,
+        onDismissRequest = {
+            // BATCH 2: Track dismiss
+            if (!hasCameraPermission) {
+                com.nongtri.app.analytics.Events.logPermissionDenyButtonClicked("camera")
+            }
+            if (!hasStoragePermission) {
+                com.nongtri.app.analytics.Events.logPermissionDenyButtonClicked("storage")
+            }
+            onDismiss()
+        },
         modifier = modifier.testTag(TestTags.IMAGE_PERMISSION_SHEET),
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     ) {
@@ -49,7 +70,16 @@ fun ImagePermissionBottomSheet(
                     fontWeight = FontWeight.Bold
                 )
                 IconButton(
-                    onClick = onDismiss,
+                    onClick = {
+                        // BATCH 2: Track close button (explicit deny)
+                        if (!hasCameraPermission) {
+                            com.nongtri.app.analytics.Events.logPermissionDenyButtonClicked("camera")
+                        }
+                        if (!hasStoragePermission) {
+                            com.nongtri.app.analytics.Events.logPermissionDenyButtonClicked("storage")
+                        }
+                        onDismiss()
+                    },
                     modifier = Modifier.testTag(TestTags.CLOSE_BUTTON)
                 ) {
                     Icon(Icons.Default.Close, contentDescription = strings.cdClose)
@@ -72,7 +102,8 @@ fun ImagePermissionBottomSheet(
                 isGranted = hasCameraPermission,
                 shouldShowSettings = shouldShowSettings && !hasCameraPermission,
                 onRequestPermission = onRequestCameraPermission,
-                strings = strings
+                strings = strings,
+                permissionType = "camera" // BATCH 2: For analytics
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -91,7 +122,8 @@ fun ImagePermissionBottomSheet(
                 isGranted = hasStoragePermission,
                 shouldShowSettings = shouldShowSettings && !hasStoragePermission,
                 onRequestPermission = onRequestStoragePermission,
-                strings = strings
+                strings = strings,
+                permissionType = "storage" // BATCH 2: For analytics
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -116,6 +148,7 @@ private fun PermissionCard(
     shouldShowSettings: Boolean,
     onRequestPermission: () -> Unit,
     strings: com.nongtri.app.l10n.Strings,
+    permissionType: String, // BATCH 2: For analytics tracking
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -151,7 +184,15 @@ private fun PermissionCard(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Button(
-                    onClick = onRequestPermission,
+                    onClick = {
+                        // BATCH 2: Track button click
+                        if (shouldShowSettings) {
+                            com.nongtri.app.analytics.Events.logPermissionOpenSettingsClicked(permissionType)
+                        } else {
+                            com.nongtri.app.analytics.Events.logPermissionAllowButtonClicked(permissionType)
+                        }
+                        onRequestPermission()
+                    },
                     modifier = Modifier.fillMaxWidth().testTag(
                         if (title.contains("Camera")) TestTags.GRANT_CAMERA_BUTTON
                         else TestTags.GRANT_PERMISSION_BUTTON

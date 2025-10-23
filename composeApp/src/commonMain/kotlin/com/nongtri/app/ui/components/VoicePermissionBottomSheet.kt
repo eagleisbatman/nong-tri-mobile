@@ -23,8 +23,22 @@ fun VoicePermissionBottomSheet(
     modifier: Modifier = Modifier
 ) {
     val strings = LocalizationProvider.getStrings(language)
+
+    // BATCH 2: Track bottom sheet opened
+    LaunchedEffect(Unit) {
+        val trigger = if (shouldShowSettings) "settings_prompt" else "rationale"
+        com.nongtri.app.analytics.Events.logPermissionBottomSheetOpened(
+            permissionType = "voice",
+            trigger = trigger
+        )
+    }
+
     ModalBottomSheet(
-        onDismissRequest = onDismiss,
+        onDismissRequest = {
+            // BATCH 2: Track dismiss (user swipes down or taps outside)
+            com.nongtri.app.analytics.Events.logPermissionDenyButtonClicked("voice")
+            onDismiss()
+        },
         modifier = modifier.testTag(TestTags.VOICE_PERMISSION_SHEET),
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     ) {
@@ -46,7 +60,11 @@ fun VoicePermissionBottomSheet(
                     fontWeight = FontWeight.Bold
                 )
                 IconButton(
-                    onClick = onDismiss,
+                    onClick = {
+                        // BATCH 2: Track close button (explicit deny)
+                        com.nongtri.app.analytics.Events.logPermissionDenyButtonClicked("voice")
+                        onDismiss()
+                    },
                     modifier = Modifier.testTag(TestTags.CLOSE_BUTTON)
                 ) {
                     Icon(Icons.Default.Close, contentDescription = strings.cdClose)
@@ -88,7 +106,15 @@ fun VoicePermissionBottomSheet(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     Button(
-                        onClick = onRequestPermission,
+                        onClick = {
+                            // BATCH 2: Track button click
+                            if (shouldShowSettings) {
+                                com.nongtri.app.analytics.Events.logPermissionOpenSettingsClicked("voice")
+                            } else {
+                                com.nongtri.app.analytics.Events.logPermissionAllowButtonClicked("voice")
+                            }
+                            onRequestPermission()
+                        },
                         modifier = Modifier.fillMaxWidth().testTag(TestTags.GRANT_PERMISSION_BUTTON),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.primary,

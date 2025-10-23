@@ -127,6 +127,15 @@ actual class ImagePermissionViewModel actual constructor() : ViewModel() {
         // If we were showing settings button but permissions are now granted, reset state
         if (_permissionState.value.shouldShowSettings && hasCameraPermission && hasStoragePermission) {
             println("[ImagePermission] Permissions granted in settings! Resetting state")
+
+            // BATCH 2: Track permissions granted from settings
+            if (!_permissionState.value.hasCameraPermission) {
+                com.nongtri.app.analytics.Events.logPermissionGrantedFromSettings("camera")
+            }
+            if (!_permissionState.value.hasStoragePermission) {
+                com.nongtri.app.analytics.Events.logPermissionGrantedFromSettings("storage")
+            }
+
             _permissionState.update {
                 it.copy(
                     hasCameraPermission = true,
@@ -241,6 +250,14 @@ actual class ImagePermissionViewModel actual constructor() : ViewModel() {
                 )
             }
 
+            // BATCH 2: Track denial count milestones
+            if (cameraDenialCount in listOf(2, 3, 5, 10)) {
+                com.nongtri.app.analytics.Events.logPermissionDenialCountMilestone(
+                    permissionType = "camera",
+                    count = cameraDenialCount
+                )
+            }
+
             println("[ImagePermission] Camera denied: shouldShowRationale=$shouldShowRationale")
 
             if (!shouldShowRationale) {
@@ -311,6 +328,14 @@ actual class ImagePermissionViewModel actual constructor() : ViewModel() {
                 com.nongtri.app.analytics.Events.logPermissionFrictionPoint(
                     permissionType = permissionType,
                     featureBlocked = "image_diagnosis"
+                )
+            }
+
+            // BATCH 2: Track denial count milestones
+            if (storageDenialCount in listOf(2, 3, 5, 10)) {
+                com.nongtri.app.analytics.Events.logPermissionDenialCountMilestone(
+                    permissionType = permissionType,
+                    count = storageDenialCount
                 )
             }
 
