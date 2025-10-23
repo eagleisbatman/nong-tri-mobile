@@ -3,6 +3,7 @@ package com.nongtri.app.ui.components
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
@@ -19,6 +20,15 @@ fun StarterQuestions(
     modifier: Modifier = Modifier
 ) {
     val strings = LocalizationProvider.getStrings(language)
+
+    // ROUND 10: Track starter questions displayed
+    LaunchedEffect(questions.size) {
+        if (questions.isNotEmpty()) {
+            com.nongtri.app.analytics.Events.logStarterQuestionsDisplayed(
+                count = questions.size
+            )
+        }
+    }
 
     Column(
         modifier = modifier
@@ -54,7 +64,14 @@ fun StarterQuestions(
         ) {
             questions.forEachIndexed { index, question ->
                 SuggestionChip(
-                    onClick = { onQuestionClick(question) },
+                    onClick = {
+                        // ROUND 10: Track starter question clicked
+                        com.nongtri.app.analytics.Events.logStarterQuestionClicked(
+                            questionText = question,
+                            questionIndex = index
+                        )
+                        onQuestionClick(question)
+                    },
                     label = {
                         Text(
                             text = question,

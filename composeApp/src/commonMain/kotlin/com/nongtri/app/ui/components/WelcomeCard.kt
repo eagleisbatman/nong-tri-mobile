@@ -58,9 +58,22 @@ fun WelcomeCard(
         }
     }
 
+    // ROUND 10: Track welcome card displayed and read time
+    val displayStartTime = remember { System.currentTimeMillis() }
+
     LaunchedEffect(Unit) {
         kotlinx.coroutines.delay(300)
         visible = true
+        // ROUND 10: Track welcome card displayed
+        com.nongtri.app.analytics.Events.logWelcomeCardDisplayed()
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            // Track welcome card read time when user leaves
+            val readTimeMs = System.currentTimeMillis() - displayStartTime
+            com.nongtri.app.analytics.Events.logWelcomeCardReadTime(readTimeMs = readTimeMs)
+        }
     }
 
     AnimatedVisibility(
