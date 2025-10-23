@@ -2057,6 +2057,51 @@ object Events {
         }
     }
 
+    // ========== BATCH 3: Push Notification Permission Events ==========
+
+    /**
+     * Push notification permission requested
+     * BATCH 3: Track when POST_NOTIFICATIONS permission is requested (Android 13+)
+     */
+    fun logPushNotificationPermissionRequested(trigger: String) {
+        try {
+            AnalyticsService.logEvent("push_notification_permission_requested", mapOf(
+                "trigger" to trigger // "onboarding", "settings", "after_first_message", etc.
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging push_notification_permission_requested: ${e.message}")
+        }
+    }
+
+    /**
+     * Push notification permission granted
+     * BATCH 3: Track when user grants POST_NOTIFICATIONS permission
+     */
+    fun logPushNotificationPermissionGranted(timeToGrantMs: Long) {
+        try {
+            AnalyticsService.logEvent("push_notification_permission_granted", mapOf(
+                "time_to_grant_ms" to timeToGrantMs
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging push_notification_permission_granted: ${e.message}")
+        }
+    }
+
+    /**
+     * Push notification permission denied
+     * BATCH 3: Track when user denies POST_NOTIFICATIONS permission
+     */
+    fun logPushNotificationPermissionDenied(denialCount: Int, canRequestAgain: Boolean) {
+        try {
+            AnalyticsService.logEvent("push_notification_permission_denied", mapOf(
+                "denial_count" to denialCount,
+                "can_request_again" to canRequestAgain
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging push_notification_permission_denied: ${e.message}")
+        }
+    }
+
     /**
      * Milestone reached (user engagement milestone)
      */

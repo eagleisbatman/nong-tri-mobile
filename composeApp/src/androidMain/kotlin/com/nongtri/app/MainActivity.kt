@@ -29,6 +29,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var audioRecorder: AudioRecorder
     private lateinit var voiceMessagePlayer: VoiceMessagePlayer
     private lateinit var imagePicker: ImagePicker
+    private lateinit var networkMonitor: com.nongtri.app.platform.NetworkMonitor // BATCH 3
 
     // Session tracking
     private var sessionStartTime = 0L
@@ -113,6 +114,33 @@ class MainActivity : ComponentActivity() {
         imagePicker.onGalleryResult(uri)
     }
 
+    // BATCH 3: Push notification permission launcher (Android 13+)
+    private var pushPermissionRequestTime = 0L
+    private var pushDenialCount = 0
+    private val pushNotificationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        val timeToGrantMs = if (pushPermissionRequestTime > 0) {
+            System.currentTimeMillis() - pushPermissionRequestTime
+        } else 0L
+
+        if (granted) {
+            com.nongtri.app.analytics.Events.logPushNotificationPermissionGranted(timeToGrantMs)
+            println("[MainActivity] POST_NOTIFICATIONS permission granted")
+        } else {
+            pushDenialCount++
+            val canRequestAgain = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                shouldShowRequestPermissionRationale(android.Manifest.permission.POST_NOTIFICATIONS)
+            } else false
+
+            com.nongtri.app.analytics.Events.logPushNotificationPermissionDenied(
+                denialCount = pushDenialCount,
+                canRequestAgain = canRequestAgain
+            )
+            println("[MainActivity] POST_NOTIFICATIONS permission denied (count: $pushDenialCount)")
+        }
+    }
+
     companion object {
         // Deprecated: Use VoicePermissionViewModel instead
         var audioPermissionResultCallback: ((Boolean) -> Unit)? = null
@@ -160,9 +188,15 @@ class MainActivity : ComponentActivity() {
         imagePicker = ImagePicker(applicationContext)
         imagePicker.initialize(this)
 
+        // BATCH 3: Initialize NetworkMonitor for reconnection tracking
+        networkMonitor = com.nongtri.app.platform.NetworkMonitor.getInstance(applicationContext)
+
         // Initialize FCM for push notifications
         val fcmService = FCMService(applicationContext)
         fcmService.initialize()
+
+        // BATCH 3: Request push notification permission (Android 13+)
+        requestPushNotificationPermission()
 
         // Handle notification tap if app was opened from notification
         handleNotificationIntent(intent)
@@ -243,6 +277,27 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    /**
+     * BATCH 3: Request push notification permission for Android 13+
+     */
+    private fun requestPushNotificationPermission() {
+        // Only request on Android 13+ (API 33+) where POST_NOTIFICATIONS permission is required
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            // Check if permission is already granted
+            val hasPermission = checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) ==
+                    android.content.pm.PackageManager.PERMISSION_GRANTED
+
+            if (!hasPermission) {
+                // Track permission request
+                pushPermissionRequestTime = System.currentTimeMillis()
+                com.nongtri.app.analytics.Events.logPushNotificationPermissionRequested("app_launch")
+
+                // Request permission
+                pushNotificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+    }
+
     override fun onStop() {
         super.onStop()
 
@@ -273,6 +328,9 @@ class MainActivity : ComponentActivity() {
         ttsManager.shutdown()
         audioRecorder.shutdown()
         voiceMessagePlayer.shutdown()
+
+        // BATCH 3: Stop NetworkMonitor
+        networkMonitor.stopMonitoring()
 
         // Clean up ImagePicker callbacks to prevent memory leaks
         ImagePicker.cameraResultCallback = null
