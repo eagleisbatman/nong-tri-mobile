@@ -99,6 +99,13 @@ fun MessageActionButtons(
                             ttsManager.resume()
                         }
                         TtsState.IDLE, TtsState.ERROR -> {
+                            // Track TTS button clicked event
+                            com.nongtri.app.analytics.Events.logTtsButtonClicked(
+                                messageIndex = 0, // TODO: Pass message index from MessageBubble
+                                messageLength = messageContent.length,
+                                language = language.code
+                            )
+
                             // Stop voice message player before starting TTS
                             voicePlayer.stop()
 

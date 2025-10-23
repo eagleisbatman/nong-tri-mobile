@@ -68,7 +68,15 @@ class VoiceRecordingViewModel(
             },
             onFailure = { error ->
                 val strings = LocalizationProvider.getStrings(userPreferences.language.value)
-                _state.value = VoiceRecordingState.Error(error.message ?: strings.errorFailedToStartRecording)
+                val errorMsg = error.message ?: strings.errorFailedToStartRecording
+                _state.value = VoiceRecordingState.Error(errorMsg)
+
+                // Track recording error
+                com.nongtri.app.analytics.Events.logVoiceRecordingError(
+                    errorType = "failed_to_start",
+                    errorMessage = errorMsg
+                )
+
                 println("[VoiceRecording] Error starting recording: ${error.message}")
             }
         )
@@ -97,7 +105,15 @@ class VoiceRecordingViewModel(
                 val durationMs = System.currentTimeMillis() - recordingStartTime
                 lastRecordingDurationMs = durationMs  // Store for analytics
                 if (durationMs < 500) {
-                    _state.value = VoiceRecordingState.Error(strings.errorRecordingTooShort)
+                    val errorMsg = strings.errorRecordingTooShort
+                    _state.value = VoiceRecordingState.Error(errorMsg)
+
+                    // Track recording error
+                    com.nongtri.app.analytics.Events.logVoiceRecordingError(
+                        errorType = "recording_too_short",
+                        errorMessage = "$errorMsg (${durationMs}ms)"
+                    )
+
                     println("[VoiceRecording] Recording too short: ${durationMs}ms")
                     audioFile.delete()
                     resetToIdle()
@@ -106,7 +122,15 @@ class VoiceRecordingViewModel(
 
                 // ✅ VALIDATION #2: Check file size (minimum 1KB)
                 if (audioFile.length() < 1000) {
-                    _state.value = VoiceRecordingState.Error(strings.errorRecordingEmpty)
+                    val errorMsg = strings.errorRecordingEmpty
+                    _state.value = VoiceRecordingState.Error(errorMsg)
+
+                    // Track recording error
+                    com.nongtri.app.analytics.Events.logVoiceRecordingError(
+                        errorType = "recording_empty",
+                        errorMessage = "$errorMsg (${audioFile.length()} bytes)"
+                    )
+
                     println("[VoiceRecording] File too small: ${audioFile.length()} bytes")
                     audioFile.delete()
                     resetToIdle()
@@ -119,7 +143,15 @@ class VoiceRecordingViewModel(
             },
             onFailure = { error ->
                 val strings = LocalizationProvider.getStrings(userPreferences.language.value)
-                _state.value = VoiceRecordingState.Error(error.message ?: strings.errorFailedToStopRecording)
+                val errorMsg = error.message ?: strings.errorFailedToStopRecording
+                _state.value = VoiceRecordingState.Error(errorMsg)
+
+                // Track recording error
+                com.nongtri.app.analytics.Events.logVoiceRecordingError(
+                    errorType = "failed_to_stop",
+                    errorMessage = errorMsg
+                )
+
                 println("[VoiceRecording] Error stopping recording: ${error.message}")
                 resetToIdle()
             }
@@ -156,7 +188,15 @@ class VoiceRecordingViewModel(
             },
             onFailure = { error ->
                 val strings = LocalizationProvider.getStrings(userPreferences.language.value)
-                _state.value = VoiceRecordingState.Error(error.message ?: strings.errorFailedToStopRecording)
+                val errorMsg = error.message ?: strings.errorFailedToStopRecording
+                _state.value = VoiceRecordingState.Error(errorMsg)
+
+                // Track recording error
+                com.nongtri.app.analytics.Events.logVoiceRecordingError(
+                    errorType = "failed_to_stop_for_preview",
+                    errorMessage = errorMsg
+                )
+
                 println("[VoiceRecording] Error stopping recording: ${error.message}")
                 error.printStackTrace()
                 resetToIdle()
@@ -272,13 +312,29 @@ class VoiceRecordingViewModel(
                         }
                     } else {
                         val strings = LocalizationProvider.getStrings(userPreferences.language.value)
-                        _state.value = VoiceRecordingState.Error(transcriptionResponse.error ?: strings.errorTranscriptionFailed)
+                        val errorMsg = transcriptionResponse.error ?: strings.errorTranscriptionFailed
+                        _state.value = VoiceRecordingState.Error(errorMsg)
+
+                        // Track transcription error
+                        com.nongtri.app.analytics.Events.logVoiceRecordingError(
+                            errorType = "transcription_failed",
+                            errorMessage = errorMsg
+                        )
+
                         resetToIdle()
                     }
                 },
                 onFailure = { error ->
                     val strings = LocalizationProvider.getStrings(userPreferences.language.value)
-                    _state.value = VoiceRecordingState.Error(error.message ?: strings.errorTranscriptionFailed)
+                    val errorMsg = error.message ?: strings.errorTranscriptionFailed
+                    _state.value = VoiceRecordingState.Error(errorMsg)
+
+                    // Track transcription error
+                    com.nongtri.app.analytics.Events.logVoiceRecordingError(
+                        errorType = "transcription_network_error",
+                        errorMessage = errorMsg
+                    )
+
                     println("[VoiceRecording] Transcription error: ${error.message}")
                     resetToIdle()
                 }

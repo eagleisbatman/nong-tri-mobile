@@ -277,6 +277,12 @@ class ChatViewModel(
                                         processingTimeMs = 0
                                     )
 
+                                    // Track diagnosis completed event
+                                    Events.logDiagnosisCompleted(
+                                        processingTimeMs = 0L, // TODO: Backend should return processing time
+                                        resultLength = diagnosis.aiResponse?.length ?: 0
+                                    )
+
                                     // Remove "diagnosis_pending" message with this jobId if it exists
                                     _uiState.update { state ->
                                         state.copy(
@@ -367,6 +373,16 @@ class ChatViewModel(
         // Track onboarding funnel step 3: First message sent (only for first message ever)
         if (userPreferences.messageCount.value == 1) {
             com.nongtri.app.analytics.Funnels.onboardingFunnel.step3_FirstMessageSent()
+
+            // Track first message sent event with detailed metrics
+            Events.logChatFirstMessageSent(
+                messageType = "text",
+                timeSinceAppOpenMs = 0L, // TODO: Need MainActivity app start time tracking
+                timeSinceChatViewMs = 0L, // TODO: Need ChatScreen first view time tracking
+                messageLength = message.trim().length,
+                usedStarterQuestion = false, // Starter questions not implemented
+                hasLocationContext = locationRepository.hasLocation()
+            )
         }
 
         // Add user message
@@ -453,6 +469,19 @@ class ChatViewModel(
                     // Track onboarding funnel step 4: First response received (only for first message ever)
                     if (userPreferences.messageCount.value == 1) {
                         com.nongtri.app.analytics.Funnels.onboardingFunnel.step4_FirstResponseReceived(responseTime)
+
+                        // Get follow-up questions from the assistant message
+                        val assistantMsg = _uiState.value.messages.find { it.id == assistantMessageId }
+                        val followUpQuestions = assistantMsg?.followUpQuestions ?: emptyList()
+
+                        // Track first response received event with detailed metrics
+                        Events.logChatFirstResponseReceived(
+                            responseTimeMs = responseTime,
+                            timeSinceAppOpenMs = 0L, // TODO: Need MainActivity app start time tracking
+                            responseLength = fullResponse.length,
+                            hasFollowUpQuestions = followUpQuestions.isNotEmpty(),
+                            followUpCount = followUpQuestions.size
+                        )
                     }
 
                     // Mark loading as complete and mark message as not loading
@@ -470,16 +499,18 @@ class ChatViewModel(
                     }
                 },
                 onFailure = { error ->
-                    // Track API error for analytics
+                    // Track error for analytics
                     val errorType = when {
                         error.message?.contains("timeout", ignoreCase = true) == true -> "timeout"
                         error.message?.contains("network", ignoreCase = true) == true -> "network"
                         error.message?.contains("connect", ignoreCase = true) == true -> "connection"
-                        else -> "api_error"
+                        else -> "unknown"
                     }
-                    Events.logApiError(
+
+                    // Use network error event for network-level failures (no HTTP status code)
+                    Events.logNetworkError(
                         endpoint = "/api/chat",
-                        statusCode = 0, // Unknown status code for network errors
+                        errorType = errorType,
                         errorMessage = error.message ?: "Unknown error"
                     )
 
