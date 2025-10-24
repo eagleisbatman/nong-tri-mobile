@@ -306,10 +306,13 @@ class MainActivity : ComponentActivity() {
 
         // Save session data for next session
         val prefs = UserPreferences.getInstance()
-        prefs.setLastSessionDate(
-            java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US)
-                .format(java.util.Date())
-        )
+
+        // Force Vietnam timezone for consistent session dates
+        val vietnamTimeZone = java.util.TimeZone.getTimeZone("Asia/Ho_Chi_Minh")
+        val dateFormat = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US)
+        dateFormat.timeZone = vietnamTimeZone
+
+        prefs.setLastSessionDate(dateFormat.format(java.util.Date()))
         prefs.setLastSessionDuration(sessionDuration)
 
         // Log session ended event

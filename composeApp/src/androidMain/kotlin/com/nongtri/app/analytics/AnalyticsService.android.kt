@@ -102,6 +102,11 @@ actual object AnalyticsService {
                 bundle.putString("location_city", cachedLocation.geoLevel3 ?: cachedLocation.city ?: "Unknown")
             }
 
+            // Timezone information for debugging and segmentation
+            val timeZone = java.util.TimeZone.getDefault()
+            bundle.putString("device_timezone_id", timeZone.id)  // e.g., "Asia/Ho_Chi_Minh"
+            bundle.putInt("timezone_offset_hours", timeZone.rawOffset / (1000 * 60 * 60))  // e.g., 7
+
             // Platform
             bundle.putString("platform", "android")
 
