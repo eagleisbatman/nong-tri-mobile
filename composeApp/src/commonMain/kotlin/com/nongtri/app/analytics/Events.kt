@@ -902,12 +902,17 @@ object Events {
 
     /**
      * IP-based location detected
+     *
+     * @param country Country name (geoLevel1)
+     * @param region Region/state name (geoLevel2)
+     * @param city City/locality name (geoLevel3)
      */
-    fun logLocationIpDetected(city: String, country: String) {
+    fun logLocationIpDetected(country: String, region: String?, city: String) {
         try {
             AnalyticsService.logEvent("location_ip_detected", mapOf(
-                "city" to city,
-                "country" to country
+                "country" to country,
+                "region" to (region ?: "Unknown"),
+                "city" to city
             ))
         } catch (e: Exception) {
             println("[Events] ❌ Error logging location_ip_detected: ${e.message}")
@@ -916,12 +921,31 @@ object Events {
 
     /**
      * GPS location obtained
+     *
+     * Logs reverse-geocoded address components instead of exact coordinates for privacy.
+     *
+     * @param country Country name
+     * @param region Region/state/province name
+     * @param city City/locality name
+     * @param district District/county name (subAdminArea)
+     * @param ward Ward/neighborhood name (subLocality)
+     * @param accuracy GPS accuracy in meters
      */
-    fun logLocationGpsObtained(latitude: Double, longitude: Double, accuracy: Float) {
+    fun logLocationGpsObtained(
+        country: String,
+        region: String?,
+        city: String?,
+        district: String?,
+        ward: String?,
+        accuracy: Float
+    ) {
         try {
             AnalyticsService.logEvent("location_gps_obtained", mapOf(
-                "latitude" to latitude,
-                "longitude" to longitude,
+                "country" to country,
+                "region" to (region ?: "Unknown"),
+                "city" to (city ?: "Unknown"),
+                "district" to (district ?: "Unknown"),
+                "ward" to (ward ?: "Unknown"),
                 "accuracy_meters" to accuracy
             ))
         } catch (e: Exception) {

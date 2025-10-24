@@ -91,6 +91,17 @@ actual object AnalyticsService {
             val hasLocation = locationRepo.hasLocation()
             bundle.putBoolean("has_location", hasLocation)
 
+            // Location type (ip, gps, none)
+            bundle.putString("location_type", locationRepo.getLocationType())
+
+            // Location address components (from cache)
+            val cachedLocation = locationRepo.getCachedLocation()
+            if (cachedLocation != null) {
+                bundle.putString("location_country", cachedLocation.geoLevel1 ?: cachedLocation.country ?: "Unknown")
+                bundle.putString("location_region", cachedLocation.geoLevel2 ?: cachedLocation.region ?: "Unknown")
+                bundle.putString("location_city", cachedLocation.geoLevel3 ?: cachedLocation.city ?: "Unknown")
+            }
+
             // Platform
             bundle.putString("platform", "android")
 

@@ -328,15 +328,18 @@ actual class LocationViewModel actual constructor() : ViewModel() {
                 val location = getCurrentGPSLocation()
 
                 if (location != null) {
-                    // ROUND 4: Track GPS location obtained
-                    com.nongtri.app.analytics.Events.logLocationGpsObtained(
-                        latitude = location.latitude,
-                        longitude = location.longitude,
-                        accuracy = location.accuracy
-                    )
-
                     // Reverse geocode to get address
                     val addressInfo = reverseGeocode(location.latitude, location.longitude)
+
+                    // ROUND 4: Track GPS location obtained (with reverse geocoded address)
+                    com.nongtri.app.analytics.Events.logLocationGpsObtained(
+                        country = addressInfo.country ?: "Unknown",
+                        region = addressInfo.region,
+                        city = addressInfo.city,
+                        district = addressInfo.district,
+                        ward = addressInfo.ward,
+                        accuracy = location.accuracy
+                    )
 
                     // Save to backend
                     val result = locationRepository.shareLocation(
@@ -464,9 +467,12 @@ actual class LocationViewModel actual constructor() : ViewModel() {
                 AddressInfo(
                     locationName = meaningfulName,
                     address = address.getAddressLine(0),
-                    city = address.locality,
-                    region = address.adminArea,
-                    country = address.countryName
+                    country = address.countryName,
+                    region = address.adminArea,          // State/province
+                    city = address.locality,             // City
+                    district = address.subAdminArea,     // District/county (NEW)
+                    ward = address.subLocality,          // Ward/neighborhood (NEW)
+                    postalCode = address.postalCode      // Zip code (NEW)
                 )
             } else {
                 AddressInfo()
@@ -480,8 +486,11 @@ actual class LocationViewModel actual constructor() : ViewModel() {
     data class AddressInfo(
         val locationName: String? = null,
         val address: String? = null,
-        val city: String? = null,
-        val region: String? = null,
-        val country: String? = null
+        val country: String? = null,
+        val region: String? = null,      // State/province (adminArea)
+        val city: String? = null,        // City/locality (locality)
+        val district: String? = null,    // District/county (subAdminArea)
+        val ward: String? = null,        // Ward/neighborhood (subLocality)
+        val postalCode: String? = null   // Zip/postal code
     )
 }

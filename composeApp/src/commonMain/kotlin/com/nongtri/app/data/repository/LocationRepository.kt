@@ -49,6 +49,14 @@ class LocationRepository private constructor() {
         return cachedIpLocation != null
     }
 
+    /**
+     * Get currently active location (GPS preferred over IP)
+     * Used for analytics global parameters
+     */
+    fun getCachedLocation(): UserLocation? {
+        return cachedGpsLocation ?: cachedIpLocation
+    }
+
     companion object {
         @Volatile
         private var instance: LocationRepository? = null
@@ -135,8 +143,9 @@ class LocationRepository private constructor() {
 
                         // ROUND 4: Track IP location detected
                         com.nongtri.app.analytics.Events.logLocationIpDetected(
-                            city = location.geoLevel3 ?: location.city ?: "Unknown",
-                            country = location.geoLevel1 ?: location.country ?: "Unknown"
+                            country = location.geoLevel1 ?: location.country ?: "Unknown",
+                            region = location.geoLevel2 ?: location.region,
+                            city = location.geoLevel3 ?: location.city ?: "Unknown"
                         )
 
                         // ROUND 6: Track location initialization completed
