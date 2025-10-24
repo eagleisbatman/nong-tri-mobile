@@ -6,6 +6,7 @@ import com.nongtri.app.data.api.NongTriApi
 import com.nongtri.app.data.preferences.UserPreferences
 import com.nongtri.app.l10n.LocalizationProvider
 import com.nongtri.app.platform.AudioRecorder
+import com.nongtri.app.platform.HapticFeedback
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,6 +22,7 @@ import java.io.File
  */
 class VoiceRecordingViewModel(
     private val audioRecorder: AudioRecorder,
+    private val hapticFeedback: HapticFeedback,
     private val api: NongTriApi = NongTriApi()
 ) : ViewModel() {
 
@@ -61,6 +63,10 @@ class VoiceRecordingViewModel(
                 _state.value = VoiceRecordingState.Recording()
                 startRecordingTimer()
                 startAmplitudePolling()
+
+                // Strong haptic feedback - recording started (eyes-free confirmation)
+                hapticFeedback.heavyClick()
+
                 println("[VoiceRecording] Started recording: $filePath")
 
                 // Track voice funnel step 3: Recording started
@@ -73,6 +79,9 @@ class VoiceRecordingViewModel(
                 val strings = LocalizationProvider.getStrings(userPreferences.language.value)
                 val errorMsg = error.message ?: strings.errorFailedToStartRecording
                 _state.value = VoiceRecordingState.Error(errorMsg)
+
+                // Error haptic feedback - recording failed
+                hapticFeedback.error()
 
                 // Track recording error
                 com.nongtri.app.analytics.Events.logVoiceRecordingError(
@@ -101,6 +110,9 @@ class VoiceRecordingViewModel(
 
         audioRecorder.stopRecording().fold(
             onSuccess = { audioFile ->
+                // Light haptic feedback - recording stopped
+                hapticFeedback.tick()
+
                 println("[VoiceRecording] Stopped recording: ${audioFile.absolutePath} (${audioFile.length()} bytes)")
 
                 // ✅ VALIDATION #1: Check recording duration (minimum 0.5 seconds)
@@ -110,6 +122,9 @@ class VoiceRecordingViewModel(
                 if (durationMs < 500) {
                     val errorMsg = strings.errorRecordingTooShort
                     _state.value = VoiceRecordingState.Error(errorMsg)
+
+                    // Error haptic feedback - recording too short
+                    hapticFeedback.error()
 
                     // Track recording error
                     com.nongtri.app.analytics.Events.logVoiceRecordingError(
@@ -127,6 +142,9 @@ class VoiceRecordingViewModel(
                 if (audioFile.length() < 1000) {
                     val errorMsg = strings.errorRecordingEmpty
                     _state.value = VoiceRecordingState.Error(errorMsg)
+
+                    // Error haptic feedback - recording empty
+                    hapticFeedback.error()
 
                     // Track recording error
                     com.nongtri.app.analytics.Events.logVoiceRecordingError(
@@ -148,6 +166,9 @@ class VoiceRecordingViewModel(
                 val strings = LocalizationProvider.getStrings(userPreferences.language.value)
                 val errorMsg = error.message ?: strings.errorFailedToStopRecording
                 _state.value = VoiceRecordingState.Error(errorMsg)
+
+                // Error haptic feedback - failed to stop
+                hapticFeedback.error()
 
                 // Track recording error
                 com.nongtri.app.analytics.Events.logVoiceRecordingError(
@@ -206,6 +227,9 @@ class VoiceRecordingViewModel(
                 val strings = LocalizationProvider.getStrings(userPreferences.language.value)
                 val errorMsg = error.message ?: strings.errorFailedToStopRecording
                 _state.value = VoiceRecordingState.Error(errorMsg)
+
+                // Error haptic feedback - failed to stop for preview
+                hapticFeedback.error()
 
                 // Track recording error
                 com.nongtri.app.analytics.Events.logVoiceRecordingError(
@@ -347,6 +371,9 @@ class VoiceRecordingViewModel(
                         val errorMsg = transcriptionResponse.error ?: strings.errorTranscriptionFailed
                         _state.value = VoiceRecordingState.Error(errorMsg)
 
+                        // Error haptic feedback - transcription failed
+                        hapticFeedback.error()
+
                         // Track transcription error
                         com.nongtri.app.analytics.Events.logVoiceRecordingError(
                             errorType = "transcription_failed",
@@ -367,6 +394,9 @@ class VoiceRecordingViewModel(
                     val strings = LocalizationProvider.getStrings(userPreferences.language.value)
                     val errorMsg = error.message ?: strings.errorTranscriptionFailed
                     _state.value = VoiceRecordingState.Error(errorMsg)
+
+                    // Error haptic feedback - transcription network error
+                    hapticFeedback.error()
 
                     // Track transcription error
                     com.nongtri.app.analytics.Events.logVoiceRecordingError(

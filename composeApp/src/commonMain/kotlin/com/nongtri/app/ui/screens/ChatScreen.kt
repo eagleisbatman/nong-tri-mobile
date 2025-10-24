@@ -56,7 +56,8 @@ fun ChatScreen(
 
     // Voice recording state
     val audioRecorder = com.nongtri.app.platform.LocalAudioRecorder.current
-    val voiceRecordingViewModel = remember { VoiceRecordingViewModel(audioRecorder) }
+    val hapticFeedback = com.nongtri.app.platform.LocalHapticFeedback.current
+    val voiceRecordingViewModel = remember { VoiceRecordingViewModel(audioRecorder, hapticFeedback) }
     val voiceRecordingState by voiceRecordingViewModel.state.collectAsState()
     val voiceAmplitude by voiceRecordingViewModel.amplitude.collectAsState()
     val isTranscribing by voiceRecordingViewModel.isTranscribing.collectAsState()
@@ -433,6 +434,8 @@ fun ChatScreen(
                             value = uiState.currentMessage,
                             onValueChange = viewModel::updateMessage,
                             onSend = {
+                                // Light haptic feedback - message sent
+                                hapticFeedback.tick()
                                 viewModel.sendMessage(uiState.currentMessage)
                             },
                             onImageClick = {
@@ -559,6 +562,8 @@ fun ChatScreen(
                             locationName = locationState.currentLocation?.geoLevel3
                                 ?: locationState.currentLocation?.city,
                             onStarterQuestionClick = { question ->
+                                // Light haptic feedback - starter question clicked
+                                hapticFeedback.tick()
                                 viewModel.sendMessage(question)
                             }
                         )
@@ -620,6 +625,8 @@ fun ChatScreen(
                                     viewModel.submitFeedback(conversationId, isPositive)
                                 },
                                 onFollowUpClick = { question ->
+                                    // Light haptic feedback - follow-up question clicked
+                                    hapticFeedback.tick()
                                     viewModel.sendMessage(question)
                                 },
                                 onAudioUrlCached = { messageId, audioUrl ->

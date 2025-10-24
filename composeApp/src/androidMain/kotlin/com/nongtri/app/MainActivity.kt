@@ -12,7 +12,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.nongtri.app.data.preferences.UserPreferences
 import com.nongtri.app.platform.AudioRecorder
 import com.nongtri.app.platform.FCMService
+import com.nongtri.app.platform.HapticFeedback
 import com.nongtri.app.platform.LocalAudioRecorder
+import com.nongtri.app.platform.LocalHapticFeedback
 import com.nongtri.app.platform.LocalShareManager
 import com.nongtri.app.platform.LocalTextToSpeechManager
 import com.nongtri.app.platform.LocalVoiceMessagePlayer
@@ -30,6 +32,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var voiceMessagePlayer: VoiceMessagePlayer
     private lateinit var imagePicker: ImagePicker
     private lateinit var networkMonitor: com.nongtri.app.platform.NetworkMonitor // BATCH 3
+    private lateinit var hapticFeedback: HapticFeedback
 
     // Session tracking
     private var sessionStartTime = 0L
@@ -187,6 +190,7 @@ class MainActivity : ComponentActivity() {
         voiceMessagePlayer = VoiceMessagePlayer(applicationContext)
         imagePicker = ImagePicker(applicationContext)
         imagePicker.initialize(this)
+        hapticFeedback = HapticFeedback(applicationContext)
 
         // BATCH 3: Initialize NetworkMonitor for reconnection tracking
         networkMonitor = com.nongtri.app.platform.NetworkMonitor.getInstance(applicationContext)
@@ -248,7 +252,8 @@ class MainActivity : ComponentActivity() {
                 LocalShareManager provides ShareManager(applicationContext),
                 LocalTextToSpeechManager provides ttsManager,
                 LocalAudioRecorder provides audioRecorder,
-                LocalVoiceMessagePlayer provides voiceMessagePlayer
+                LocalVoiceMessagePlayer provides voiceMessagePlayer,
+                LocalHapticFeedback provides hapticFeedback
             ) {
                 App()
             }
