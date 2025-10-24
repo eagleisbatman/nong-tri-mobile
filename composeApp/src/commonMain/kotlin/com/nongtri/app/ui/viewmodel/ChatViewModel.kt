@@ -47,10 +47,41 @@ class ChatViewModel(
     private var sessionVoiceMessageCount = 0
     private var sessionImageCount = 0
 
+    // Chunk throttling for smoother streaming (reduces layout reflows)
+    private val chunkBuffer = StringBuilder()
+    private var lastChunkFlushTime = 0L
+    private var currentStreamingMessageId: String? = null
+
     // Getters for MainActivity to access session stats
     fun getSessionMessageCount() = sessionMessageCount
     fun getSessionVoiceMessageCount() = sessionVoiceMessageCount
     fun getSessionImageCount() = sessionImageCount
+
+    /**
+     * Flush buffered chunks to UI
+     * Reduces layout reflows by batching small chunks
+     */
+    private fun flushChunkBuffer() {
+        if (chunkBuffer.isEmpty() || currentStreamingMessageId == null) return
+
+        val content = chunkBuffer.toString()
+        val messageId = currentStreamingMessageId!!
+
+        _uiState.update { state ->
+            state.copy(
+                messages = state.messages.map { msg ->
+                    if (msg.id == messageId) {
+                        msg.copy(content = msg.content + content)
+                    } else {
+                        msg
+                    }
+                }
+            )
+        }
+
+        chunkBuffer.clear()
+        lastChunkFlushTime = System.currentTimeMillis()
+    }
 
     init {
         // Initialize location for first message
@@ -423,23 +454,26 @@ class ChatViewModel(
         // Track response time
         val messageStartTime = System.currentTimeMillis()
 
+        // Initialize streaming state
+        currentStreamingMessageId = assistantMessageId
+        chunkBuffer.clear()
+        lastChunkFlushTime = System.currentTimeMillis()
+
         // Send to API with streaming
         viewModelScope.launch {
             api.sendMessageStream(
                 userId = userId,
                 message = message,
                 onChunk = { chunk ->
-                    // Update the assistant message with each chunk
-                    _uiState.update { state ->
-                        state.copy(
-                            messages = state.messages.map { msg ->
-                                if (msg.id == assistantMessageId) {
-                                    msg.copy(content = msg.content + chunk)
-                                } else {
-                                    msg
-                                }
-                            }
-                        )
+                    // Throttle chunks for smoother rendering (reduces layout reflows)
+                    chunkBuffer.append(chunk)
+                    val now = System.currentTimeMillis()
+
+                    // Flush every 80ms OR when buffer reaches 30 characters
+                    // 80ms = ~12 updates per second (smooth but not overwhelming)
+                    // 30 chars = roughly 5-6 words (good reading chunk)
+                    if (now - lastChunkFlushTime >= 80 || chunkBuffer.length >= 30) {
+                        flushChunkBuffer()
                     }
                 },
                 onMetadata = { metadata ->
@@ -464,6 +498,10 @@ class ChatViewModel(
                 }
             ).fold(
                 onSuccess = { fullResponse ->
+                    // Flush any remaining buffered chunks
+                    flushChunkBuffer()
+                    currentStreamingMessageId = null
+
                     // Track analytics: response received
                     val responseTime = System.currentTimeMillis() - messageStartTime
                     Events.logChatMessageReceived(
@@ -505,6 +543,10 @@ class ChatViewModel(
                     }
                 },
                 onFailure = { error ->
+                    // Clear streaming state on error
+                    chunkBuffer.clear()
+                    currentStreamingMessageId = null
+
                     // Track error for analytics
                     val errorType = when {
                         error.message?.contains("timeout", ignoreCase = true) == true -> "timeout"
@@ -649,22 +691,23 @@ class ChatViewModel(
             state.copy(messages = state.messages + initialAssistantMessage)
         }
 
+        // Initialize streaming state
+        currentStreamingMessageId = assistantMessageId
+        chunkBuffer.clear()
+        lastChunkFlushTime = System.currentTimeMillis()
+
         // Send transcription to API with streaming (same as sendMessage)
         viewModelScope.launch {
             api.sendMessageStream(
                 userId = userId,
                 message = transcription,
                 onChunk = { chunk ->
-                    _uiState.update { state ->
-                        state.copy(
-                            messages = state.messages.map { msg ->
-                                if (msg.id == assistantMessageId) {
-                                    msg.copy(content = msg.content + chunk)
-                                } else {
-                                    msg
-                                }
-                            }
-                        )
+                    // Throttle chunks for smoother rendering (same as text messages)
+                    chunkBuffer.append(chunk)
+                    val now = System.currentTimeMillis()
+
+                    if (now - lastChunkFlushTime >= 80 || chunkBuffer.length >= 30) {
+                        flushChunkBuffer()
                     }
                 },
                 onMetadata = { metadata ->
@@ -688,6 +731,10 @@ class ChatViewModel(
                 }
             ).fold(
                 onSuccess = { fullResponse ->
+                    // Flush any remaining buffered chunks
+                    flushChunkBuffer()
+                    currentStreamingMessageId = null
+
                     _uiState.update { state ->
                         state.copy(
                             isLoading = false,
@@ -702,6 +749,10 @@ class ChatViewModel(
                     }
                 },
                 onFailure = { error ->
+                    // Clear streaming state on error
+                    chunkBuffer.clear()
+                    currentStreamingMessageId = null
+
                     val strings = LocalizationProvider.getStrings(userPreferences.language.value)
                     _uiState.update { state ->
                         state.copy(
