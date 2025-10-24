@@ -116,19 +116,25 @@ fun MessageActionButtons(
         }
 
         // Listen button (TTS) - ALWAYS shown for all responses
+        val hapticFeedback = com.nongtri.app.platform.LocalHapticFeedback.current
         IconButton(
             onClick = {
                 coroutineScope.launch {
                     when (ttsState) {
                         TtsState.PLAYING -> {
-                            // Pause playback
+                            // Pause playback - double light tap haptic
+                            hapticFeedback.doubleTap()
                             ttsManager.pause()
                         }
                         TtsState.PAUSED -> {
-                            // Resume playback from paused position
+                            // Resume playback from paused position - light tap
+                            hapticFeedback.tick()
                             ttsManager.resume()
                         }
                         TtsState.IDLE, TtsState.ERROR -> {
+                            // Light haptic feedback - TTS starting
+                            hapticFeedback.tick()
+
                             // Track TTS button clicked event
                             com.nongtri.app.analytics.Events.logTtsButtonClicked(
                                 messageIndex = 0, // TODO: Pass message index from MessageBubble

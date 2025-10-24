@@ -10,8 +10,11 @@ import android.os.VibratorManager
  * Haptic feedback helper for Android
  * Provides simple API for different haptic patterns
  * Handles Android version compatibility (API 24+)
+ * Respects user preference for haptics
  */
 actual class HapticFeedback(private val context: Context) {
+
+    private val userPreferences by lazy { com.nongtri.app.data.preferences.UserPreferences.getInstance() }
 
     private val vibrator: Vibrator? by lazy {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -143,9 +146,9 @@ actual class HapticFeedback(private val context: Context) {
     }
 
     /**
-     * Check if device has vibrator
+     * Check if device has vibrator AND user has haptics enabled
      */
     private fun hasVibrator(): Boolean {
-        return vibrator?.hasVibrator() ?: false
+        return (vibrator?.hasVibrator() ?: false) && userPreferences.hapticsEnabled.value
     }
 }

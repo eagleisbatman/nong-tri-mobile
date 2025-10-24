@@ -8,9 +8,10 @@ import androidx.compose.ui.platform.LocalContext
 @Composable
 actual fun rememberLocationViewModel(): LocationViewModel {
     val context = LocalContext.current
+    val hapticFeedback = com.nongtri.app.platform.LocalHapticFeedback.current
     return remember {
         LocationViewModel().apply {
-            initialize(context.applicationContext)
+            initialize(context.applicationContext, hapticFeedback)
         }
     }
 }

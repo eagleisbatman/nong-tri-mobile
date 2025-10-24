@@ -29,7 +29,8 @@ data class ChatUiState(
 
 @OptIn(ExperimentalUuidApi::class)
 class ChatViewModel(
-    private val api: NongTriApi = NongTriApi()
+    private val api: NongTriApi = NongTriApi(),
+    private val hapticFeedback: com.nongtri.app.platform.HapticFeedback? = null
 ) : ViewModel() {
 
     private val userPreferences by lazy { UserPreferences.getInstance() }
@@ -51,6 +52,7 @@ class ChatViewModel(
     private val chunkBuffer = StringBuilder()
     private var lastChunkFlushTime = 0L
     private var currentStreamingMessageId: String? = null
+    private var isFirstChunk = true  // Track first chunk for haptic feedback
 
     // Getters for MainActivity to access session stats
     fun getSessionMessageCount() = sessionMessageCount
@@ -458,6 +460,7 @@ class ChatViewModel(
         currentStreamingMessageId = assistantMessageId
         chunkBuffer.clear()
         lastChunkFlushTime = System.currentTimeMillis()
+        isFirstChunk = true  // Reset for new response
 
         // Send to API with streaming
         viewModelScope.launch {
@@ -465,6 +468,12 @@ class ChatViewModel(
                 userId = userId,
                 message = message,
                 onChunk = { chunk ->
+                    // Haptic feedback - AI response started (first chunk only)
+                    if (isFirstChunk) {
+                        hapticFeedback?.gentleTick()
+                        isFirstChunk = false
+                    }
+
                     // Throttle chunks for smoother rendering (reduces layout reflows)
                     chunkBuffer.append(chunk)
                     val now = System.currentTimeMillis()
@@ -501,6 +510,9 @@ class ChatViewModel(
                     // Flush any remaining buffered chunks
                     flushChunkBuffer()
                     currentStreamingMessageId = null
+
+                    // Haptic feedback - AI response completed
+                    hapticFeedback?.tick()
 
                     // Track analytics: response received
                     val responseTime = System.currentTimeMillis() - messageStartTime
@@ -543,6 +555,9 @@ class ChatViewModel(
                     }
                 },
                 onFailure = { error ->
+                    // Haptic feedback - network error
+                    hapticFeedback?.error()
+
                     // Clear streaming state on error
                     chunkBuffer.clear()
                     currentStreamingMessageId = null
@@ -695,6 +710,7 @@ class ChatViewModel(
         currentStreamingMessageId = assistantMessageId
         chunkBuffer.clear()
         lastChunkFlushTime = System.currentTimeMillis()
+        isFirstChunk = true  // Reset for new response
 
         // Send transcription to API with streaming (same as sendMessage)
         viewModelScope.launch {
@@ -735,6 +751,9 @@ class ChatViewModel(
                     flushChunkBuffer()
                     currentStreamingMessageId = null
 
+                    // Haptic feedback - AI response completed
+                    hapticFeedback?.tick()
+
                     _uiState.update { state ->
                         state.copy(
                             isLoading = false,
@@ -749,6 +768,9 @@ class ChatViewModel(
                     }
                 },
                 onFailure = { error ->
+                    // Haptic feedback - network error
+                    hapticFeedback?.error()
+
                     // Clear streaming state on error
                     chunkBuffer.clear()
                     currentStreamingMessageId = null
@@ -941,6 +963,9 @@ class ChatViewModel(
                         networkType = "unknown" // TODO: Get actual network type
                     )
 
+                    // Haptic feedback - upload success
+                    hapticFeedback?.success()
+
                     // Clear loading state on user's image message
                     _uiState.update { state ->
                         state.copy(
@@ -980,6 +1005,9 @@ class ChatViewModel(
                 },
                 onFailure = { error ->
                     println("[ImageDiagnosis] ✗ Error submitting job: ${error.message}")
+
+                    // Haptic feedback - upload/network error
+                    hapticFeedback?.error()
 
                     // ROUND 4: Track diagnosis failed event
                     val errorType = when {

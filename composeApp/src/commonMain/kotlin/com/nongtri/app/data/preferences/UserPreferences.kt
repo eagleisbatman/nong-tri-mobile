@@ -14,6 +14,7 @@ expect class UserPreferences {
     val language: StateFlow<Language>
     val themeMode: StateFlow<ThemeMode>
     val hasCompletedOnboarding: StateFlow<Boolean>
+    val hapticsEnabled: StateFlow<Boolean>  // Haptic feedback preference
 
     // Analytics tracking properties
     val sessionCount: StateFlow<Int>
@@ -27,6 +28,7 @@ expect class UserPreferences {
 
     fun setLanguage(language: Language)
     fun setThemeMode(mode: ThemeMode)
+    fun setHapticsEnabled(enabled: Boolean)
     fun completeOnboarding()
 
     // Device identification methods

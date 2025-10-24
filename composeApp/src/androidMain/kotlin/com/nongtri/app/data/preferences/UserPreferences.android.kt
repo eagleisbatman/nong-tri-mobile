@@ -28,6 +28,9 @@ actual class UserPreferences private constructor(context: Context) {
     private val _hasCompletedOnboarding = MutableStateFlow(false)
     actual val hasCompletedOnboarding: StateFlow<Boolean> = _hasCompletedOnboarding.asStateFlow()
 
+    private val _hapticsEnabled = MutableStateFlow(true)  // Default: enabled
+    actual val hapticsEnabled: StateFlow<Boolean> = _hapticsEnabled.asStateFlow()
+
     // Analytics tracking properties
     private val _sessionCount = MutableStateFlow(0)
     actual val sessionCount: StateFlow<Int> = _sessionCount.asStateFlow()
@@ -96,6 +99,10 @@ actual class UserPreferences private constructor(context: Context) {
         _hasCompletedOnboarding.value = prefs.getBoolean("onboarding_completed", false)
         println("UserPreferences: Loaded onboarding status: ${_hasCompletedOnboarding.value}")
 
+        // Load haptics preference
+        _hapticsEnabled.value = prefs.getBoolean("haptics_enabled", true)  // Default: enabled
+        println("UserPreferences: Loaded haptics setting: ${_hapticsEnabled.value}")
+
         // Load analytics tracking properties
         _sessionCount.value = prefs.getInt("session_count", 0)
         _messageCount.value = prefs.getInt("message_count", 0)
@@ -148,6 +155,19 @@ actual class UserPreferences private constructor(context: Context) {
 
         // Step 3: Sync to backend asynchronously
         syncPreferencesToBackend()
+    }
+
+    actual fun setHapticsEnabled(enabled: Boolean) {
+        println("UserPreferences: Setting haptics to $enabled")
+
+        // Step 1: Update in-memory state
+        _hapticsEnabled.value = enabled
+
+        // Step 2: Save to local SharedPreferences immediately
+        prefs.edit().putBoolean("haptics_enabled", enabled).apply()
+        println("UserPreferences: Saved haptics setting to local storage")
+
+        // Note: No backend sync needed - haptics is a client-side preference
     }
 
     actual fun completeOnboarding() {

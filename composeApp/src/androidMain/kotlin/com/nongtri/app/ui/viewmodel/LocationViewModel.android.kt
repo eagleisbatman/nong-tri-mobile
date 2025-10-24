@@ -36,6 +36,7 @@ actual class LocationViewModel actual constructor() : ViewModel() {
     private lateinit var context: Context
     private val userPreferences = UserPreferences.getInstance()
     private val strings get() = LocalizationProvider.getStrings(userPreferences.language.value)
+    private var hapticFeedback: com.nongtri.app.platform.HapticFeedback? = null
 
     // Permission tracking for analytics
     private var permissionRequestTime = 0L
@@ -46,8 +47,9 @@ actual class LocationViewModel actual constructor() : ViewModel() {
         var permissionResultCallback: ((Boolean) -> Unit)? = null
     }
 
-    fun initialize(context: Context) {
+    fun initialize(context: Context, hapticFeedback: com.nongtri.app.platform.HapticFeedback? = null) {
         this.context = context
+        this.hapticFeedback = hapticFeedback
         this.fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
         loadCurrentLocation()
         loadSavedLocations()
@@ -354,6 +356,9 @@ actual class LocationViewModel actual constructor() : ViewModel() {
                     )
 
                     result.onSuccess { savedLocation ->
+                        // Haptic feedback - GPS location shared successfully
+                        hapticFeedback?.success()
+
                         _locationState.update {
                             it.copy(
                                 gpsLocation = savedLocation,

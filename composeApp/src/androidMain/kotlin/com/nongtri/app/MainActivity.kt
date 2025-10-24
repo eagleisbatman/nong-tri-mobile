@@ -185,12 +185,12 @@ class MainActivity : ComponentActivity() {
             com.nongtri.app.analytics.Funnels.onboardingFunnel.step1_AppLaunched()
         }
 
-        ttsManager = TextToSpeechManager(applicationContext)
+        hapticFeedback = HapticFeedback(applicationContext)
+        ttsManager = TextToSpeechManager(applicationContext, hapticFeedback)
         audioRecorder = AudioRecorder(applicationContext)
         voiceMessagePlayer = VoiceMessagePlayer(applicationContext)
         imagePicker = ImagePicker(applicationContext)
         imagePicker.initialize(this)
-        hapticFeedback = HapticFeedback(applicationContext)
 
         // BATCH 3: Initialize NetworkMonitor for reconnection tracking
         networkMonitor = com.nongtri.app.platform.NetworkMonitor.getInstance(applicationContext)

@@ -21,7 +21,10 @@ import org.json.JSONObject
 import java.io.File
 import java.util.concurrent.TimeUnit
 
-actual class TextToSpeechManager(private val context: Context) {
+actual class TextToSpeechManager(
+    private val context: Context,
+    private val hapticFeedback: HapticFeedback? = null
+) {
     private val _state = MutableStateFlow(TtsState.IDLE)
     actual val state: StateFlow<TtsState> = _state.asStateFlow()
 
@@ -126,6 +129,9 @@ actual class TextToSpeechManager(private val context: Context) {
                     setDataSource(audioFile.absolutePath)
                     setOnCompletionListener {
                         Log.d(TAG, "TTS: Playback completed")
+
+                        // Medium haptic feedback - TTS completed
+                        hapticFeedback?.click()
 
                         // Track playback completed event
                         val playbackDuration = if (playbackStartTime > 0) {

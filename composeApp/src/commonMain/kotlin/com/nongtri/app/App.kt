@@ -36,7 +36,8 @@ fun App() {
         } else {
             // After onboarding - navigation between chat and conversation list
             var showConversationList by remember { mutableStateOf(false) }
-            val chatViewModel = remember { ChatViewModel() }
+            val hapticFeedback = com.nongtri.app.platform.LocalHapticFeedback.current
+            val chatViewModel = remember { ChatViewModel(hapticFeedback = hapticFeedback) }
             val conversationListViewModel = remember { ConversationListViewModel() }
 
             if (showConversationList) {
