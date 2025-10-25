@@ -57,9 +57,9 @@ fun ImageMessageBubble(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = strings.you,  // "You" label
+                    text = strings.userLabel,  // "You" label
                     style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
