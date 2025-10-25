@@ -116,13 +116,14 @@ fun ChatScreen(
         }
     }
 
-    // CRITICAL: Start new conversation when GPS location is shared
+    // CRITICAL: Clear conversation when GPS location is shared
     // This ensures clean context with updated location information
+    // Don't create new thread yet - wait until user sends first message
     LaunchedEffect(locationState.gpsLocation?.id) {
         // Only trigger if GPS location exists and has changed (id changed)
         locationState.gpsLocation?.let {
-            println("[ChatScreen] GPS location changed (id=${it.id}), starting new conversation")
-            viewModel.createNewThread(title = null)
+            println("[ChatScreen] GPS location changed (id=${it.id}), clearing conversation")
+            viewModel.clearHistory()
         }
     }
 
