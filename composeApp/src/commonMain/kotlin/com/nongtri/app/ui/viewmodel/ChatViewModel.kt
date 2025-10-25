@@ -24,7 +24,9 @@ data class ChatUiState(
     val isLoading: Boolean = false,
     val error: String? = null,
     val currentThreadId: Int? = null,
-    val currentThreadTitle: String? = null
+    val currentThreadTitle: String? = null,
+    val attachedImageUri: String? = null,  // Display URI for preview
+    val attachedImageBase64: String? = null  // Base64 data for upload
 )
 
 @OptIn(ExperimentalUuidApi::class)
@@ -390,11 +392,23 @@ class ChatViewModel(
         _uiState.update { it.copy(currentMessage = message) }
     }
 
-    fun sendMessage(message: String) {
-        if (message.isBlank()) return
+    fun attachImage(uri: String, base64Data: String) {
+        _uiState.update { it.copy(attachedImageUri = uri, attachedImageBase64 = base64Data) }
+    }
 
-        // Clear input field
-        _uiState.update { it.copy(currentMessage = "") }
+    fun removeAttachedImage() {
+        _uiState.update { it.copy(attachedImageUri = null, attachedImageBase64 = null) }
+    }
+
+    fun sendMessage(message: String) {
+        if (message.isBlank() && _uiState.value.attachedImageBase64 == null) return
+
+        // Get attached image before clearing
+        val imageData = _uiState.value.attachedImageBase64
+        val hasImage = imageData != null
+
+        // Clear input field and attached image
+        _uiState.update { it.copy(currentMessage = "", attachedImageUri = null, attachedImageBase64 = null) }
 
         // Track analytics: message sent
         sessionMessageCount++
@@ -466,8 +480,9 @@ class ChatViewModel(
         viewModelScope.launch {
             api.sendMessageStream(
                 userId = userId,
-                message = message,
+                message = message.ifBlank { "What's wrong with my plant?" },  // Default question if only image
                 language = userPreferences.language.value.code,  // Pass current language to backend
+                imageData = imageData,  // Include attached image if present
                 onChunk = { chunk ->
                     // Haptic feedback - AI response started (first chunk only)
                     if (isFirstChunk) {

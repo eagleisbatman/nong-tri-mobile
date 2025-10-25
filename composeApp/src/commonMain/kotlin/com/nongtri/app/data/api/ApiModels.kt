@@ -9,7 +9,9 @@ data class ChatRequest(
     val message: String,
     val userName: String? = null,
     val deviceInfo: DeviceInfo? = null,
-    val language: String? = null  // "en" or "vi" - language preference for AI response
+    val language: String? = null,  // "en" or "vi" - language preference for AI response
+    val imageData: String? = null,  // Base64 image data for image messages
+    val messageType: String? = null  // "text" or "image"
 )
 
 @Serializable

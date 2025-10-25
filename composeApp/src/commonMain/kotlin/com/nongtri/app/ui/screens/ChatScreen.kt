@@ -3,6 +3,7 @@ package com.nongtri.app.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -13,6 +14,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -446,6 +448,35 @@ fun ChatScreen(
                     .background(MaterialTheme.colorScheme.surface)
                     .windowInsetsPadding(WindowInsets.navigationBars)
             ) {
+                    // Show image thumbnail above input bar when image is attached
+                    if (uiState.attachedImageUri != null) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 8.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // Image thumbnail
+                            coil3.compose.AsyncImage(
+                                model = uiState.attachedImageUri!!,
+                                contentDescription = "Attached image",
+                                modifier = Modifier
+                                    .size(80.dp)
+                                    .clip(RoundedCornerShape(8.dp)),
+                                contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                            )
+
+                            Spacer(modifier = Modifier.width(8.dp))
+
+                            // Remove button
+                            IconButton(onClick = { viewModel.removeAttachedImage() }) {
+                                Icon(Icons.Default.Close, contentDescription = "Remove image")
+                            }
+                        }
+
+                        HorizontalDivider()
+                    }
+
                     when (voiceRecordingUIState) {
                     is VoiceRecordingUIState.Idle -> {
                         // Normal input bar
@@ -833,10 +864,8 @@ fun ChatScreen(
                             imageHeight = result.height
                         )
 
-                        selectedImageUri = result.uri
-                        selectedImageBase64 = result.base64Data
-                        selectedImageSource = result.source
-                        showImagePreviewDialog = true
+                        // Attach image to chat (simple WhatsApp-style)
+                        viewModel.attachImage(result.uri, result.base64Data)
                     } else {
                         println("[ChatScreen] Camera capture cancelled or failed: base64Data=${result?.base64Data != null}")
                         // Show specific error message if available (farmer-friendly)
@@ -880,10 +909,8 @@ fun ChatScreen(
                             imageHeight = result.height
                         )
 
-                        selectedImageUri = result.uri
-                        selectedImageBase64 = result.base64Data
-                        selectedImageSource = result.source
-                        showImagePreviewDialog = true
+                        // Attach image to chat (simple WhatsApp-style)
+                        viewModel.attachImage(result.uri, result.base64Data)
                     } else {
                         println("[ChatScreen] Gallery selection cancelled or failed: base64Data=${result?.base64Data != null}")
                         if (result != null && result.base64Data == null) {
