@@ -57,8 +57,12 @@ actual class UserPreferences private constructor(context: Context) {
     actual val hasUsedTts: StateFlow<Boolean> = _hasUsedTts.asStateFlow()
 
     init {
+        println("UserPreferences: ========== INITIALIZING ==========")
+
         // Load preferences from local storage on initialization
         loadPreferencesFromLocal()
+
+        println("UserPreferences: After loading - Language: ${_language.value}, Theme: ${_themeMode.value}, Onboarding: ${_hasCompletedOnboarding.value}")
 
         // If local storage is empty, fetch from backend
         if (_language.value == Language.ENGLISH &&
@@ -66,6 +70,7 @@ actual class UserPreferences private constructor(context: Context) {
             !_hasCompletedOnboarding.value) {
             // Defaults detected - might be first launch or cleared data
             // Try fetching from backend asynchronously
+            println("UserPreferences: Defaults detected, fetching from backend...")
             fetchPreferencesFromBackend()
         }
     }
