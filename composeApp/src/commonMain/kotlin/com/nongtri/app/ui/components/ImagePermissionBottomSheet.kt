@@ -22,6 +22,7 @@ fun ImagePermissionBottomSheet(
     onRequestCameraPermission: () -> Unit,
     onRequestStoragePermission: () -> Unit,
     onDismiss: () -> Unit,
+    onBack: (() -> Unit)? = null,  // Optional: navigate back instead of just dismissing
     language: Language,
     modifier: Modifier = Modifier
 ) {
@@ -48,6 +49,7 @@ fun ImagePermissionBottomSheet(
                 com.nongtri.app.analytics.Events.logPermissionDenyButtonClicked("storage")
             }
             onDismiss()
+            onBack?.invoke()  // Navigate back if callback provided
         },
         modifier = modifier.testTag(TestTags.IMAGE_PERMISSION_SHEET),
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -79,6 +81,7 @@ fun ImagePermissionBottomSheet(
                             com.nongtri.app.analytics.Events.logPermissionDenyButtonClicked("storage")
                         }
                         onDismiss()
+                        onBack?.invoke()  // Navigate back if callback provided
                     },
                     modifier = Modifier.testTag(TestTags.CLOSE_BUTTON)
                 ) {

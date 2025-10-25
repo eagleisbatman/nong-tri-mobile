@@ -70,6 +70,7 @@ fun ChatScreen(
 
     // Image selection state (critical state survives rotation to handle camera/gallery results)
     var showImageSourceSelector by remember { mutableStateOf(false) }
+    var permissionSheetOpenedFromImageSelector by remember { mutableStateOf(false) }
     var showImagePreviewDialog by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     var selectedImageUri by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<String?>(null) }  // Display URI
     // Note: selectedImageBase64 cannot use rememberSaveable (too large for savedInstanceState)
@@ -778,6 +779,13 @@ fun ChatScreen(
                 showImagePermissionBottomSheet = false
                 imagePermissionViewModel.checkPermissionState()
             },
+            onBack = if (permissionSheetOpenedFromImageSelector) {
+                {
+                    // Reopen image source selector
+                    permissionSheetOpenedFromImageSelector = false
+                    showImageSourceSelector = true
+                }
+            } else null,
             language = language
         )
     }
@@ -794,6 +802,7 @@ fun ChatScreen(
             hasCameraPermission = imagePermissionState.hasCameraPermission,
             onRequestCameraPermission = {
                 // Show permission sheet to request camera permission
+                permissionSheetOpenedFromImageSelector = true
                 showImagePermissionBottomSheet = true
             },
             onCameraClick = {
