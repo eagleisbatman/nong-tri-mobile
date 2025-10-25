@@ -68,6 +68,9 @@ class NongTriApi(
             // Get device info to send with request
             val deviceInfo = userPreferences.getDeviceInfo()
 
+            // CRITICAL: Log the language being sent to backend
+            println("[NongTriApi] Sending message with language: $language (user: $userId)")
+
             client.preparePost("$baseUrl/api/chat/stream") {
                 contentType(ContentType.Application.Json)
                 setBody(ChatRequest(userId, message, userName, deviceInfo, language))
