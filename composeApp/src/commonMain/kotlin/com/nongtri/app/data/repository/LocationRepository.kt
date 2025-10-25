@@ -106,34 +106,17 @@ class LocationRepository private constructor() {
             if (response.status.isSuccess()) {
                 val body = response.body<LocationResponse>()
 
-                // Save preferences from backend if provided
-                body.preferences?.let { prefs ->
-                    println("[LocationRepository] Received preferences from backend: language=${prefs.language}, onboarding=${prefs.onboardingCompleted}")
+                // CRITICAL: DO NOT overwrite local preferences with backend data!
+                // Local SharedPreferences is the source of truth for user preferences.
+                // Backend preferences are only used on first launch (when local is empty).
+                // This prevents the race condition where:
+                // 1. User changes language in settings → saves to SharedPreferences
+                // 2. Location init returns stale backend data → would overwrite local!
 
-                    prefs.language?.let { lang ->
-                        val language = when (lang) {
-                            "vi" -> Language.VIETNAMESE
-                            else -> Language.ENGLISH
-                        }
-                        userPreferences.setLanguage(language)
-                    }
+                // We've removed this code that was causing language to reset on every app start.
+                // Preferences are now only synced TO backend, never FROM backend.
 
-                    prefs.themeMode?.let { theme ->
-                        val themeMode = when (theme) {
-                            "light" -> ThemeMode.LIGHT
-                            "dark" -> ThemeMode.DARK
-                            else -> ThemeMode.SYSTEM
-                        }
-                        userPreferences.setThemeMode(themeMode)
-                    }
-
-                    prefs.onboardingCompleted?.let { completed ->
-                        if (completed) {
-                            userPreferences.completeOnboarding()
-                            println("[LocationRepository] Onboarding already completed, skipping language selection")
-                        }
-                    }
-                }
+                println("[LocationRepository] Backend preferences ignored - local SharedPreferences is source of truth")
 
                 if (body.success && body.location != null) {
                     val location = body.location.toUserLocation()
