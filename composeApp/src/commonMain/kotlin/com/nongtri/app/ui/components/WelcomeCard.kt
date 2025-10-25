@@ -38,12 +38,15 @@ fun WelcomeCard(
     val scope = rememberCoroutineScope()
     val api = remember { NongTriApi() }
 
-    LaunchedEffect(language, deviceId) {
+    // CRITICAL: Only fetch starter questions ONCE on first load
+    // Do NOT refetch when language changes (causes flash from English → Vietnamese)
+    LaunchedEffect(deviceId) {
         scope.launch {
             isLoadingQuestions = true
-            println("[WelcomeCard] Fetching starter questions for deviceId: $deviceId, language: $language")
+            val languageCode = if (language == Language.VIETNAMESE) "vi" else "en"
+            println("[WelcomeCard] Fetching starter questions for deviceId: $deviceId, language: $languageCode")
             val result = api.getStarterQuestions(
-                language = if (language == Language.VIETNAMESE) "vi" else "en",
+                language = languageCode,
                 deviceId = deviceId
             )
             result.onSuccess { questions ->
