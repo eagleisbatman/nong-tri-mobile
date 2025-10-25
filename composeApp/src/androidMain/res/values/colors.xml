@@ -6,4 +6,7 @@
 
     <!-- Notification color -->
     <color name="notification_color">@color/brand_green_dark</color>
+
+    <!-- Splash screen background -->
+    <color name="splash_background">#FFFFFF</color>
 </resources>

@@ -8,7 +8,8 @@ data class ChatRequest(
     val userId: String,
     val message: String,
     val userName: String? = null,
-    val deviceInfo: DeviceInfo? = null
+    val deviceInfo: DeviceInfo? = null,
+    val language: String? = null  // "en" or "vi" - language preference for AI response
 )
 
 @Serializable
@@ -55,5 +56,6 @@ data class ImageDiagnosisRequest(
     val imageData: String,  // Base64 data URL: data:image/jpeg;base64,...
     val messageType: String = "image",
     val userName: String? = null,
-    val deviceInfo: DeviceInfo? = null
+    val deviceInfo: DeviceInfo? = null,
+    val language: String? = null  // "en" or "vi" - language preference for AI response
 )

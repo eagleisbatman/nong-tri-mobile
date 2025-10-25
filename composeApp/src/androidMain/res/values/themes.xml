@@ -2,8 +2,6 @@
 <resources>
     <!-- Nông Trí App Theme -->
     <style name="Theme.NongTri" parent="android:Theme.Material.Light.NoActionBar">
-        <!-- Splash screen configuration -->
-        <item name="android:windowBackground">@drawable/splash_screen</item>
-        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowBackground">@drawable/splash_drawable</item>
     </style>
 </resources>

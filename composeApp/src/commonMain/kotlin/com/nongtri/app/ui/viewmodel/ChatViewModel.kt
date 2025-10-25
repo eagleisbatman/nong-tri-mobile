@@ -467,6 +467,7 @@ class ChatViewModel(
             api.sendMessageStream(
                 userId = userId,
                 message = message,
+                language = userPreferences.language.value.code,  // Pass current language to backend
                 onChunk = { chunk ->
                     // Haptic feedback - AI response started (first chunk only)
                     if (isFirstChunk) {
@@ -717,6 +718,7 @@ class ChatViewModel(
             api.sendMessageStream(
                 userId = userId,
                 message = transcription,
+                language = userPreferences.language.value.code,  // Pass current language to backend
                 onChunk = { chunk ->
                     // Throttle chunks for smoother rendering (same as text messages)
                     chunkBuffer.append(chunk)
@@ -947,7 +949,8 @@ class ChatViewModel(
             api.submitDiagnosisJob(
                 userId = userId,
                 imageData = imageData,
-                question = question
+                question = question,
+                language = userPreferences.language.value.code  // Pass current language to backend
             ).fold(
                 onSuccess = { response ->
                     println("[ImageDiagnosis] ✓ Job submitted: jobId=${response.jobId}")

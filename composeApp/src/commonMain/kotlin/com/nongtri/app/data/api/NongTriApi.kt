@@ -57,6 +57,7 @@ class NongTriApi(
     suspend fun sendMessageStream(
         userId: String,
         message: String,
+        language: String? = null,  // "en" or "vi" - language preference for AI response
         userName: String? = null,
         onChunk: (String) -> Unit,
         onMetadata: ((StreamMetadata) -> Unit)? = null
@@ -69,7 +70,7 @@ class NongTriApi(
 
             client.preparePost("$baseUrl/api/chat/stream") {
                 contentType(ContentType.Application.Json)
-                setBody(ChatRequest(userId, message, userName, deviceInfo))
+                setBody(ChatRequest(userId, message, userName, deviceInfo, language))
             }.execute { response ->
                 val channel: ByteReadChannel = response.body()
 
@@ -168,6 +169,7 @@ class NongTriApi(
         userId: String,
         message: String,
         imageData: String,
+        language: String? = null,  // "en" or "vi" - language preference for AI response
         userName: String? = null,
         onChunk: (String) -> Unit,
         onMetadata: ((StreamMetadata) -> Unit)? = null
@@ -188,7 +190,8 @@ class NongTriApi(
                     message = message,
                     imageData = imageData,
                     userName = userName,
-                    deviceInfo = deviceInfo
+                    deviceInfo = deviceInfo,
+                    language = language
                 ))
             }.execute { response ->
                 val channel: ByteReadChannel = response.body()
@@ -666,7 +669,8 @@ class NongTriApi(
     suspend fun submitDiagnosisJob(
         userId: String,
         imageData: String,
-        question: String = "How is the health of my crop?"
+        question: String = "How is the health of my crop?",
+        language: String? = null  // "en" or "vi" - language preference for AI response
     ): Result<DiagnosisJobResponse> {
         return try {
             val response: DiagnosisJobResponse = client.post("$baseUrl/api/diagnosis/submit") {
@@ -674,7 +678,8 @@ class NongTriApi(
                 setBody(DiagnosisJobRequest(
                     userId = userId,
                     imageData = imageData,
-                    question = question
+                    question = question,
+                    language = language
                 ))
             }.body()
 
@@ -800,7 +805,8 @@ data class FCMRegistrationResponse(
 data class DiagnosisJobRequest(
     val userId: String,
     val imageData: String,  // Base64 data URL (data:image/jpeg;base64,...)
-    val question: String
+    val question: String,
+    val language: String? = null  // "en" or "vi" - language preference for AI response
 )
 
 @kotlinx.serialization.Serializable
