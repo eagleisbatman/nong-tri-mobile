@@ -197,12 +197,6 @@ class NongTriApi(
                     deviceInfo = deviceInfo,
                     language = language
                 ))
-
-                // Use longer timeout for image diagnosis (MCP processing takes longer)
-                timeout {
-                    requestTimeoutMillis = 180000  // 3 minutes for image diagnosis
-                    socketTimeoutMillis = 180000
-                }
             }.execute { response ->
                 val channel: ByteReadChannel = response.body()
 
