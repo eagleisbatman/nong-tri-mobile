@@ -509,7 +509,7 @@ class ChatViewModel(
             println("[ChatViewModel] ⚠ Max polling retries reached for jobId: $jobId")
             val strings = LocalizationProvider.getStrings(userPreferences.language.value)
             _uiState.update { state ->
-                state.copy(error = strings.errorDiagnosisTimeout)
+                state.copy(error = "Diagnosis is taking longer than expected. You'll receive a notification when ready.")
             }
         }
     }
