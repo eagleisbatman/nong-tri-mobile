@@ -33,7 +33,7 @@ fun WhatsAppStyleInputBar(
     Surface(
         modifier = modifier.fillMaxWidth().testTag(TestTags.INPUT_AREA),
         color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 3.dp
+        tonalElevation = 0.dp
     ) {
         Row(
             modifier = Modifier
