@@ -33,13 +33,17 @@ actual class HapticFeedback(private val context: Context) {
     actual fun tick() {
         if (!hasVibrator()) return
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            vibrator?.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_TICK))
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            vibrator?.vibrate(VibrationEffect.createOneShot(20, 50))
-        } else {
-            @Suppress("DEPRECATION")
-            vibrator?.vibrate(20)
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                vibrator?.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_TICK))
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                vibrator?.vibrate(VibrationEffect.createOneShot(20, 50))
+            } else {
+                @Suppress("DEPRECATION")
+                vibrator?.vibrate(20)
+            }
+        } catch (e: SecurityException) {
+            println("[HapticFeedback] VIBRATE permission denied: ${e.message}")
         }
     }
 
@@ -50,13 +54,17 @@ actual class HapticFeedback(private val context: Context) {
     actual fun click() {
         if (!hasVibrator()) return
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            vibrator?.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK))
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            vibrator?.vibrate(VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE))
-        } else {
-            @Suppress("DEPRECATION")
-            vibrator?.vibrate(50)
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                vibrator?.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK))
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                vibrator?.vibrate(VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE))
+            } else {
+                @Suppress("DEPRECATION")
+                vibrator?.vibrate(50)
+            }
+        } catch (e: SecurityException) {
+            println("[HapticFeedback] VIBRATE permission denied: ${e.message}")
         }
     }
 
@@ -67,13 +75,17 @@ actual class HapticFeedback(private val context: Context) {
     actual fun heavyClick() {
         if (!hasVibrator()) return
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            vibrator?.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_HEAVY_CLICK))
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            vibrator?.vibrate(VibrationEffect.createOneShot(80, 200))
-        } else {
-            @Suppress("DEPRECATION")
-            vibrator?.vibrate(80)
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                vibrator?.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_HEAVY_CLICK))
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                vibrator?.vibrate(VibrationEffect.createOneShot(80, 200))
+            } else {
+                @Suppress("DEPRECATION")
+                vibrator?.vibrate(80)
+            }
+        } catch (e: SecurityException) {
+            println("[HapticFeedback] VIBRATE permission denied: ${e.message}")
         }
     }
 
@@ -84,15 +96,19 @@ actual class HapticFeedback(private val context: Context) {
     actual fun doubleTap() {
         if (!hasVibrator()) return
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            vibrator?.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_DOUBLE_CLICK))
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val pattern = longArrayOf(0, 30, 50, 30)
-            vibrator?.vibrate(VibrationEffect.createWaveform(pattern, -1))
-        } else {
-            @Suppress("DEPRECATION")
-            val pattern = longArrayOf(0, 30, 50, 30)
-            vibrator?.vibrate(pattern, -1)
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                vibrator?.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_DOUBLE_CLICK))
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val pattern = longArrayOf(0, 30, 50, 30)
+                vibrator?.vibrate(VibrationEffect.createWaveform(pattern, -1))
+            } else {
+                @Suppress("DEPRECATION")
+                val pattern = longArrayOf(0, 30, 50, 30)
+                vibrator?.vibrate(pattern, -1)
+            }
+        } catch (e: SecurityException) {
+            println("[HapticFeedback] VIBRATE permission denied: ${e.message}")
         }
     }
 
@@ -103,13 +119,17 @@ actual class HapticFeedback(private val context: Context) {
     actual fun error() {
         if (!hasVibrator()) return
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val pattern = longArrayOf(0, 50, 100, 50, 100, 50)
-            vibrator?.vibrate(VibrationEffect.createWaveform(pattern, -1))
-        } else {
-            @Suppress("DEPRECATION")
-            val pattern = longArrayOf(0, 50, 100, 50, 100, 50)
-            vibrator?.vibrate(pattern, -1)
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val pattern = longArrayOf(0, 50, 100, 50, 100, 50)
+                vibrator?.vibrate(VibrationEffect.createWaveform(pattern, -1))
+            } else {
+                @Suppress("DEPRECATION")
+                val pattern = longArrayOf(0, 50, 100, 50, 100, 50)
+                vibrator?.vibrate(pattern, -1)
+            }
+        } catch (e: SecurityException) {
+            println("[HapticFeedback] VIBRATE permission denied: ${e.message}")
         }
     }
 
@@ -120,13 +140,17 @@ actual class HapticFeedback(private val context: Context) {
     actual fun success() {
         if (!hasVibrator()) return
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val pattern = longArrayOf(0, 30, 100, 60)
-            vibrator?.vibrate(VibrationEffect.createWaveform(pattern, -1))
-        } else {
-            @Suppress("DEPRECATION")
-            val pattern = longArrayOf(0, 30, 100, 60)
-            vibrator?.vibrate(pattern, -1)
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val pattern = longArrayOf(0, 30, 100, 60)
+                vibrator?.vibrate(VibrationEffect.createWaveform(pattern, -1))
+            } else {
+                @Suppress("DEPRECATION")
+                val pattern = longArrayOf(0, 30, 100, 60)
+                vibrator?.vibrate(pattern, -1)
+            }
+        } catch (e: SecurityException) {
+            println("[HapticFeedback] VIBRATE permission denied: ${e.message}")
         }
     }
 
@@ -137,11 +161,15 @@ actual class HapticFeedback(private val context: Context) {
     actual fun gentleTick() {
         if (!hasVibrator()) return
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            vibrator?.vibrate(VibrationEffect.createOneShot(15, 40))
-        } else {
-            @Suppress("DEPRECATION")
-            vibrator?.vibrate(15)
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                vibrator?.vibrate(VibrationEffect.createOneShot(15, 40))
+            } else {
+                @Suppress("DEPRECATION")
+                vibrator?.vibrate(15)
+            }
+        } catch (e: SecurityException) {
+            println("[HapticFeedback] VIBRATE permission denied: ${e.message}")
         }
     }
 

@@ -61,9 +61,11 @@ fun App() {
                     viewModel = chatViewModel,
                     language = selectedLanguage,
                     onLanguageChange = { language ->
+                        println("[App] Language changed to: $language")
                         userPreferences.setLanguage(language)
                         // CRITICAL: Start a new conversation when language changes
                         // This ensures clean context without mixed language conversation history
+                        println("[App] Creating new thread after language change")
                         chatViewModel.createNewThread(title = null)
                     },
                     onClearHistory = {
