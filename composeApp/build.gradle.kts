@@ -60,6 +60,7 @@ kotlin {
             implementation(libs.compose.material.icons.extended)
             implementation("io.coil-kt.coil3:coil-compose:3.0.0-rc02")
             implementation("io.coil-kt.coil3:coil-network-ktor3:3.0.0-rc02")
+            implementation("io.coil-kt.coil3:coil-svg:3.0.0-rc02") // For SVG and data URL support
         }
     }
 }

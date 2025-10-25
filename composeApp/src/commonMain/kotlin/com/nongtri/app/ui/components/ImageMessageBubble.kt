@@ -53,13 +53,40 @@ fun ImageMessageBubble(
                     .fillMaxWidth()
                     .height(200.dp)
             ) {
-                // Image
+                // Image - Use rememberAsyncImagePainter for better base64 support
                 if (message.imageUrl != null) {
-                    AsyncImage(
+                    coil3.compose.SubcomposeAsyncImage(
                         model = message.imageUrl,
                         contentDescription = strings.plantImage,
                         modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
+                        contentScale = ContentScale.Crop,
+                        loading = {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(24.dp),
+                                    strokeWidth = 2.dp
+                                )
+                            }
+                        },
+                        error = {
+                            // Show placeholder on error
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    Icons.Default.BrokenImage,
+                                    contentDescription = strings.noImage,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(48.dp)
+                                )
+                            }
+                        }
                     )
                 } else {
                     // Fallback: Show placeholder
