@@ -31,12 +31,38 @@ fun ImageMessageBubble(
     onImageClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(
+    // Wrap in Row to match MessageBubble layout structure
+    Row(
         modifier = modifier
-            .widthIn(max = 280.dp)
-            .padding(vertical = 4.dp),
-        horizontalAlignment = Alignment.End
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp),
+        horizontalArrangement = Arrangement.End  // Align to right for user messages
     ) {
+        Column(
+            modifier = Modifier
+                .widthIn(max = 280.dp),
+            horizontalAlignment = Alignment.End
+        ) {
+            // Sender label and timestamp
+            Row(
+                modifier = Modifier
+                    .padding(horizontal = 8.dp, vertical = 2.dp),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = formatTimestamp(message.timestamp),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = strings.you,  // "You" label
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         // Image thumbnail (clickable for fullscreen)
         Card(
             onClick = {
@@ -53,7 +79,7 @@ fun ImageMessageBubble(
                     .fillMaxWidth()
                     .height(200.dp)
             ) {
-                // Image - Use rememberAsyncImagePainter for better base64 support
+                // Image - Use AsyncImage to load images (base64 will be handled by platform-specific ImageLoader)
                 if (message.imageUrl != null) {
                     coil3.compose.SubcomposeAsyncImage(
                         model = message.imageUrl,
@@ -149,14 +175,7 @@ fun ImageMessageBubble(
             }
         }
 
-        Spacer(modifier = Modifier.height(2.dp))
-
-        // Timestamp
-        Text(
-            text = formatTimestamp(message.timestamp),
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        }
     }
 }
 
