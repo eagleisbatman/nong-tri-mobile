@@ -469,12 +469,13 @@ fun ChatScreen(
                                     return@WhatsAppStyleInputBar
                                 }
 
-                                // Check if both permissions are granted
-                                if (imagePermissionState.hasCameraPermission && imagePermissionState.hasStoragePermission) {
-                                    // Permissions granted, show image source selector
+                                // Check permissions - allow gallery access if storage permission is granted
+                                if (imagePermissionState.hasStoragePermission) {
+                                    // At least storage permission granted, show image source selector
+                                    // (Camera option will be disabled if camera permission not granted)
                                     showImageSourceSelector = true
                                 } else {
-                                    // Request permissions
+                                    // No storage permission, request permissions
                                     showImagePermissionBottomSheet = true
                                 }
                             },
@@ -790,6 +791,7 @@ fun ChatScreen(
 
         ImageSourceBottomSheet(
             language = language,
+            hasCameraPermission = imagePermissionState.hasCameraPermission,
             onCameraClick = {
                 // Track image funnel step 3: Source selected
                 com.nongtri.app.analytics.Funnels.imageDiagnosisFunnel.step3_SourceSelected("camera")
