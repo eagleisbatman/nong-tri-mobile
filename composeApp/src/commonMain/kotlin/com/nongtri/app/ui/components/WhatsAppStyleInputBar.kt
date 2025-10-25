@@ -28,6 +28,7 @@ fun WhatsAppStyleInputBar(
     strings: Strings,
     isEnabled: Boolean,
     isTranscribing: Boolean = false,        // Show transcribing feedback
+    hasAttachedImage: Boolean = false,      // Show send button even if text is blank
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -93,7 +94,8 @@ fun WhatsAppStyleInputBar(
             )
 
             // Send or Voice button
-            if (value.isNotBlank()) {
+            // Show send button if text is present OR image is attached
+            if (value.isNotBlank() || hasAttachedImage) {
                 // Send button
                 FilledIconButton(
                     onClick = onSend,

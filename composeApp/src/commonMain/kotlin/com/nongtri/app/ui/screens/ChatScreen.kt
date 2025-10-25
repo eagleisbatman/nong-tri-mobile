@@ -488,6 +488,7 @@ fun ChatScreen(
                                 hapticFeedback.tick()
                                 viewModel.sendMessage(uiState.currentMessage)
                             },
+                            hasAttachedImage = uiState.attachedImageUri != null,
                             onImageClick = {
                                 // Track image funnel step 1: Image button clicked
                                 com.nongtri.app.analytics.Funnels.imageDiagnosisFunnel.step1_ImageButtonClicked()
@@ -498,6 +499,12 @@ fun ChatScreen(
                                 // Prevent multiple simultaneous operations
                                 if (isImageProcessing) {
                                     println("[ChatScreen] Image already being processed, ignoring click")
+                                    return@WhatsAppStyleInputBar
+                                }
+
+                                // Prevent attaching multiple images - only one allowed
+                                if (uiState.attachedImageUri != null) {
+                                    println("[ChatScreen] Image already attached, ignoring click")
                                     return@WhatsAppStyleInputBar
                                 }
 
