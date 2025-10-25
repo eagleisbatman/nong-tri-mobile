@@ -437,7 +437,9 @@ fun ChatScreen(
                 }
             }
 
-            Column {
+            Column(
+                modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars)
+            ) {
                 when (voiceRecordingUIState) {
                     is VoiceRecordingUIState.Idle -> {
                         // Normal input bar
@@ -548,8 +550,7 @@ fun ChatScreen(
                     )
                 }
             }
-        },
-        contentWindowInsets = WindowInsets(0.dp, 0.dp, 0.dp, 0.dp)
+        }
     ) { paddingValues ->
         Box(
             modifier = Modifier
