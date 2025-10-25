@@ -533,24 +533,35 @@ class ChatViewModel(
         val imageData = _uiState.value.attachedImageBase64
         val hasImage = imageData != null
 
+        // Use default question if image attached but no text
+        val actualMessage = if (hasImage && message.isBlank()) {
+            "What's wrong with my plant?"
+        } else {
+            message
+        }
+
         // Clear input field and attached image
         _uiState.update { it.copy(currentMessage = "", attachedImageUri = null, attachedImageBase64 = null) }
-
-        // If image attached, use async job queue system (handles long MCP processing)
-        if (hasImage && imageData != null) {
-            val question = message.ifBlank { "What's wrong with my plant?" }
-            sendImageDiagnosis(imageData, question, imageSource = "gallery")
-            return
-        }
 
         // Track analytics: message sent
         sessionMessageCount++
         userPreferences.incrementMessageCount()
 
+        // Track image analytics if present
+        if (hasImage) {
+            sessionImageCount++
+            userPreferences.incrementImageMessageCount()
+            userPreferences.setHasUsedImageDiagnosis(true)
+            Events.logImageDiagnosisRequested(
+                imageSource = "gallery",
+                hasLocation = locationRepository.hasLocation(),
+                locationType = locationRepository.getLocationType()
+            )
+        }
+
         // Log message sent event
-        // TODO: Add location context when LocationRepository provides sync location status
         Events.logChatMessageSent(
-            messageLength = message.trim().length,
+            messageLength = actualMessage.trim().length,
             hasLocation = locationRepository.hasLocation(),
             locationType = locationRepository.getLocationType(),
             sessionMessageNumber = sessionMessageCount
@@ -562,20 +573,22 @@ class ChatViewModel(
 
             // Track first message sent event with detailed metrics
             Events.logChatFirstMessageSent(
-                messageType = "text",  // Only text messages go through regular sendMessage
+                messageType = if (hasImage) "image" else "text",
                 timeSinceAppOpenMs = 0L, // TODO: Need MainActivity app start time tracking
                 timeSinceChatViewMs = 0L, // TODO: Need ChatScreen first view time tracking
-                messageLength = message.trim().length,
+                messageLength = actualMessage.trim().length,
                 usedStarterQuestion = false, // Starter questions not implemented
                 hasLocationContext = locationRepository.hasLocation()
             )
         }
 
-        // Add user message
+        // Add user message with image if present
         val userMessage = ChatMessage(
             role = MessageRole.USER,
-            content = message.trim(),
-            timestamp = Clock.System.now()
+            content = actualMessage.trim(),
+            timestamp = Clock.System.now(),
+            messageType = if (hasImage) "image" else "text",
+            imageUrl = if (hasImage) imageData else null  // Show preview in chat
         )
 
         _uiState.update { state ->
@@ -613,8 +626,9 @@ class ChatViewModel(
         viewModelScope.launch {
             api.sendMessageStream(
                 userId = userId,
-                message = message,
+                message = actualMessage,
                 language = userPreferences.language.value.code,  // Pass current language to backend
+                imageData = imageData,  // Pass image if attached
                 onChunk = { chunk ->
                     // Haptic feedback - AI response started (first chunk only)
                     if (isFirstChunk) {
