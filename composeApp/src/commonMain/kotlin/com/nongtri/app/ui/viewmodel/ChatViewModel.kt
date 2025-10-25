@@ -429,7 +429,7 @@ class ChatViewModel(
 
             // Track first message sent event with detailed metrics
             Events.logChatFirstMessageSent(
-                messageType = "text",
+                messageType = if (hasImage) "image" else "text",
                 timeSinceAppOpenMs = 0L, // TODO: Need MainActivity app start time tracking
                 timeSinceChatViewMs = 0L, // TODO: Need ChatScreen first view time tracking
                 messageLength = message.trim().length,
@@ -480,9 +480,9 @@ class ChatViewModel(
         viewModelScope.launch {
             api.sendMessageStream(
                 userId = userId,
-                message = message.ifBlank { "What's wrong with my plant?" },  // Default question if only image
+                message = message,
                 language = userPreferences.language.value.code,  // Pass current language to backend
-                imageData = imageData,  // Include attached image if present
+                imageData = imageData,  // Include image if attached (Base64 data)
                 onChunk = { chunk ->
                     // Haptic feedback - AI response started (first chunk only)
                     if (isFirstChunk) {
