@@ -75,14 +75,6 @@ class NongTriApi(
             client.preparePost("$baseUrl/api/chat/stream") {
                 contentType(ContentType.Application.Json)
                 setBody(ChatRequest(userId, message, userName, deviceInfo, language, imageData, if (imageData != null) "image" else "text"))
-
-                // Use longer timeout for image requests (MCP processing takes longer)
-                if (imageData != null) {
-                    timeout {
-                        requestTimeoutMillis = 180000  // 3 minutes for image diagnosis
-                        socketTimeoutMillis = 180000
-                    }
-                }
             }.execute { response ->
                 val channel: ByteReadChannel = response.body()
 

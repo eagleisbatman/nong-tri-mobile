@@ -410,6 +410,13 @@ class ChatViewModel(
         // Clear input field and attached image
         _uiState.update { it.copy(currentMessage = "", attachedImageUri = null, attachedImageBase64 = null) }
 
+        // If image attached, use async job queue system (handles long MCP processing)
+        if (hasImage && imageData != null) {
+            val question = message.ifBlank { "What's wrong with my plant?" }
+            sendImageDiagnosis(imageData, question, imageSource = "gallery")
+            return
+        }
+
         // Track analytics: message sent
         sessionMessageCount++
         userPreferences.incrementMessageCount()
@@ -429,7 +436,7 @@ class ChatViewModel(
 
             // Track first message sent event with detailed metrics
             Events.logChatFirstMessageSent(
-                messageType = if (hasImage) "image" else "text",
+                messageType = "text",  // Only text messages go through regular sendMessage
                 timeSinceAppOpenMs = 0L, // TODO: Need MainActivity app start time tracking
                 timeSinceChatViewMs = 0L, // TODO: Need ChatScreen first view time tracking
                 messageLength = message.trim().length,
@@ -482,7 +489,6 @@ class ChatViewModel(
                 userId = userId,
                 message = message,
                 language = userPreferences.language.value.code,  // Pass current language to backend
-                imageData = imageData,  // Include image if attached (Base64 data)
                 onChunk = { chunk ->
                     // Haptic feedback - AI response started (first chunk only)
                     if (isFirstChunk) {
