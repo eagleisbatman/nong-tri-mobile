@@ -106,17 +106,54 @@ class LocationRepository private constructor() {
             if (response.status.isSuccess()) {
                 val body = response.body<LocationResponse>()
 
-                // CRITICAL: DO NOT overwrite local preferences with backend data!
-                // Local SharedPreferences is the source of truth for user preferences.
-                // Backend preferences are only used on first launch (when local is empty).
-                // This prevents the race condition where:
-                // 1. User changes language in settings → saves to SharedPreferences
-                // 2. Location init returns stale backend data → would overwrite local!
+                // SMART PREFERENCE SYNC:
+                // - Backend data is ONLY used on first launch (when local SharedPreferences is empty)
+                // - After that, local is always the source of truth
+                // - If local has data, we sync it TO backend instead of FROM backend
 
-                // We've removed this code that was causing language to reset on every app start.
-                // Preferences are now only synced TO backend, never FROM backend.
+                body.preferences?.let { backendPrefs ->
+                    // Check if this is first launch (local prefs are still at defaults)
+                    val currentLang = userPreferences.language.value
+                    val currentTheme = userPreferences.themeMode.value
+                    val currentOnboarding = userPreferences.hasCompletedOnboarding.value
 
-                println("[LocationRepository] Backend preferences ignored - local SharedPreferences is source of truth")
+                    val isFirstLaunch = (currentLang == Language.ENGLISH &&
+                                        currentTheme == ThemeMode.SYSTEM &&
+                                        !currentOnboarding)
+
+                    if (isFirstLaunch) {
+                        // First launch - use backend data if available
+                        println("[LocationRepository] First launch detected - loading preferences from backend")
+
+                        backendPrefs.language?.let { lang ->
+                            val language = when (lang) {
+                                "vi" -> Language.VIETNAMESE
+                                else -> Language.ENGLISH
+                            }
+                            userPreferences.setLanguage(language)
+                        }
+
+                        backendPrefs.themeMode?.let { theme ->
+                            val themeMode = when (theme) {
+                                "light" -> ThemeMode.LIGHT
+                                "dark" -> ThemeMode.DARK
+                                else -> ThemeMode.SYSTEM
+                            }
+                            userPreferences.setThemeMode(themeMode)
+                        }
+
+                        backendPrefs.onboardingCompleted?.let { completed ->
+                            if (completed) {
+                                userPreferences.completeOnboarding()
+                            }
+                        }
+                    } else {
+                        // NOT first launch - local data exists, so sync it TO backend
+                        println("[LocationRepository] Local preferences exist - syncing TO backend (local is source of truth)")
+                        // UserPreferences.setLanguage() already triggers syncPreferencesToBackend()
+                        // So this happens automatically when user changes settings
+                    }
+                }
 
                 if (body.success && body.location != null) {
                     val location = body.location.toUserLocation()
