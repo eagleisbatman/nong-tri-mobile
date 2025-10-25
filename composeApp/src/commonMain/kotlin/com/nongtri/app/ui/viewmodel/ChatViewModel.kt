@@ -388,6 +388,132 @@ class ChatViewModel(
         }
     }
 
+    /**
+     * Start polling for diagnosis job completion
+     * Polls every 10 seconds until diagnosis is completed or max retries reached
+     * Updates "Processing..." card to completed diagnosis when ready
+     */
+    private fun startPollingForDiagnosis(jobId: String) {
+        println("[ChatViewModel] Starting diagnosis polling for jobId: $jobId")
+
+        viewModelScope.launch {
+            var pollCount = 0
+            val maxPolls = 30  // 30 polls × 10 seconds = 5 minutes max
+
+            while (pollCount < maxPolls) {
+                // Wait 10 seconds before each poll
+                kotlinx.coroutines.delay(10000)
+                pollCount++
+
+                println("[ChatViewModel] Polling diagnosis status (attempt $pollCount/$maxPolls)")
+
+                try {
+                    api.getDiagnosisResult(jobId).fold(
+                        onSuccess = { response ->
+                            when (response.status) {
+                                "completed" -> {
+                                    println("[ChatViewModel] ✓ Diagnosis completed!")
+
+                                    response.diagnosis?.let { diagnosis ->
+                                        // Track completion
+                                        com.nongtri.app.analytics.Funnels.imageDiagnosisFunnel.step6_DiagnosisCompleted(
+                                            processingTimeMs = pollCount * 10000L
+                                        )
+                                        Events.logDiagnosisCompleted(
+                                            processingTimeMs = pollCount * 10000L,
+                                            resultLength = diagnosis.aiResponse?.length ?: 0
+                                        )
+
+                                        // Remove "diagnosis_pending" card
+                                        _uiState.update { state ->
+                                            state.copy(
+                                                messages = state.messages.filter { msg ->
+                                                    !(msg.messageType == "diagnosis_pending" &&
+                                                      msg.diagnosisPendingJobId == jobId)
+                                                }
+                                            )
+                                        }
+
+                                        // Add completed diagnosis message
+                                        val strings = LocalizationProvider.getStrings(userPreferences.language.value)
+                                        val diagnosisMessage = ChatMessage(
+                                            id = Uuid.random().toString(),
+                                            role = MessageRole.ASSISTANT,
+                                            content = diagnosis.aiResponse ?: strings.diagnosisCompleted,
+                                            timestamp = Clock.System.now(),
+                                            diagnosisData = diagnosis.diagnosisData,
+                                            language = diagnosis.responseLanguage ?: "vi"
+                                        )
+
+                                        _uiState.update { state ->
+                                            state.copy(messages = state.messages + diagnosisMessage)
+                                        }
+
+                                        // Haptic feedback - diagnosis ready
+                                        hapticFeedback?.success()
+
+                                        // Clear pending job ID
+                                        userPreferences.setPendingDiagnosisJobId(null)
+
+                                        // Track result viewed
+                                        Events.logDiagnosisResultViewed(
+                                            jobId = jobId,
+                                            resultLength = diagnosis.aiResponse?.length ?: 0
+                                        )
+                                    }
+
+                                    // Stop polling - diagnosis complete
+                                    return@launch
+                                }
+                                "failed" -> {
+                                    println("[ChatViewModel] ✗ Diagnosis failed: ${response.error}")
+
+                                    // Remove pending card and show error
+                                    _uiState.update { state ->
+                                        state.copy(
+                                            messages = state.messages.filter { msg ->
+                                                !(msg.messageType == "diagnosis_pending" &&
+                                                  msg.diagnosisPendingJobId == jobId)
+                                            },
+                                            error = response.error ?: "Diagnosis failed"
+                                        )
+                                    }
+
+                                    // Haptic feedback - error
+                                    hapticFeedback?.error()
+
+                                    // Clear pending job ID
+                                    userPreferences.setPendingDiagnosisJobId(null)
+
+                                    // Stop polling - job failed
+                                    return@launch
+                                }
+                                "pending", "processing" -> {
+                                    println("[ChatViewModel] Diagnosis still processing: ${response.status}")
+                                    // Continue polling
+                                }
+                            }
+                        },
+                        onFailure = { error ->
+                            println("[ChatViewModel] ✗ Polling error: ${error.message}")
+                            // Continue polling despite error (might be network hiccup)
+                        }
+                    )
+                } catch (e: Exception) {
+                    println("[ChatViewModel] ✗ Exception during polling: ${e.message}")
+                    // Continue polling despite exception
+                }
+            }
+
+            // Max retries reached
+            println("[ChatViewModel] ⚠ Max polling retries reached for jobId: $jobId")
+            val strings = LocalizationProvider.getStrings(userPreferences.language.value)
+            _uiState.update { state ->
+                state.copy(error = strings.errorDiagnosisTimeout)
+            }
+        }
+    }
+
     fun updateMessage(message: String) {
         _uiState.update { it.copy(currentMessage = message) }
     }
@@ -990,6 +1116,13 @@ class ChatViewModel(
                     // Haptic feedback - upload success
                     hapticFeedback?.success()
 
+                    // CRITICAL: Save job ID to UserPreferences for crash recovery
+                    // If app crashes after upload, we can still fetch diagnosis on restart
+                    response.jobId?.let { jobId ->
+                        userPreferences.setPendingDiagnosisJobId(jobId)
+                        println("[ImageDiagnosis] Job ID saved to preferences: $jobId")
+                    }
+
                     // Clear loading state on user's image message
                     _uiState.update { state ->
                         state.copy(
@@ -1026,6 +1159,11 @@ class ChatViewModel(
 
                     // ROUND 4: Track diagnosis processing card displayed event
                     Events.logDiagnosisProcessingDisplayed(jobId = response.jobId ?: "unknown")
+
+                    // Start polling for diagnosis completion
+                    response.jobId?.let { jobId ->
+                        startPollingForDiagnosis(jobId)
+                    }
                 },
                 onFailure = { error ->
                     println("[ImageDiagnosis] ✗ Error submitting job: ${error.message}")
