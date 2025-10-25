@@ -792,6 +792,10 @@ fun ChatScreen(
         ImageSourceBottomSheet(
             language = language,
             hasCameraPermission = imagePermissionState.hasCameraPermission,
+            onRequestCameraPermission = {
+                // Show permission sheet to request camera permission
+                showImagePermissionBottomSheet = true
+            },
             onCameraClick = {
                 // Track image funnel step 3: Source selected
                 com.nongtri.app.analytics.Funnels.imageDiagnosisFunnel.step3_SourceSelected("camera")

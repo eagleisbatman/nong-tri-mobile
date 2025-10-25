@@ -24,6 +24,7 @@ fun ImageSourceBottomSheet(
     onGalleryClick: () -> Unit,
     onDismiss: () -> Unit,
     hasCameraPermission: Boolean = true,
+    onRequestCameraPermission: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val strings = LocalizationProvider.getStrings(language)
@@ -65,16 +66,16 @@ fun ImageSourceBottomSheet(
                     if (hasCameraPermission) {
                         onCameraClick()
                         onDismiss()
+                    } else {
+                        // Request camera permission
+                        onRequestCameraPermission()
+                        onDismiss()
                     }
                 },
                 modifier = Modifier.fillMaxWidth().testTag(TestTags.CAMERA_OPTION),
                 colors = CardDefaults.cardColors(
-                    containerColor = if (hasCameraPermission)
-                        MaterialTheme.colorScheme.surfaceVariant
-                    else
-                        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                ),
-                enabled = hasCameraPermission
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
             ) {
                 Row(
                     modifier = Modifier
@@ -85,10 +86,7 @@ fun ImageSourceBottomSheet(
                     Icon(
                         imageVector = Icons.Default.CameraAlt,
                         contentDescription = strings.cdCamera,
-                        tint = if (hasCameraPermission)
-                            MaterialTheme.colorScheme.primary
-                        else
-                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
+                        tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(32.dp)
                     )
                     Spacer(modifier = Modifier.width(16.dp))
@@ -96,31 +94,21 @@ fun ImageSourceBottomSheet(
                         Text(
                             text = strings.takePhoto,
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Medium,
-                            color = if (hasCameraPermission)
-                                MaterialTheme.colorScheme.onSurface
-                            else
-                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                            fontWeight = FontWeight.Medium
                         )
                         Text(
                             text = if (hasCameraPermission)
                                 strings.captureNewPhoto
                             else
-                                "Camera permission required",
+                                "Tap to grant camera permission",
                             style = MaterialTheme.typography.bodySmall,
-                            color = if (hasCameraPermission)
-                                MaterialTheme.colorScheme.onSurfaceVariant
-                            else
-                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                     Icon(
                         imageVector = Icons.Default.ChevronRight,
                         contentDescription = null,
-                        tint = if (hasCameraPermission)
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        else
-                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
