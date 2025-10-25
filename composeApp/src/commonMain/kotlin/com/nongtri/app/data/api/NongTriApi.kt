@@ -48,9 +48,9 @@ class NongTriApi(
             level = LogLevel.INFO
         }
         install(HttpTimeout) {
-            requestTimeoutMillis = 60000  // 60 seconds for AI responses
-            connectTimeoutMillis = 15000  // 15 seconds to establish connection
-            socketTimeoutMillis = 60000   // 60 seconds for socket read/write
+            requestTimeoutMillis = 180000  // 3 minutes for AI responses (MCP servers can be slow)
+            connectTimeoutMillis = 15000   // 15 seconds to establish connection
+            socketTimeoutMillis = 180000   // 3 minutes for socket read/write
         }
     }
 
