@@ -375,7 +375,9 @@ fun ChatScreen(
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface
                 ),
-                modifier = Modifier.testTag(TestTags.CHAT_APP_BAR)
+                modifier = Modifier
+                    .windowInsetsPadding(WindowInsets.statusBars)
+                    .testTag(TestTags.CHAT_APP_BAR)
             )
         },
         bottomBar = {
@@ -437,10 +439,12 @@ fun ChatScreen(
                 }
             }
 
-            Column(
+            Surface(
+                color = MaterialTheme.colorScheme.surface,
                 modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars)
             ) {
-                when (voiceRecordingUIState) {
+                Column {
+                    when (voiceRecordingUIState) {
                     is VoiceRecordingUIState.Idle -> {
                         // Normal input bar
                         WhatsAppStyleInputBar(
@@ -528,6 +532,7 @@ fun ChatScreen(
                         )
                     }
                 }
+            }
             }
         },
         floatingActionButton = {
