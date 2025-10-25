@@ -376,6 +376,7 @@ fun ChatScreen(
                     containerColor = MaterialTheme.colorScheme.surface
                 ),
                 modifier = Modifier
+                    .background(MaterialTheme.colorScheme.surface)
                     .windowInsetsPadding(WindowInsets.statusBars)
                     .testTag(TestTags.CHAT_APP_BAR)
             )
@@ -439,11 +440,11 @@ fun ChatScreen(
                 }
             }
 
-            Surface(
-                color = MaterialTheme.colorScheme.surface,
-                modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars)
+            Column(
+                modifier = Modifier
+                    .background(MaterialTheme.colorScheme.surface)
+                    .windowInsetsPadding(WindowInsets.navigationBars)
             ) {
-                Column {
                     when (voiceRecordingUIState) {
                     is VoiceRecordingUIState.Idle -> {
                         // Normal input bar
@@ -532,7 +533,6 @@ fun ChatScreen(
                         )
                     }
                 }
-            }
             }
         },
         floatingActionButton = {
