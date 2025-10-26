@@ -20,11 +20,14 @@ class Base64ImageFetcher(
 ) : Fetcher {
 
     override suspend fun fetch(): FetchResult {
+        android.util.Log.i("Base64ImageFetcher", "✅ Fetching base64 image (length: ${data.length})")
+
         // Extract base64 data after "base64," prefix
         val base64Data = data.substringAfter("base64,")
 
         // Decode base64 to bytes
         val bytes = Base64.decode(base64Data, Base64.DEFAULT)
+        android.util.Log.i("Base64ImageFetcher", "✅ Decoded ${bytes.size} bytes")
 
         // Create Okio Buffer and write bytes
         val buffer = Buffer()
@@ -59,9 +62,14 @@ class Base64ImageFetcher(
             imageLoader: ImageLoader
         ): Fetcher? {
             // Only handle strings that start with "data:image/"
-            return if (data.startsWith("data:image/") && data.contains("base64,")) {
+            val isBase64 = data.startsWith("data:image/") && data.contains("base64,")
+            android.util.Log.i("Base64ImageFetcher", "Factory.create() called - isBase64: $isBase64, dataPrefix: ${data.take(50)}")
+
+            return if (isBase64) {
+                android.util.Log.i("Base64ImageFetcher", "✅ Creating Base64ImageFetcher")
                 Base64ImageFetcher(data, options)
             } else {
+                android.util.Log.i("Base64ImageFetcher", "❌ Not base64, returning null")
                 null
             }
         }

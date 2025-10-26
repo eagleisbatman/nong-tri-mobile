@@ -31,35 +31,35 @@ fun ImageMessageBubble(
     onImageClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // Wrap in Row to match MessageBubble layout structure
+    // Match MessageBubble layout - LEFT-aligned like chat messages
     Row(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 4.dp),
-        horizontalArrangement = Arrangement.End  // Align to right for user messages
+        horizontalArrangement = Arrangement.Start  // LEFT-aligned for consistency
     ) {
         Column(
             modifier = Modifier
-                .widthIn(max = 280.dp),
-            horizontalAlignment = Alignment.End
+                .fillMaxWidth(),
+            horizontalAlignment = Alignment.Start  // LEFT-aligned
         ) {
-            // Sender label and timestamp
+            // Sender label and timestamp at top
             Row(
                 modifier = Modifier
                     .padding(horizontal = 8.dp, vertical = 2.dp),
-                horizontalArrangement = Arrangement.End,
+                horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = formatTimestamp(message.timestamp),
+                    text = strings.userLabel,  // "You" label first
                     style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = strings.userLabel,  // "You" label
+                    text = formatTimestamp(message.timestamp),
                     style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -81,8 +81,12 @@ fun ImageMessageBubble(
             ) {
                 // Image - Use AsyncImage to load images (base64 will be handled by platform-specific ImageLoader)
                 if (message.imageUrl != null) {
+                    // Debug: Log the image URL type
+                    val imageUrl = message.imageUrl
+                    println("[ImageMessageBubble] Loading image - isBase64: ${imageUrl.startsWith("data:image/")}, length: ${imageUrl.length}, prefix: ${imageUrl.take(50)}")
+
                     coil3.compose.SubcomposeAsyncImage(
-                        model = message.imageUrl,
+                        model = imageUrl,
                         contentDescription = strings.plantImage,
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop,
