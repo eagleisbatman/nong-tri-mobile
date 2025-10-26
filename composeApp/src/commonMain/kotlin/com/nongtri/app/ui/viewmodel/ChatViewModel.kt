@@ -1028,6 +1028,11 @@ class ChatViewModel(
      * @param imageSource "camera" or "gallery" for analytics tracking
      */
     fun sendImageDiagnosis(imageData: String, question: String, imageSource: String = "unknown") {
+        println("[ImageDiagnosis] ======== FUNCTION CALLED ========")
+        println("[ImageDiagnosis] imageData.length: ${imageData.length}")
+        println("[ImageDiagnosis] question.length: ${question.length}")
+        println("[ImageDiagnosis] imageSource: $imageSource")
+
         if (imageData.isBlank() || question.isBlank()) {
             println("[ImageDiagnosis] ✗ Invalid input: imageData or question is blank")
             return
@@ -1035,11 +1040,15 @@ class ChatViewModel(
 
         // Validate image size using localized ImageValidator
         val estimatedSizeBytes = (imageData.length * 3L / 4)  // base64 to bytes
+        println("[ImageDiagnosis] Estimated size: $estimatedSizeBytes bytes (${estimatedSizeBytes / 1024}KB, ${estimatedSizeBytes / (1024 * 1024)}MB)")
+
         val strings = LocalizationProvider.getStrings(userPreferences.language.value)
         val validationResult = com.nongtri.app.util.ImageValidator.validateFileSize(
             estimatedSizeBytes,
             strings
         )
+
+        println("[ImageDiagnosis] Validation result: $validationResult")
 
         if (validationResult is com.nongtri.app.util.ImageValidationResult.Invalid) {
             println("[ImageDiagnosis] ✗ Image validation failed: ${validationResult.reason}")
