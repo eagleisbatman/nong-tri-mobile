@@ -10,11 +10,11 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class DiagnosisData(
     @SerialName("crop") val crop: Crop? = null,
-    @SerialName("health_status") val healthStatus: String,
+    @SerialName("health_status") val healthStatus: String = "Unable to assess",
     @SerialName("health_confidence") val healthConfidence: String? = null,
     @SerialName("issues") val issues: List<Issue> = emptyList(),
     @SerialName("growth_stage") val growthStage: String? = null,
-    @SerialName("image_quality") val imageQuality: String,
+    @SerialName("image_quality") val imageQuality: String = "Unknown",
     @SerialName("diagnostic_notes") val diagnosticNotes: String? = null,
     @SerialName("agriculture_api_reference") val agricultureApiReference: Boolean? = null,
     @SerialName("analyzed_at") val analyzedAt: String? = null
