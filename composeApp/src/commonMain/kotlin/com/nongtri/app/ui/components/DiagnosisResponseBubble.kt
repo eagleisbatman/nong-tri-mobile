@@ -72,20 +72,27 @@ fun DiagnosisResponseBubble(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "${message.diagnosisData.crop.nameVi} (${message.diagnosisData.crop.nameEn})",
+                            message.diagnosisData.crop?.let { crop ->
+                                Text(
+                                    text = "${crop.nameVi} (${crop.nameEn})",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                                )
+                                crop.scientificName?.let { scientific ->
+                                    Text(
+                                        text = scientific,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f),
+                                        fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+                                    )
+                                }
+                            } ?: Text(
+                                text = "Crop information not available",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSecondaryContainer
+                                color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.6f)
                             )
-                            message.diagnosisData.crop.scientificName?.let { scientific ->
-                                Text(
-                                    text = scientific,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f),
-                                    fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
-                                )
-                            }
                         }
                     }
 

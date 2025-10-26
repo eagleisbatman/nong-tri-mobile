@@ -149,14 +149,17 @@ fun FullscreenImageDialog(
                 ) {
                     Column(modifier = Modifier.padding(12.dp)) {
                         // Crop name
-                        Text(
-                            text = "${diagnosisData.crop.nameVi} (${diagnosisData.crop.nameEn})",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        diagnosisData.crop?.let { crop ->
+                            Text(
+                                text = "${crop.nameVi} (${crop.nameEn})",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                        }
 
-                        Spacer(modifier = Modifier.height(4.dp))
+
 
                         // Health status
                         Text(
