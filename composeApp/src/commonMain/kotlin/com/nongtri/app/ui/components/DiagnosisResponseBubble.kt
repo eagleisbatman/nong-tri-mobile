@@ -1,5 +1,7 @@
 package com.nongtri.app.ui.components
 
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -8,6 +10,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
@@ -17,11 +20,14 @@ import com.nongtri.app.data.model.HealthStatusColor
 import com.nongtri.app.data.model.getHealthStatusColor
 import com.nongtri.app.data.model.getSeverityIcon
 import com.nongtri.app.ui.components.TestTags
+import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 
 /**
  * Message bubble for AI diagnosis responses
- * Shows diagnosis summary card with crop info, health status, and issues
- * Displays full Vietnamese treatment advice below
+ * Matches the clean MessageBubble style - no purple cards, just plain text
+ * Shows diagnosis data inline within the message content
  */
 @Composable
 fun DiagnosisResponseBubble(
@@ -36,74 +42,101 @@ fun DiagnosisResponseBubble(
         if (message.diagnosisData != null) {
             val readTimeMs = System.currentTimeMillis() - displayStartTime
             com.nongtri.app.analytics.Events.logDiagnosisResultRead(
-                jobId = message.diagnosisPendingJobId ?: message.id,  // Use pending job ID or message ID
+                jobId = message.diagnosisPendingJobId ?: message.id,
                 readTimeMs = readTimeMs,
-                scrollPercent = 100  // Assume full view (no scroll tracking yet)
+                scrollPercent = 100
             )
         }
     }
 
-    Column(
-        modifier = modifier
-            .widthIn(max = 320.dp)
-            .padding(vertical = 4.dp),
-        horizontalAlignment = Alignment.Start
-    ) {
-        // Diagnosis summary card (if diagnosis data available)
-        if (message.diagnosisData != null) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer
+    // Entrance animation (same as MessageBubble)
+    var visible by remember { mutableStateOf(false) }
+    LaunchedEffect(message.id) {
+        visible = true
+    }
+
+    val scale by animateFloatAsState(
+        targetValue = if (visible) 1f else 0.8f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
+        )
+    )
+
+    AnimatedVisibility(
+        visible = visible,
+        enter = fadeIn(animationSpec = tween(300)) +
+                slideInVertically(
+                    initialOffsetY = { it / 4 },
+                    animationSpec = tween(300)
                 ),
-                shape = RoundedCornerShape(12.dp)
+        modifier = modifier
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 4.dp)
+                .scale(scale),
+            horizontalArrangement = Arrangement.Start
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .widthIn(min = 100.dp),
+                horizontalAlignment = Alignment.Start
             ) {
-                Column(modifier = Modifier.padding(12.dp)) {
-                    // Crop identification
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Icon(
-                            Icons.Default.Eco,
-                            contentDescription = strings.cropLabel,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            message.diagnosisData.crop?.let { crop ->
-                                Text(
-                                    text = "${crop.nameVi} (${crop.nameEn})",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onSecondaryContainer
-                                )
-                                crop.scientificName?.let { scientific ->
-                                    Text(
-                                        text = scientific,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f),
-                                        fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
-                                    )
-                                }
-                            } ?: Text(
-                                text = "Crop information not available",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.6f)
+                // Sender label and timestamp at top (same as MessageBubble)
+                Row(
+                    modifier = Modifier
+                        .padding(horizontal = 8.dp, vertical = 2.dp),
+                    horizontalArrangement = Arrangement.Start,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = strings.aiLabel,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = formatTimestamp(message.timestamp),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                // Message content (no bubble, just text - same as MessageBubble)
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    // Show diagnosis summary inline (if available)
+                    message.diagnosisData?.let { diagnosis ->
+                        // Crop info
+                        diagnosis.crop?.let { crop ->
+                            Text(
+                                text = "🌱 ${crop.nameVi} (${crop.nameEn})",
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onBackground
                             )
+
+                            crop.scientificName?.let { scientific ->
+                                Text(
+                                    text = scientific,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
+                                    fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(4.dp))
                         }
-                    }
 
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    // Health status with color coding
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        val healthColor = when (message.diagnosisData.getHealthStatusColor()) {
+                        // Health status
+                        val healthColor = when (diagnosis.getHealthStatusColor()) {
                             HealthStatusColor.GREEN -> Color(0xFF4CAF50)
                             HealthStatusColor.YELLOW -> Color(0xFFFFC107)
                             HealthStatusColor.ORANGE -> Color(0xFFFF9800)
@@ -111,169 +144,90 @@ fun DiagnosisResponseBubble(
                             HealthStatusColor.GRAY -> MaterialTheme.colorScheme.onSurfaceVariant
                         }
 
-                        Icon(
-                            Icons.Default.HealthAndSafety,
-                            contentDescription = strings.healthStatus,
-                            tint = healthColor,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = message.diagnosisData.healthStatus,
+                            text = "💚 Tình trạng: ${diagnosis.healthStatus}",
                             style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.Medium,
-                            color = healthColor
+                            color = healthColor,
+                            fontWeight = FontWeight.Medium
                         )
+
+                        // Issues (if any)
+                        if (diagnosis.issues.isNotEmpty()) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "⚠️ Vấn đề phát hiện:",
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onBackground
+                            )
+
+                            diagnosis.issues.forEach { issue ->
+                                Text(
+                                    text = "• ${issue.name} (${issue.category}, mức độ: ${issue.severity})",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onBackground
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
                     }
 
-                    // Issues list (if any)
-                    if (message.diagnosisData.issues.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(12.dp))
-                        HorizontalDivider(color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.2f))
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        Text(
-                            text = strings.detectedIssues,
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                    // Vietnamese advice (markdown format, same as regular AI messages)
+                    if (message.content.isNotBlank()) {
+                        MarkdownText(
+                            text = message.content,
+                            color = MaterialTheme.colorScheme.onBackground
                         )
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        message.diagnosisData.issues.forEach { issue ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 4.dp)
-                            ) {
-                                Text(
-                                    text = issue.getSeverityIcon(),
-                                    modifier = Modifier.width(24.dp)
-                                )
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = issue.name,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        fontWeight = FontWeight.Medium,
-                                        color = MaterialTheme.colorScheme.onSecondaryContainer
-                                    )
-                                    Text(
-                                        text = "${issue.category}${strings.severityLabel}${issue.severity}",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
-                                    )
-                                    if (issue.affectedParts.isNotEmpty()) {
-                                        Text(
-                                            text = "${strings.affectedLabel}${issue.affectedParts.joinToString(", ")}",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.6f)
-                                        )
-                                    }
-                                }
-                            }
+                    } else if (message.isLoading) {
+                        // Loading indicator
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(16.dp),
+                                strokeWidth = 2.dp
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = strings.analyzingPlantHealth,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
+                            )
                         }
                     }
 
-                    // Growth stage (if available)
-                    message.diagnosisData.growthStage?.let { stage ->
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "${strings.growthStage}$stage",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                    // Action buttons (same as MessageBubble for AI messages)
+                    if (!message.isLoading && message.content.isNotEmpty()) {
+                        MessageActionButtons(
+                            messageContent = message.content,
+                            language = com.nongtri.app.l10n.Language.VIETNAMESE,  // Diagnosis always in Vietnamese
+                            strings = strings,
+                            isGenericResponse = false,
+                            cachedAudioUrl = message.audioUrl,
+                            onCopy = { },
+                            onShare = { },
+                            onListen = { },
+                            onFeedback = { },
+                            onAudioUrlCached = { audioUrl ->
+                                // ROUND 6: Track diagnosis advice TTS played
+                                com.nongtri.app.analytics.Events.logDiagnosisAdviceTtsPlayed(
+                                    jobId = message.diagnosisPendingJobId ?: message.id,
+                                    adviceLength = message.content.length
+                                )
+                            }
                         )
                     }
                 }
             }
-
-            Spacer(modifier = Modifier.height(8.dp))
         }
-
-        // Full advice text (Vietnamese treatment recommendations)
-        Surface(
-            shape = RoundedCornerShape(12.dp),
-            color = MaterialTheme.colorScheme.surfaceVariant,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(modifier = Modifier.padding(12.dp)) {
-                // Advice content
-                if (message.content.isNotBlank()) {
-                    Text(
-                        text = message.content,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                } else if (message.isLoading) {
-                    // Show loading indicator during streaming
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(16.dp),
-                            strokeWidth = 2.dp
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = strings.analyzingPlantHealth,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                        )
-                    }
-                }
-
-                // TTS button (if content available and TTS handler provided)
-                if (message.content.isNotBlank() && onTtsClick != null) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    HorizontalDivider(color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f))
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    TextButton(
-                        onClick = {
-                            // ROUND 6: Track diagnosis advice TTS played
-                            com.nongtri.app.analytics.Events.logDiagnosisAdviceTtsPlayed(
-                                jobId = message.diagnosisPendingJobId ?: message.id,  // Use pending job ID or message ID
-                                adviceLength = message.content.length
-                            )
-                            onTtsClick()
-                        },
-                        modifier = Modifier.fillMaxWidth().testTag(TestTags.DIAGNOSIS_TTS_BUTTON)
-                    ) {
-                        Icon(
-                            Icons.Default.VolumeUp,
-                            contentDescription = strings.listenToAdvice,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(strings.listenToAdvice)
-                    }
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(2.dp))
-
-        // Timestamp
-        Text(
-            text = formatTimestamp(message.timestamp, strings),
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
     }
 }
 
 /**
- * Format timestamp for message display with localized strings
+ * Format timestamp to HH:mm format (same as MessageBubble)
  */
-private fun formatTimestamp(timestamp: kotlinx.datetime.Instant, strings: com.nongtri.app.l10n.Strings): String {
-    val now = kotlinx.datetime.Clock.System.now()
-    val duration = now - timestamp
-
-    return when {
-        duration.inWholeMinutes < 1 -> strings.justNow
-        duration.inWholeMinutes < 60 -> "${duration.inWholeMinutes}${strings.minutesAgo}"
-        duration.inWholeHours < 24 -> "${duration.inWholeHours}${strings.hoursAgo}"
-        else -> {
-            val local = timestamp.toString()
-            local.substring(0, 16).replace("T", " ")
-        }
-    }
+private fun formatTimestamp(timestamp: Instant): String {
+    val localDateTime = timestamp.toLocalDateTime(TimeZone.currentSystemDefault())
+    val hour = localDateTime.hour
+    val minute = localDateTime.minute.toString().padStart(2, '0')
+    return "$hour:$minute"
 }
