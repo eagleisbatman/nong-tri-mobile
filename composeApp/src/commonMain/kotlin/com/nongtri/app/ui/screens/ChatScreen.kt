@@ -871,8 +871,11 @@ fun ChatScreen(
                             imageHeight = result.height
                         )
 
-                        // Attach image to chat (simple WhatsApp-style)
-                        viewModel.attachImage(result.uri, result.base64Data)
+                        // Show preview dialog with async diagnosis flow
+                        selectedImageUri = result.uri
+                        selectedImageBase64 = result.base64Data
+                        selectedImageSource = "camera"
+                        showImagePreviewDialog = true
                     } else {
                         println("[ChatScreen] Camera capture cancelled or failed: base64Data=${result?.base64Data != null}")
                         // Show specific error message if available (farmer-friendly)
@@ -916,8 +919,11 @@ fun ChatScreen(
                             imageHeight = result.height
                         )
 
-                        // Attach image to chat (simple WhatsApp-style)
-                        viewModel.attachImage(result.uri, result.base64Data)
+                        // Show preview dialog with async diagnosis flow
+                        selectedImageUri = result.uri
+                        selectedImageBase64 = result.base64Data
+                        selectedImageSource = "gallery"
+                        showImagePreviewDialog = true
                     } else {
                         println("[ChatScreen] Gallery selection cancelled or failed: base64Data=${result?.base64Data != null}")
                         if (result != null && result.base64Data == null) {
