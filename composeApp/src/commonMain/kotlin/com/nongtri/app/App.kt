@@ -31,11 +31,12 @@ fun App() {
     }
 
     // Load translations on app start and when language changes
+    // Uses version checking to only fetch if translations were updated
     LaunchedEffect(selectedLanguage) {
         launch {
             try {
-                println("🌐 Loading translations for ${selectedLanguage.displayName}...")
-                val translations = translationRepository.getTranslations(selectedLanguage.code)
+                println("🌐 Checking translations for ${selectedLanguage.displayName}...")
+                val translations = translationRepository.getTranslationsWithVersionCheck(selectedLanguage.code)
 
                 if (translations.isNotEmpty()) {
                     // Update LocalizationProvider with API translations

@@ -9,7 +9,7 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 data class DiagnosisData(
-    @SerialName("crop") val crop: Crop,
+    @SerialName("crop") val crop: Crop? = null,
     @SerialName("health_status") val healthStatus: String,
     @SerialName("health_confidence") val healthConfidence: String? = null,
     @SerialName("issues") val issues: List<Issue> = emptyList(),
@@ -25,10 +25,10 @@ data class DiagnosisData(
  */
 @Serializable
 data class Crop(
-    @SerialName("name_en") val nameEn: String,
-    @SerialName("name_vi") val nameVi: String,
+    @SerialName("name_en") val nameEn: String = "Unknown",
+    @SerialName("name_vi") val nameVi: String = "Không xác định",
     @SerialName("scientific_name") val scientificName: String? = null,
-    @SerialName("confidence") val confidence: String  // "High" | "Medium" | "Low" | "None"
+    @SerialName("confidence") val confidence: String = "None"  // "High" | "Medium" | "Low" | "None"
 )
 
 /**

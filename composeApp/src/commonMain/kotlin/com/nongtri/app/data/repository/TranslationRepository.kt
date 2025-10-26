@@ -8,17 +8,26 @@ import io.ktor.client.request.get
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+
+@Serializable
+data class TranslationVersion(
+    val language: String,
+    val version: Int,
+    val updated_at: String?
+)
 
 /**
  * Repository for managing translations from Weblate API
  *
  * Flow:
- * 1. Try to fetch from API
- * 2. If successful, cache locally
- * 3. If API fails, fallback to cached translations
- * 4. If no cache exists, return empty map (hardcoded strings will be used as final fallback)
+ * 1. Check server version vs cached version
+ * 2. If version changed, fetch new translations
+ * 3. If successful, cache locally with version number
+ * 4. If API fails, fallback to cached translations
+ * 5. If no cache exists, return empty map (hardcoded strings will be used as final fallback)
  */
 class TranslationRepository(
     private val api: NongTriApi,
@@ -128,5 +137,104 @@ class TranslationRepository(
     suspend fun hasCachedTranslations(languageCode: String): Boolean = withContext(Dispatchers.IO) {
         val jsonString = userPreferences.getString("translations_$languageCode", "")
         jsonString.isNotEmpty()
+    }
+
+    /**
+     * Check if translations need updating (by comparing version numbers)
+     * @return true if translations should be refetched, false otherwise
+     */
+    suspend fun needsUpdate(languageCode: String): Boolean = withContext(Dispatchers.IO) {
+        try {
+            // Get server version
+            val serverVersion = getServerVersion(languageCode)
+
+            // Get cached version
+            val cachedVersion = getCachedVersion(languageCode)
+
+            println("🔍 Version check: $languageCode - Server: v${serverVersion}, Cached: v${cachedVersion}")
+
+            // Need update if server version is higher
+            serverVersion > cachedVersion
+        } catch (e: Exception) {
+            println("⚠️ Version check failed: ${e.message}")
+            // If version check fails, don't force update (use cache)
+            false
+        }
+    }
+
+    /**
+     * Get current translation version from server
+     */
+    private suspend fun getServerVersion(languageCode: String): Int {
+        return try {
+            val response = api.httpClient.get("/api/translations/version/$languageCode")
+                .body<TranslationVersion>()
+            response.version
+        } catch (e: Exception) {
+            println("⚠️ Failed to get server version: ${e.message}")
+            0
+        }
+    }
+
+    /**
+     * Get cached translation version
+     */
+    private suspend fun getCachedVersion(languageCode: String): Int {
+        return userPreferences.getInt("translations_version_$languageCode", 0)
+    }
+
+    /**
+     * Save translation version to cache
+     */
+    private suspend fun cacheVersion(languageCode: String, version: Int) {
+        userPreferences.setInt("translations_version_$languageCode", version)
+        println("💾 Cached version for $languageCode: v$version")
+    }
+
+    /**
+     * Get translations with version checking
+     * This is the smart method that checks versions before fetching
+     */
+    suspend fun getTranslationsWithVersionCheck(languageCode: String): Map<String, String> = withContext(Dispatchers.IO) {
+        try {
+            // Check if we need to update
+            if (needsUpdate(languageCode)) {
+                println("🔄 Translation update available for $languageCode, fetching...")
+                val response = api.httpClient.get("/api/translations/$languageCode").body<TranslationResponse>()
+
+                // Cache translations and version
+                cacheTranslations(languageCode, response.translations)
+                cacheVersion(languageCode, getServerVersion(languageCode))
+
+                println("✅ Updated to latest translations for $languageCode")
+                return@withContext response.translations
+            } else {
+                // Use cached translations
+                val cached = getCachedTranslations(languageCode)
+                if (cached.isNotEmpty()) {
+                    println("✅ Using ${cached.size} cached translations for $languageCode (up to date)")
+                    return@withContext cached
+                } else {
+                    // No cache, fetch from API
+                    println("🌐 No cache found, fetching $languageCode translations...")
+                    val response = api.httpClient.get("/api/translations/$languageCode").body<TranslationResponse>()
+                    cacheTranslations(languageCode, response.translations)
+                    cacheVersion(languageCode, getServerVersion(languageCode))
+                    return@withContext response.translations
+                }
+            }
+        } catch (e: Exception) {
+            println("❌ Failed to get translations: ${e.message}")
+
+            // Fallback to cached translations
+            val cached = getCachedTranslations(languageCode)
+            if (cached.isNotEmpty()) {
+                println("✅ Using ${cached.size} cached translations (offline)")
+                return@withContext cached
+            }
+
+            println("❌ No cached translations available for $languageCode")
+            emptyMap()
+        }
     }
 }
