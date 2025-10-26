@@ -535,7 +535,7 @@ fun ChatScreen(
                             onVoiceRelease = {},   // Not used anymore
                             onVoiceCancel = {},    // Not used anymore
                             strings = strings,
-                            isEnabled = !uiState.isLoading,
+                            isEnabled = !uiState.isLoading && !uiState.isDiagnosisInProgress,  // Disable during loading or diagnosis
                             isTranscribing = isTranscribing  // Show transcribing feedback
                         )
                     }

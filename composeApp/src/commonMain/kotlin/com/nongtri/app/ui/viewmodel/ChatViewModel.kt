@@ -26,7 +26,8 @@ data class ChatUiState(
     val currentThreadId: Int? = null,
     val currentThreadTitle: String? = null,
     val attachedImageUri: String? = null,  // Display URI for preview
-    val attachedImageBase64: String? = null  // Base64 data for upload
+    val attachedImageBase64: String? = null,  // Base64 data for upload
+    val isDiagnosisInProgress: Boolean = false  // True when diagnosis is being processed
 )
 
 @OptIn(ExperimentalUuidApi::class)
@@ -340,7 +341,10 @@ class ChatViewModel(
                                     )
 
                                     _uiState.update { state ->
-                                        state.copy(messages = state.messages + diagnosisMessage)
+                                        state.copy(
+                                            messages = state.messages + diagnosisMessage,
+                                            isDiagnosisInProgress = false  // Re-enable input
+                                        )
                                     }
 
                                     // ROUND 4: Track diagnosis result viewed event
@@ -352,14 +356,20 @@ class ChatViewModel(
                             }
                             "pending", "processing" -> {
                                 println("[ChatViewModel] Diagnosis still processing: ${response.status}")
-                                // Keep the pending card visible
+                                // Keep the pending card visible and disable input
+                                _uiState.update { state ->
+                                    state.copy(isDiagnosisInProgress = true)
+                                }
                             }
                             "failed" -> {
                                 println("[ChatViewModel] Diagnosis failed: ${response.error}")
                                 // Show error message
                                 val strings = LocalizationProvider.getStrings(userPreferences.language.value)
                                 _uiState.update { state ->
-                                    state.copy(error = "${strings.errorDiagnosisFailed}: ${response.error}")
+                                    state.copy(
+                                        error = "${strings.errorDiagnosisFailed}: ${response.error}",
+                                        isDiagnosisInProgress = false  // Re-enable input
+                                    )
                                 }
                             }
                             else -> {
@@ -446,7 +456,10 @@ class ChatViewModel(
                                         )
 
                                         _uiState.update { state ->
-                                            state.copy(messages = state.messages + diagnosisMessage)
+                                            state.copy(
+                                                messages = state.messages + diagnosisMessage,
+                                                isDiagnosisInProgress = false  // Re-enable input
+                                            )
                                         }
 
                                         // Haptic feedback - diagnosis ready
@@ -475,7 +488,8 @@ class ChatViewModel(
                                                 !(msg.messageType == "diagnosis_pending" &&
                                                   msg.diagnosisPendingJobId == jobId)
                                             },
-                                            error = response.error ?: "Diagnosis failed"
+                                            error = response.error ?: "Diagnosis failed",
+                                            isDiagnosisInProgress = false  // Re-enable input even on failure
                                         )
                                     }
 
@@ -1177,7 +1191,10 @@ class ChatViewModel(
                     )
 
                     _uiState.update { state ->
-                        state.copy(messages = state.messages + pendingMessage)
+                        state.copy(
+                            messages = state.messages + pendingMessage,
+                            isDiagnosisInProgress = true  // Disable input while diagnosis is processing
+                        )
                     }
 
                     // ROUND 4: Track diagnosis processing card displayed event
