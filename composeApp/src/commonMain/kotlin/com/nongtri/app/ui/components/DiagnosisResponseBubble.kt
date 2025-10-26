@@ -112,68 +112,7 @@ fun DiagnosisResponseBubble(
                         .fillMaxWidth()
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
-                    // Show diagnosis summary inline (if available)
-                    message.diagnosisData?.let { diagnosis ->
-                        // Crop info
-                        diagnosis.crop?.let { crop ->
-                            Text(
-                                text = "🌱 ${crop.nameVi} (${crop.nameEn})",
-                                style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onBackground
-                            )
-
-                            crop.scientificName?.let { scientific ->
-                                Text(
-                                    text = scientific,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
-                                    fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.height(4.dp))
-                        }
-
-                        // Health status
-                        val healthColor = when (diagnosis.getHealthStatusColor()) {
-                            HealthStatusColor.GREEN -> Color(0xFF4CAF50)
-                            HealthStatusColor.YELLOW -> Color(0xFFFFC107)
-                            HealthStatusColor.ORANGE -> Color(0xFFFF9800)
-                            HealthStatusColor.RED -> Color(0xFFF44336)
-                            HealthStatusColor.GRAY -> MaterialTheme.colorScheme.onSurfaceVariant
-                        }
-
-                        Text(
-                            text = "💚 Tình trạng: ${diagnosis.healthStatus}",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = healthColor,
-                            fontWeight = FontWeight.Medium
-                        )
-
-                        // Issues (if any)
-                        if (diagnosis.issues.isNotEmpty()) {
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "⚠️ Vấn đề phát hiện:",
-                                style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onBackground
-                            )
-
-                            diagnosis.issues.forEach { issue ->
-                                Text(
-                                    text = "• ${issue.name} (${issue.category}, mức độ: ${issue.severity})",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onBackground
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(12.dp))
-                    }
-
-                    // Vietnamese advice (markdown format, same as regular AI messages)
+                    // Just show the content like a regular AI message - no duplicate diagnosis data
                     if (message.content.isNotBlank()) {
                         MarkdownText(
                             text = message.content,
