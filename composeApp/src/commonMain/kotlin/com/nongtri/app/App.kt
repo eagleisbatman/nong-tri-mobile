@@ -2,14 +2,18 @@ package com.nongtri.app
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.*
+import com.nongtri.app.data.api.NongTriApi
 import com.nongtri.app.data.preferences.ThemeMode
 import com.nongtri.app.data.preferences.UserPreferences
+import com.nongtri.app.data.repository.TranslationRepository
+import com.nongtri.app.l10n.LocalizationProvider
 import com.nongtri.app.ui.screens.ChatScreen
 import com.nongtri.app.ui.screens.ConversationListScreen
 import com.nongtri.app.ui.screens.LanguageSelectionScreen
 import com.nongtri.app.ui.theme.NongTriTheme
 import com.nongtri.app.ui.viewmodel.ChatViewModel
 import com.nongtri.app.ui.viewmodel.ConversationListViewModel
+import kotlinx.coroutines.launch
 
 @Composable
 fun App() {
@@ -17,6 +21,35 @@ fun App() {
     val hasCompletedOnboarding by userPreferences.hasCompletedOnboarding.collectAsState()
     val selectedLanguage by userPreferences.language.collectAsState()
     val themeMode by userPreferences.themeMode.collectAsState()
+
+    // Translation repository for loading translations from API
+    val translationRepository = remember {
+        TranslationRepository(
+            api = NongTriApi.getInstance(),
+            userPreferences = userPreferences
+        )
+    }
+
+    // Load translations on app start and when language changes
+    LaunchedEffect(selectedLanguage) {
+        launch {
+            try {
+                println("🌐 Loading translations for ${selectedLanguage.displayName}...")
+                val translations = translationRepository.getTranslations(selectedLanguage.code)
+
+                if (translations.isNotEmpty()) {
+                    // Update LocalizationProvider with API translations
+                    LocalizationProvider.setApiTranslations(selectedLanguage, translations)
+                    println("✅ Loaded ${translations.size} translations for ${selectedLanguage.displayName}")
+                } else {
+                    println("⚠️ No translations loaded, using hardcoded fallbacks")
+                }
+            } catch (e: Exception) {
+                println("❌ Failed to load translations: ${e.message}")
+                println("⚠️ Using hardcoded fallback translations")
+            }
+        }
+    }
 
     val darkTheme = when (themeMode) {
         ThemeMode.LIGHT -> false

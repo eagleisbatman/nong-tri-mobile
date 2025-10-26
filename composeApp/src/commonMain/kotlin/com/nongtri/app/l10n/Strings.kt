@@ -1184,11 +1184,440 @@ object VietnameseStrings : Strings {
         "Định dạng hình ảnh không được hỗ trợ: .$extension. Vui lòng sử dụng JPEG, PNG hoặc WebP."
 }
 
+/**
+ * Dynamic Strings implementation that merges API translations with hardcoded fallbacks
+ */
+class DynamicStrings(
+    private val apiTranslations: Map<String, String>,
+    private val fallbackStrings: Strings
+) : Strings {
+    // Helper function to get translation from API or fallback
+    private fun t(key: String, fallback: String): String {
+        return apiTranslations[key] ?: fallback
+    }
+
+    // ============================================================================
+    // APP IDENTITY
+    // ============================================================================
+    override val appName get() = t("app_name", fallbackStrings.appName)
+    override val appTagline get() = t("app_tagline", fallbackStrings.appTagline)
+    override val aiAssistantName get() = t("ai_assistant_name", fallbackStrings.aiAssistantName)
+
+    // ============================================================================
+    // LANGUAGE SELECTION SCREEN
+    // ============================================================================
+    override val selectLanguage get() = t("select_language", fallbackStrings.selectLanguage)
+    override val selectLanguageBilingual get() = t("select_language_bilingual", fallbackStrings.selectLanguageBilingual)
+    override val chooseYourLanguage get() = t("choose_your_language", fallbackStrings.chooseYourLanguage)
+    override val continue_ get() = t("continue", fallbackStrings.continue_)
+
+    // ============================================================================
+    // CHAT SCREEN - TOP BAR & MENU
+    // ============================================================================
+    override val chatTitle get() = t("chat_title", fallbackStrings.chatTitle)
+    override val menuConversations get() = t("menu_conversations", fallbackStrings.menuConversations)
+    override val menuNewChat get() = t("menu_new_chat", fallbackStrings.menuNewChat)
+    override val menuShareLocation get() = t("menu_share_location", fallbackStrings.menuShareLocation)
+    override val menuLanguageSection get() = t("menu_language_section", fallbackStrings.menuLanguageSection)
+    override val menuThemeSection get() = t("menu_theme_section", fallbackStrings.menuThemeSection)
+
+    // ============================================================================
+    // NAVIGATION & COMMON ACTIONS
+    // ============================================================================
+    override val back get() = t("back", fallbackStrings.back)
+    override val close get() = t("close", fallbackStrings.close)
+    override val cancel get() = t("cancel", fallbackStrings.cancel)
+    override val ok get() = t("ok", fallbackStrings.ok)
+    override val yes get() = t("yes", fallbackStrings.yes)
+    override val no get() = t("no", fallbackStrings.no)
+    override val retry get() = t("retry", fallbackStrings.retry)
+    override val delete get() = t("delete", fallbackStrings.delete)
+    override val send get() = t("send", fallbackStrings.send)
+    override val confirm get() = t("confirm", fallbackStrings.confirm)
+    override val dismiss get() = t("dismiss", fallbackStrings.dismiss)
+
+    // ============================================================================
+    // WELCOME CARD
+    // ============================================================================
+    override val welcomeMessage get() = t("welcome_message", fallbackStrings.welcomeMessage)
+    override val welcomeDescription get() = t("welcome_description", fallbackStrings.welcomeDescription)
+    override val buildingExperience get() = t("building_experience", fallbackStrings.buildingExperience)
+
+    // ============================================================================
+    // STARTER QUESTIONS
+    // ============================================================================
+    override val starterQuestionsHeaderVi get() = t("starter_questions_header_vi", fallbackStrings.starterQuestionsHeaderVi)
+    override val starterQuestionsHeaderEn get() = t("starter_questions_header_en", fallbackStrings.starterQuestionsHeaderEn)
+
+    // ============================================================================
+    // INPUT BAR
+    // ============================================================================
+    override val typeMessage get() = t("type_message", fallbackStrings.typeMessage)
+    override val listening get() = t("listening", fallbackStrings.listening)
+    override val processing get() = t("processing", fallbackStrings.processing)
+    override val transcribing get() = t("transcribing", fallbackStrings.transcribing)
+    override val tapToSpeak get() = t("tap_to_speak", fallbackStrings.tapToSpeak)
+    override val releaseToSend get() = t("release_to_send", fallbackStrings.releaseToSend)
+    override val slideToCancelHint get() = t("slide_to_cancel_hint", fallbackStrings.slideToCancelHint)
+
+    // ============================================================================
+    // MESSAGE TYPES & LABELS
+    // ============================================================================
+    override val textMessage get() = t("text_message", fallbackStrings.textMessage)
+    override val voiceMessage get() = t("voice_message", fallbackStrings.voiceMessage)
+    override val imageMessage get() = t("image_message", fallbackStrings.imageMessage)
+    override val userLabel get() = t("user_label", fallbackStrings.userLabel)
+    override val aiLabel get() = t("ai_label", fallbackStrings.aiLabel)
+    override val followUpSectionHeader get() = t("follow_up_section_header", fallbackStrings.followUpSectionHeader)
+
+    // ============================================================================
+    // MESSAGE ACTIONS
+    // ============================================================================
+    override val actionCopy get() = t("action_copy", fallbackStrings.actionCopy)
+    override val actionShare get() = t("action_share", fallbackStrings.actionShare)
+    override val actionListen get() = t("action_listen", fallbackStrings.actionListen)
+    override val actionListenError get() = t("action_listen_error", fallbackStrings.actionListenError)
+    override val actionThumbsUp get() = t("action_thumbs_up", fallbackStrings.actionThumbsUp)
+    override val actionThumbsDown get() = t("action_thumbs_down", fallbackStrings.actionThumbsDown)
+    override val shareAiResponse get() = t("share_ai_response", fallbackStrings.shareAiResponse)
+
+    // ============================================================================
+    // VOICE RECORDING
+    // ============================================================================
+    override val recording get() = t("recording", fallbackStrings.recording)
+    override val cancelRecording get() = t("cancel_recording", fallbackStrings.cancelRecording)
+    override val sendRecording get() = t("send_recording", fallbackStrings.sendRecording)
+
+    // ============================================================================
+    // IMAGE ACTIONS
+    // ============================================================================
+    override val attachImage get() = t("attach_image", fallbackStrings.attachImage)
+    override val takePhoto get() = t("take_photo", fallbackStrings.takePhoto)
+    override val chooseFromGallery get() = t("choose_from_gallery", fallbackStrings.chooseFromGallery)
+    override val camera get() = t("camera", fallbackStrings.camera)
+    override val gallery get() = t("gallery", fallbackStrings.gallery)
+    override val selectImageSource get() = t("select_image_source", fallbackStrings.selectImageSource)
+    override val captureNewPhoto get() = t("capture_new_photo", fallbackStrings.captureNewPhoto)
+    override val selectExistingPhoto get() = t("select_existing_photo", fallbackStrings.selectExistingPhoto)
+    override val imageTipsText get() = t("image_tips_text", fallbackStrings.imageTipsText)
+
+    // ============================================================================
+    // IMAGE PREVIEW & DIAGNOSIS
+    // ============================================================================
+    override val confirmImage get() = t("confirm_image", fallbackStrings.confirmImage)
+    override val askQuestionAboutPlant get() = t("ask_question_about_plant", fallbackStrings.askQuestionAboutPlant)
+    override val defaultPlantQuestion get() = t("default_plant_question", fallbackStrings.defaultPlantQuestion)
+    override val sendForDiagnosis get() = t("send_for_diagnosis", fallbackStrings.sendForDiagnosis)
+    override val diagnosisInfoText get() = t("diagnosis_info_text", fallbackStrings.diagnosisInfoText)
+    override val analyzing get() = t("analyzing", fallbackStrings.analyzing)
+    override val analyzingPlantHealth get() = t("analyzing_plant_health", fallbackStrings.analyzingPlantHealth)
+
+    // ============================================================================
+    // DIAGNOSIS RESPONSE
+    // ============================================================================
+    override val healthStatus get() = t("health_status", fallbackStrings.healthStatus)
+    override val detectedIssues get() = t("detected_issues", fallbackStrings.detectedIssues)
+    override val severityLabel get() = t("severity_label", fallbackStrings.severityLabel)
+    override val affectedLabel get() = t("affected_label", fallbackStrings.affectedLabel)
+    override val growthStage get() = t("growth_stage", fallbackStrings.growthStage)
+    override val listenToAdvice get() = t("listen_to_advice", fallbackStrings.listenToAdvice)
+
+    // ============================================================================
+    // DIAGNOSIS PENDING
+    // ============================================================================
+    override val analyzingYourCrop get() = t("analyzing_your_crop", fallbackStrings.analyzingYourCrop)
+    override val estimatedTime get() = t("estimated_time", fallbackStrings.estimatedTime)
+    override val notificationWhenReady get() = t("notification_when_ready", fallbackStrings.notificationWhenReady)
+    override val whatsHappening get() = t("whats_happening", fallbackStrings.whatsHappening)
+    override val diagnosisPendingExplanation get() = t("diagnosis_pending_explanation", fallbackStrings.diagnosisPendingExplanation)
+    override val diagnosisPendingInfo get() = t("diagnosis_pending_info", fallbackStrings.diagnosisPendingInfo)
+    override val jobIdLabel get() = t("job_id_label", fallbackStrings.jobIdLabel)
+    override val plantImageBeingAnalyzed get() = t("plant_image_being_analyzed", fallbackStrings.plantImageBeingAnalyzed)
+
+    // ============================================================================
+    // TIMESTAMPS & RELATIVE TIME
+    // ============================================================================
+    override val justNow get() = t("just_now", fallbackStrings.justNow)
+    override val minutesAgo get() = t("minutes_ago", fallbackStrings.minutesAgo)
+    override val hoursAgo get() = t("hours_ago", fallbackStrings.hoursAgo)
+    override val today get() = t("today", fallbackStrings.today)
+    override val yesterday get() = t("yesterday", fallbackStrings.yesterday)
+    override val daysAgo get() = t("days_ago", fallbackStrings.daysAgo)
+    override val weeksAgo get() = t("weeks_ago", fallbackStrings.weeksAgo)
+    override val monthsAgo get() = t("months_ago", fallbackStrings.monthsAgo)
+
+    // ============================================================================
+    // CONVERSATIONS LIST SCREEN
+    // ============================================================================
+    override val conversations get() = t("conversations", fallbackStrings.conversations)
+    override val newConversation get() = t("new_conversation", fallbackStrings.newConversation)
+    override val noConversationsYet get() = t("no_conversations_yet", fallbackStrings.noConversationsYet)
+    override val noConversationsHint get() = t("no_conversations_hint", fallbackStrings.noConversationsHint)
+    override val messageCountSuffix get() = t("message_count_suffix", fallbackStrings.messageCountSuffix)
+    override val deleteConversation get() = t("delete_conversation", fallbackStrings.deleteConversation)
+    override val deleteConversationTitle get() = t("delete_conversation_title", fallbackStrings.deleteConversationTitle)
+    override val deleteConversationMessage get() = t("delete_conversation_message", fallbackStrings.deleteConversationMessage)
+    override val deleteConversationConfirm get() = t("delete_conversation_confirm", fallbackStrings.deleteConversationConfirm)
+
+    // ============================================================================
+    // LOCATION
+    // ============================================================================
+    override val location get() = t("location", fallbackStrings.location)
+    override val shareLocation get() = t("share_location", fallbackStrings.shareLocation)
+    override val updateLocation get() = t("update_location", fallbackStrings.updateLocation)
+    override val shareGpsLocation get() = t("share_gps_location", fallbackStrings.shareGpsLocation)
+    override val openSettings get() = t("open_settings", fallbackStrings.openSettings)
+    override val detectedLocationIp get() = t("detected_location_ip", fallbackStrings.detectedLocationIp)
+    override val mySharedLocationGps get() = t("my_shared_location_gps", fallbackStrings.mySharedLocationGps)
+    override val unableToDetectLocation get() = t("unable_to_detect_location", fallbackStrings.unableToDetectLocation)
+    override val shareLocationDescription get() = t("share_location_description", fallbackStrings.shareLocationDescription)
+    override val locationHelpText get() = t("location_help_text", fallbackStrings.locationHelpText)
+
+    // ============================================================================
+    // PERMISSIONS - VOICE
+    // ============================================================================
+    override val microphonePermission get() = t("microphone_permission", fallbackStrings.microphonePermission)
+    override val voiceRecording get() = t("voice_recording", fallbackStrings.voiceRecording)
+    override val microphonePermissionSettingsPrompt get() = t("microphone_permission_settings_prompt", fallbackStrings.microphonePermissionSettingsPrompt)
+    override val microphonePermissionPrompt get() = t("microphone_permission_prompt", fallbackStrings.microphonePermissionPrompt)
+    override val grantPermission get() = t("grant_permission", fallbackStrings.grantPermission)
+    override val voiceMessageInfoText get() = t("voice_message_info_text", fallbackStrings.voiceMessageInfoText)
+
+    // ============================================================================
+    // PERMISSIONS - CAMERA & PHOTOS
+    // ============================================================================
+    override val cameraPhotoPermissions get() = t("camera_photo_permissions", fallbackStrings.cameraPhotoPermissions)
+    override val cameraAccess get() = t("camera_access", fallbackStrings.cameraAccess)
+    override val cameraPermissionSettingsPrompt get() = t("camera_permission_settings_prompt", fallbackStrings.cameraPermissionSettingsPrompt)
+    override val cameraPermissionGranted get() = t("camera_permission_granted", fallbackStrings.cameraPermissionGranted)
+    override val cameraPermissionPrompt get() = t("camera_permission_prompt", fallbackStrings.cameraPermissionPrompt)
+    override val photoLibraryAccess get() = t("photo_library_access", fallbackStrings.photoLibraryAccess)
+    override val photoLibraryPermissionSettingsPrompt get() = t("photo_library_permission_settings_prompt", fallbackStrings.photoLibraryPermissionSettingsPrompt)
+    override val photoLibraryPermissionGranted get() = t("photo_library_permission_granted", fallbackStrings.photoLibraryPermissionGranted)
+    override val photoLibraryPermissionPrompt get() = t("photo_library_permission_prompt", fallbackStrings.photoLibraryPermissionPrompt)
+    override val imageUploadInfoText get() = t("image_upload_info_text", fallbackStrings.imageUploadInfoText)
+    override val permissionGrantedText get() = t("permission_granted_text", fallbackStrings.permissionGrantedText)
+
+    // ============================================================================
+    // THEME
+    // ============================================================================
+    override val profile get() = t("profile", fallbackStrings.profile)
+    override val settings get() = t("settings", fallbackStrings.settings)
+    override val language get() = t("language", fallbackStrings.language)
+    override val theme get() = t("theme", fallbackStrings.theme)
+    override val light get() = t("light", fallbackStrings.light)
+    override val dark get() = t("dark", fallbackStrings.dark)
+    override val system get() = t("system", fallbackStrings.system)
+    override val systemDefault get() = t("system_default", fallbackStrings.systemDefault)
+    override val about get() = t("about", fallbackStrings.about)
+    override val version get() = t("version", fallbackStrings.version)
+
+    // ============================================================================
+    // SHARE
+    // ============================================================================
+    override val shareResponse get() = t("share_response", fallbackStrings.shareResponse)
+    override val shareAsText get() = t("share_as_text", fallbackStrings.shareAsText)
+    override val shareAsImage get() = t("share_as_image", fallbackStrings.shareAsImage)
+    override val shareViaMessaging get() = t("share_via_messaging", fallbackStrings.shareViaMessaging)
+    override val saveOrShareScreenshot get() = t("save_or_share_screenshot", fallbackStrings.saveOrShareScreenshot)
+
+    // ============================================================================
+    // ERROR MESSAGES - GENERIC
+    // ============================================================================
+    override val errorGeneric get() = t("error_generic", fallbackStrings.errorGeneric)
+    override val errorNetwork get() = t("error_network", fallbackStrings.errorNetwork)
+    override val errorMicrophone get() = t("error_microphone", fallbackStrings.errorMicrophone)
+    override val errorCamera get() = t("error_camera", fallbackStrings.errorCamera)
+    override val errorPermission get() = t("error_permission", fallbackStrings.errorPermission)
+    override val errorUnknown get() = t("error_unknown", fallbackStrings.errorUnknown)
+
+    // ============================================================================
+    // ERROR MESSAGES - SPECIFIC
+    // ============================================================================
+    override val errorFailedToSendMessage get() = t("error_failed_to_send_message", fallbackStrings.errorFailedToSendMessage)
+    override val errorFailedToLoadConversations get() = t("error_failed_to_load_conversations", fallbackStrings.errorFailedToLoadConversations)
+    override val errorFailedToCreateConversation get() = t("error_failed_to_create_conversation", fallbackStrings.errorFailedToCreateConversation)
+    override val errorFailedToDeleteConversation get() = t("error_failed_to_delete_conversation", fallbackStrings.errorFailedToDeleteConversation)
+    override val errorFailedToArchiveConversation get() = t("error_failed_to_archive_conversation", fallbackStrings.errorFailedToArchiveConversation)
+    override val errorFailedToSubmitDiagnosis get() = t("error_failed_to_submit_diagnosis", fallbackStrings.errorFailedToSubmitDiagnosis)
+    override val errorImageTooLarge get() = t("error_image_too_large", fallbackStrings.errorImageTooLarge)
+    override val errorFailedToProcessImage get() = t("error_failed_to_process_image", fallbackStrings.errorFailedToProcessImage)
+    override val errorLoadingConversations get() = t("error_loading_conversations", fallbackStrings.errorLoadingConversations)
+
+    // Diagnosis errors
+    override val diagnosisCompleted get() = t("diagnosis_completed", fallbackStrings.diagnosisCompleted)
+    override val errorDiagnosisFailed get() = t("error_diagnosis_failed", fallbackStrings.errorDiagnosisFailed)
+    override val errorFailedToFetchDiagnosis get() = t("error_failed_to_fetch_diagnosis", fallbackStrings.errorFailedToFetchDiagnosis)
+    override val errorFetchingDiagnosis get() = t("error_fetching_diagnosis", fallbackStrings.errorFetchingDiagnosis)
+    override val diagnosisProcessingMessage get() = t("diagnosis_processing_message", fallbackStrings.diagnosisProcessingMessage)
+    override val errorFailedToFetchStarterQuestions get() = t("error_failed_to_fetch_starter_questions", fallbackStrings.errorFailedToFetchStarterQuestions)
+
+    // Voice recording errors
+    override val errorRecordingTooShort get() = t("error_recording_too_short", fallbackStrings.errorRecordingTooShort)
+    override val errorRecordingEmpty get() = t("error_recording_empty", fallbackStrings.errorRecordingEmpty)
+    override val errorFailedToStartRecording get() = t("error_failed_to_start_recording", fallbackStrings.errorFailedToStartRecording)
+    override val errorFailedToStopRecording get() = t("error_failed_to_stop_recording", fallbackStrings.errorFailedToStopRecording)
+    override val errorTranscriptionFailed get() = t("error_transcription_failed", fallbackStrings.errorTranscriptionFailed)
+
+    // Location errors
+    override val errorFailedToInitializeLocation get() = t("error_failed_to_initialize_location", fallbackStrings.errorFailedToInitializeLocation)
+    override val errorFailedToGetLocations get() = t("error_failed_to_get_locations", fallbackStrings.errorFailedToGetLocations)
+    override val errorFailedToGetSavedLocations get() = t("error_failed_to_get_saved_locations", fallbackStrings.errorFailedToGetSavedLocations)
+    override val errorFailedToSaveLocation get() = t("error_failed_to_save_location", fallbackStrings.errorFailedToSaveLocation)
+    override val errorFailedToShareLocation get() = t("error_failed_to_share_location", fallbackStrings.errorFailedToShareLocation)
+    override val errorFailedToSetPrimaryLocation get() = t("error_failed_to_set_primary_location", fallbackStrings.errorFailedToSetPrimaryLocation)
+    override val errorFailedToDeleteLocation get() = t("error_failed_to_delete_location", fallbackStrings.errorFailedToDeleteLocation)
+
+    // API/Network errors
+    override val errorUploadTimeout get() = t("error_upload_timeout", fallbackStrings.errorUploadTimeout)
+    override val errorNoInternetConnection get() = t("error_no_internet_connection", fallbackStrings.errorNoInternetConnection)
+    override val errorCannotConnectToServer get() = t("error_cannot_connect_to_server", fallbackStrings.errorCannotConnectToServer)
+    override val errorUploadFailed get() = t("error_upload_failed", fallbackStrings.errorUploadFailed)
+    override val errorFailedToSaveVoiceMessage get() = t("error_failed_to_save_voice_message", fallbackStrings.errorFailedToSaveVoiceMessage)
+    override val errorFailedToUpdateAudioUrl get() = t("error_failed_to_update_audio_url", fallbackStrings.errorFailedToUpdateAudioUrl)
+    override val errorFailedToLoadHistory get() = t("error_failed_to_load_history", fallbackStrings.errorFailedToLoadHistory)
+    override val errorFailedToLoadThreads get() = t("error_failed_to_load_threads", fallbackStrings.errorFailedToLoadThreads)
+    override val errorFailedToCreateThread get() = t("error_failed_to_create_thread", fallbackStrings.errorFailedToCreateThread)
+    override val errorFailedToGetActiveThread get() = t("error_failed_to_get_active_thread", fallbackStrings.errorFailedToGetActiveThread)
+    override val errorFailedToLoadThreadMessages get() = t("error_failed_to_load_thread_messages", fallbackStrings.errorFailedToLoadThreadMessages)
+    override val errorFailedToUpdateThread get() = t("error_failed_to_update_thread", fallbackStrings.errorFailedToUpdateThread)
+    override val errorFailedToDeleteThread get() = t("error_failed_to_delete_thread", fallbackStrings.errorFailedToDeleteThread)
+    override val errorFailedToRegisterFcmToken get() = t("error_failed_to_register_fcm_token", fallbackStrings.errorFailedToRegisterFcmToken)
+
+    // Image validation errors
+    override val errorImageTooLargeWithSize get() = t("error_image_too_large_with_size", fallbackStrings.errorImageTooLargeWithSize)
+    override val errorImageFileEmpty get() = t("error_image_file_empty", fallbackStrings.errorImageFileEmpty)
+    override val errorInvalidImageDimensions get() = t("error_invalid_image_dimensions", fallbackStrings.errorInvalidImageDimensions)
+    override val errorImageDimensionsTooLarge get() = t("error_image_dimensions_too_large", fallbackStrings.errorImageDimensionsTooLarge)
+    override val errorUnsupportedImageFormatMimeType get() = t("error_unsupported_image_format_mime_type", fallbackStrings.errorUnsupportedImageFormatMimeType)
+    override val errorUnsupportedImageFormatExtension get() = t("error_unsupported_image_format_extension", fallbackStrings.errorUnsupportedImageFormatExtension)
+    override val errorCannotDetermineImageFormat get() = t("error_cannot_determine_image_format", fallbackStrings.errorCannotDetermineImageFormat)
+
+    // Platform-specific errors (Android)
+    override val errorCannotAccessImageFile get() = t("error_cannot_access_image_file", fallbackStrings.errorCannotAccessImageFile)
+    override val errorCannotReadImage get() = t("error_cannot_read_image", fallbackStrings.errorCannotReadImage)
+    override val errorCouldNotOpenSettings get() = t("error_could_not_open_settings", fallbackStrings.errorCouldNotOpenSettings)
+    override val errorLocationPermissionNotGranted get() = t("error_location_permission_not_granted", fallbackStrings.errorLocationPermissionNotGranted)
+    override val errorCouldNotGetCurrentLocation get() = t("error_could_not_get_current_location", fallbackStrings.errorCouldNotGetCurrentLocation)
+
+    // Toast messages (Android)
+    override val toastSpeechAlreadyPlaying get() = t("toast_speech_already_playing", fallbackStrings.toastSpeechAlreadyPlaying)
+    override val toastTtsError get() = t("toast_tts_error", fallbackStrings.toastTtsError)
+
+    // Permission messages (Android)
+    override val permissionMicrophoneDeniedSettings get() = t("permission_microphone_denied_settings", fallbackStrings.permissionMicrophoneDeniedSettings)
+    override val permissionMicrophoneRationale get() = t("permission_microphone_rationale", fallbackStrings.permissionMicrophoneRationale)
+    override val permissionCameraStorageDeniedSettings get() = t("permission_camera_storage_denied_settings", fallbackStrings.permissionCameraStorageDeniedSettings)
+    override val permissionCameraDeniedSettings get() = t("permission_camera_denied_settings", fallbackStrings.permissionCameraDeniedSettings)
+    override val permissionCameraRationale get() = t("permission_camera_rationale", fallbackStrings.permissionCameraRationale)
+    override val permissionStorageDeniedSettings get() = t("permission_storage_denied_settings", fallbackStrings.permissionStorageDeniedSettings)
+    override val permissionStorageRationale get() = t("permission_storage_rationale", fallbackStrings.permissionStorageRationale)
+    override val permissionLocationDeniedSettings get() = t("permission_location_denied_settings", fallbackStrings.permissionLocationDeniedSettings)
+    override val permissionLocationRationale get() = t("permission_location_rationale", fallbackStrings.permissionLocationRationale)
+
+    // Notification messages (Android)
+    override val notificationDiagnosisTitle get() = t("notification_diagnosis_title", fallbackStrings.notificationDiagnosisTitle)
+    override val notificationDiagnosisBody get() = t("notification_diagnosis_body", fallbackStrings.notificationDiagnosisBody)
+    override val notificationChannelName get() = t("notification_channel_name", fallbackStrings.notificationChannelName)
+    override val notificationChannelDescription get() = t("notification_channel_description", fallbackStrings.notificationChannelDescription)
+
+    // Share/UI strings
+    override val shareImageTitle get() = t("share_image_title", fallbackStrings.shareImageTitle)
+
+    // ============================================================================
+    // VOICE MESSAGES
+    // ============================================================================
+    override val audioNotAvailable get() = t("audio_not_available", fallbackStrings.audioNotAvailable)
+    override val playVoiceMessage get() = t("play_voice_message", fallbackStrings.playVoiceMessage)
+    override val pauseVoiceMessage get() = t("pause_voice_message", fallbackStrings.pauseVoiceMessage)
+    override val resumeVoiceMessage get() = t("resume_voice_message", fallbackStrings.resumeVoiceMessage)
+
+    // ============================================================================
+    // FULLSCREEN IMAGE
+    // ============================================================================
+    override val plantImage get() = t("plant_image", fallbackStrings.plantImage)
+    override val plantImageFullscreen get() = t("plant_image_fullscreen", fallbackStrings.plantImageFullscreen)
+    override val healthLabel get() = t("health_label", fallbackStrings.healthLabel)
+    override val issuesDetected get() = t("issues_detected", fallbackStrings.issuesDetected)
+    override val imageQualityLabel get() = t("image_quality_label", fallbackStrings.imageQualityLabel)
+    override val noImage get() = t("no_image", fallbackStrings.noImage)
+    override val cropLabel get() = t("crop_label", fallbackStrings.cropLabel)
+
+    // ============================================================================
+    // CONTENT DESCRIPTIONS (for accessibility)
+    // ============================================================================
+    override val cdSettings get() = t("cd_settings", fallbackStrings.cdSettings)
+    override val cdScrollToBottom get() = t("cd_scroll_to_bottom", fallbackStrings.cdScrollToBottom)
+    override val cdNewConversation get() = t("cd_new_conversation", fallbackStrings.cdNewConversation)
+    override val cdDeleteConversation get() = t("cd_delete_conversation", fallbackStrings.cdDeleteConversation)
+    override val cdVoiceInput get() = t("cd_voice_input", fallbackStrings.cdVoiceInput)
+    override val cdAttachImage get() = t("cd_attach_image", fallbackStrings.cdAttachImage)
+    override val cdCamera get() = t("cd_camera", fallbackStrings.cdCamera)
+    override val cdGallery get() = t("cd_gallery", fallbackStrings.cdGallery)
+    override val cdSend get() = t("cd_send", fallbackStrings.cdSend)
+    override val cdBack get() = t("cd_back", fallbackStrings.cdBack)
+    override val cdClose get() = t("cd_close", fallbackStrings.cdClose)
+    override val cdCancel get() = t("cd_cancel", fallbackStrings.cdCancel)
+    override val cdCopy get() = t("cd_copy", fallbackStrings.cdCopy)
+    override val cdShare get() = t("cd_share", fallbackStrings.cdShare)
+    override val cdPlay get() = t("cd_play", fallbackStrings.cdPlay)
+    override val cdPause get() = t("cd_pause", fallbackStrings.cdPause)
+    override val cdSelectedPlantImage get() = t("cd_selected_plant_image", fallbackStrings.cdSelectedPlantImage)
+    override val cdPlantImageFullscreen get() = t("cd_plant_image_fullscreen", fallbackStrings.cdPlantImageFullscreen)
+    override val cdCancelRecording get() = t("cd_cancel_recording", fallbackStrings.cdCancelRecording)
+    override val cdSendRecording get() = t("cd_send_recording", fallbackStrings.cdSendRecording)
+    override val cdCrop get() = t("cd_crop", fallbackStrings.cdCrop)
+
+    // Formatting functions - delegate to fallback
+    override fun formatImageTooLargeWithSize(currentSize: String, maxSize: String): String =
+        fallbackStrings.formatImageTooLargeWithSize(currentSize, maxSize)
+
+    override fun formatImageDimensionsTooLarge(width: Int, height: Int, maxDimension: Int): String =
+        fallbackStrings.formatImageDimensionsTooLarge(width, height, maxDimension)
+
+    override fun formatUnsupportedImageFormatMimeType(mimeType: String): String =
+        fallbackStrings.formatUnsupportedImageFormatMimeType(mimeType)
+
+    override fun formatUnsupportedImageFormatExtension(extension: String): String =
+        fallbackStrings.formatUnsupportedImageFormatExtension(extension)
+}
+
 object LocalizationProvider {
+    // Store API translations per language
+    private val apiTranslations = mutableMapOf<Language, Map<String, String>>()
+
+    /**
+     * Set API translations for a language
+     * Called when translations are fetched from the API
+     */
+    fun setApiTranslations(language: Language, translations: Map<String, String>) {
+        apiTranslations[language] = translations
+        println("📝 Set ${translations.size} API translations for ${language.displayName}")
+    }
+
+    /**
+     * Clear API translations for a language
+     */
+    fun clearApiTranslations(language: Language) {
+        apiTranslations.remove(language)
+        println("🗑️ Cleared API translations for ${language.displayName}")
+    }
+
+    /**
+     * Get strings for a language
+     * Returns DynamicStrings that merges API translations with hardcoded fallbacks
+     */
     fun getStrings(language: Language): Strings {
-        return when (language) {
+        val fallback = when (language) {
             Language.ENGLISH -> EnglishStrings
             Language.VIETNAMESE -> VietnameseStrings
+        }
+
+        val api = apiTranslations[language]
+        return if (api != null && api.isNotEmpty()) {
+            DynamicStrings(api, fallback)
+        } else {
+            fallback
         }
     }
 }
