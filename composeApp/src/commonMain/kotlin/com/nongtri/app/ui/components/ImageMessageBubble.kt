@@ -89,7 +89,7 @@ fun ImageMessageBubble(
                         model = imageUrl,
                         contentDescription = strings.plantImage,
                         modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop,
+                        contentScale = ContentScale.Fit,  // Fit entire image without cropping
                         loading = {
                             Box(
                                 modifier = Modifier.fillMaxSize(),

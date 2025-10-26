@@ -20,28 +20,33 @@ class Base64ImageFetcher(
 ) : Fetcher {
 
     override suspend fun fetch(): FetchResult {
-        android.util.Log.i("Base64ImageFetcher", "✅ Fetching base64 image (length: ${data.length})")
+        return try {
+            android.util.Log.i("Base64ImageFetcher", "✅ Fetching base64 image (length: ${data.length})")
 
-        // Extract base64 data after "base64," prefix
-        val base64Data = data.substringAfter("base64,")
+            // Extract base64 data after "base64," prefix
+            val base64Data = data.substringAfter("base64,")
 
-        // Decode base64 to bytes
-        val bytes = Base64.decode(base64Data, Base64.DEFAULT)
-        android.util.Log.i("Base64ImageFetcher", "✅ Decoded ${bytes.size} bytes")
+            // Decode base64 to bytes
+            val bytes = Base64.decode(base64Data, Base64.DEFAULT)
+            android.util.Log.i("Base64ImageFetcher", "✅ Decoded ${bytes.size} bytes")
 
         // Create Okio Buffer and write bytes
         val buffer = Buffer()
         buffer.write(bytes)
 
-        // Return as SourceFetchResult
-        return SourceFetchResult(
-            source = ImageSource(
-                source = buffer,
-                fileSystem = options.fileSystem
-            ),
-            mimeType = extractMimeType(data),
-            dataSource = DataSource.MEMORY
-        )
+            // Return as SourceFetchResult
+            SourceFetchResult(
+                source = ImageSource(
+                    source = buffer,
+                    fileSystem = options.fileSystem
+                ),
+                mimeType = extractMimeType(data),
+                dataSource = DataSource.MEMORY
+            )
+        } catch (e: Exception) {
+            android.util.Log.e("Base64ImageFetcher", "❌ Error fetching base64 image: ${e.message}", e)
+            throw e
+        }
     }
 
     private fun extractMimeType(dataUrl: String): String? {
