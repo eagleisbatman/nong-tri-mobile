@@ -656,10 +656,10 @@ class ChatViewModel(
                     chunkBuffer.append(chunk)
                     val now = System.currentTimeMillis()
 
-                    // Flush ONLY based on TIME, not character count
-                    // 250ms = ~4 updates per second (smooth, reduces flickering significantly)
-                    // This accumulates ~50-150 characters per update depending on streaming speed
-                    if (now - lastChunkFlushTime >= 250) {
+                    // Optimized for GPT-4o streaming rate (~55 tokens/sec = ~220 chars/sec)
+                    // 300ms interval = ~66 chars per update = ~12-15 words per chunk
+                    // 3.3 updates per second = smooth, natural reading pace without flickering
+                    if (now - lastChunkFlushTime >= 300) {
                         flushChunkBuffer()
                         lastChunkFlushTime = now
                     }
