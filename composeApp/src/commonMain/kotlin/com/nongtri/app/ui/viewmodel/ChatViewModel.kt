@@ -651,10 +651,10 @@ class ChatViewModel(
                     chunkBuffer.append(chunk)
                     val now = System.currentTimeMillis()
 
-                    // Balanced update frequency with auto-scroll
-                    // 200ms = 5 updates per second - smooth without excessive scrolling
-                    // Instant scroll (no animation) prevents layout jumps
-                    if (now - lastChunkFlushTime >= 200) {
+                    // FINAL SOLUTION: Very infrequent updates to eliminate flickering
+                    // 2000ms (2 seconds) = only 0.5 updates per second
+                    // Paragraphs appear in large chunks - eliminates all flickering
+                    if (now - lastChunkFlushTime >= 2000) {
                         flushChunkBuffer()
                         lastChunkFlushTime = now
                     }
