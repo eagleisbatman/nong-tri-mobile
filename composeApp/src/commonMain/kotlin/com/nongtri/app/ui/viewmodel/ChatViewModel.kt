@@ -845,9 +845,8 @@ class ChatViewModel(
             role = MessageRole.USER,
             content = transcription.trim(),
             timestamp = Clock.System.now(),
-            messageType = MessageType.VOICE,
-            voiceAudioUrl = voiceAudioUrl,
-            voiceDurationMs = durationMs
+            messageType = "voice",
+            voiceAudioUrl = voiceAudioUrl
         )
 
         _uiState.update { state ->
