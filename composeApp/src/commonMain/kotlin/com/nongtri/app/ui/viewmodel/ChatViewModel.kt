@@ -147,7 +147,8 @@ class ChatViewModel(
                                 ChatMessage(
                                     id = h.id.toString(),
                                     role = if (h.role == "user") MessageRole.USER else MessageRole.ASSISTANT,
-                                    content = h.content,
+                                    // For voice messages, content should be empty (transcription shown in bubble)
+                                    content = if (h.messageType == "voice") "" else h.content,
                                     timestamp = kotlinx.datetime.Instant.parse(h.timestamp),
                                     conversationId = h.id,
                                     audioUrl = h.audioUrl,
@@ -194,7 +195,8 @@ class ChatViewModel(
                             ChatMessage(
                                 id = h.id.toString(),
                                 role = if (h.role == "user") MessageRole.USER else MessageRole.ASSISTANT,
-                                content = h.content,
+                                // For voice messages, content should be empty (transcription shown in bubble)
+                                content = if (h.messageType == "voice") "" else h.content,
                                 timestamp = kotlinx.datetime.Instant.parse(h.timestamp),
                                 conversationId = h.id,
                                 audioUrl = h.audioUrl,
