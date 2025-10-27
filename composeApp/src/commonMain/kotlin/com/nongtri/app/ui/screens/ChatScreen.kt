@@ -389,6 +389,10 @@ fun ChatScreen(
             var voiceRecordingUIState by remember { mutableStateOf<VoiceRecordingUIState>(VoiceRecordingUIState.Idle) }
             var recordedAudioFile by remember { mutableStateOf<java.io.File?>(null) }
 
+            // Track pending voice metadata for when user sends
+            var pendingVoiceUrl by remember { mutableStateOf<String?>(null) }
+            var pendingVoiceDuration by remember { mutableStateOf<Long?>(null) }
+
             // Update voice recording UI state based on VoiceRecordingViewModel state
             LaunchedEffect(voiceRecordingState) {
                 when (voiceRecordingState) {
@@ -407,26 +411,25 @@ fun ChatScreen(
                 }
             }
 
-            // Auto-send voice message when transcription completes successfully
+            // Populate input field when transcription completes successfully
             LaunchedEffect(isTranscribing, transcriptionText) {
-                // When transcription completes and we have text, auto-send voice message
+                // When transcription completes and we have text, populate input field
                 val text = transcriptionText
                 if (!isTranscribing && text != null && text.isNotEmpty() && recordedAudioFile != null) {
                     println("[ChatScreen] Transcription complete: $text")
+                    println("[ChatScreen] Populating input field with transcription")
 
-                    // Get transcription result (includes voiceAudioUrl from MinIO)
+                    // Populate input field with transcribed text
+                    viewModel.updateMessage(text)
+
+                    // Store voice metadata for when user sends
                     val result = voiceRecordingViewModel.getTranscriptionResult()
                     val voiceAudioUrl = result?.second
-
-                    // Get recording duration for analytics
                     val durationMs = voiceRecordingViewModel.getLastRecordingDurationMs()
 
-                    // Auto-send voice message with transcription
-                    viewModel.sendVoiceMessage(
-                        transcription = text,
-                        voiceAudioUrl = voiceAudioUrl,
-                        durationMs = durationMs
-                    )
+                    // Store these for when user clicks send
+                    pendingVoiceUrl = voiceAudioUrl
+                    pendingVoiceDuration = durationMs
 
                     // Clean up audio file
                     recordedAudioFile?.delete()
@@ -486,7 +489,23 @@ fun ChatScreen(
                             onSend = {
                                 // Light haptic feedback - message sent
                                 hapticFeedback.tick()
-                                viewModel.sendMessage(uiState.currentMessage)
+
+                                // Check if this is a voice message with pending metadata
+                                if (pendingVoiceUrl != null) {
+                                    println("[ChatScreen] Sending voice message with transcription: ${uiState.currentMessage}")
+                                    // Send as voice message with stored metadata
+                                    viewModel.sendVoiceMessage(
+                                        transcription = uiState.currentMessage,
+                                        voiceAudioUrl = pendingVoiceUrl,
+                                        durationMs = pendingVoiceDuration ?: 0L
+                                    )
+                                    // Clear pending voice metadata
+                                    pendingVoiceUrl = null
+                                    pendingVoiceDuration = null
+                                } else {
+                                    // Regular text message
+                                    viewModel.sendMessage(uiState.currentMessage)
+                                }
                             },
                             hasAttachedImage = uiState.attachedImageUri != null,
                             onImageClick = {
