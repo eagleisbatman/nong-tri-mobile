@@ -60,6 +60,7 @@ class NongTriApi(
         language: String? = null,  // "en" or "vi" - language preference for AI response
         userName: String? = null,
         imageData: String? = null,  // Base64 image data for image messages
+        messageType: String? = null,  // "text", "voice", or "image" - type of message
         onChunk: (String) -> Unit,
         onMetadata: ((StreamMetadata) -> Unit)? = null
     ): Result<String> {
@@ -72,9 +73,12 @@ class NongTriApi(
             // CRITICAL: Log the language being sent to backend
             println("[NongTriApi] Sending message with language: $language (user: $userId)")
 
+            // Determine message type: explicit > imageData > default
+            val actualMessageType = messageType ?: (if (imageData != null) "image" else "text")
+
             client.preparePost("$baseUrl/api/chat/stream") {
                 contentType(ContentType.Application.Json)
-                setBody(ChatRequest(userId, message, userName, deviceInfo, language, imageData, if (imageData != null) "image" else "text"))
+                setBody(ChatRequest(userId, message, userName, deviceInfo, language, imageData, actualMessageType))
             }.execute { response ->
                 val channel: ByteReadChannel = response.body()
 

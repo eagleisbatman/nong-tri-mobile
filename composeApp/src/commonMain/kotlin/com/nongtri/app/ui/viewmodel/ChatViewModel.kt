@@ -922,6 +922,7 @@ class ChatViewModel(
                 userId = userId,
                 message = transcription,
                 language = userPreferences.language.value.code,  // Pass current language to backend
+                messageType = "voice",  // CRITICAL: Mark as voice to prevent duplicate message creation
                 onChunk = { chunk ->
                     // Throttle chunks for smoother rendering (same as text messages)
                     chunkBuffer.append(chunk)
