@@ -84,27 +84,27 @@ val NongTriTypography = Typography(
         letterSpacing = 0.1.sp
     ),
 
-    // Body styles
+    // Body styles - optimized for Apple-like clean readability
     bodyLarge = TextStyle(
         fontFamily = AppFontFamily,
         fontWeight = FontWeight.Normal,
         fontSize = 16.sp,
-        lineHeight = 24.sp,
-        letterSpacing = 0.5.sp
+        lineHeight = 22.sp,  // Reduced from 24.sp for tighter, cleaner look (1.375x)
+        letterSpacing = 0.sp  // Removed letter spacing for cleaner Apple-like appearance
     ),
     bodyMedium = TextStyle(
         fontFamily = AppFontFamily,
         fontWeight = FontWeight.Normal,
         fontSize = 14.sp,
         lineHeight = 20.sp,
-        letterSpacing = 0.25.sp
+        letterSpacing = 0.sp  // Reduced from 0.25.sp for cleaner look
     ),
     bodySmall = TextStyle(
         fontFamily = AppFontFamily,
         fontWeight = FontWeight.Normal,
         fontSize = 12.sp,
         lineHeight = 16.sp,
-        letterSpacing = 0.4.sp
+        letterSpacing = 0.sp  // Reduced from 0.4.sp for cleaner look
     ),
 
     // Label styles

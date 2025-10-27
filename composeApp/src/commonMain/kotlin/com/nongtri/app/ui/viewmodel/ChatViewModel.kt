@@ -656,10 +656,10 @@ class ChatViewModel(
                     chunkBuffer.append(chunk)
                     val now = System.currentTimeMillis()
 
-                    // Flush every 80ms OR when buffer reaches 30 characters
-                    // 80ms = ~12 updates per second (smooth but not overwhelming)
-                    // 30 chars = roughly 5-6 words (good reading chunk)
-                    if (now - lastChunkFlushTime >= 80 || chunkBuffer.length >= 30) {
+                    // Flush every 150ms OR when buffer reaches 50 characters
+                    // 150ms = ~6-7 updates per second (smooth, sentence-like chunks)
+                    // 50 chars = roughly 8-10 words (better reading experience)
+                    if (now - lastChunkFlushTime >= 150 || chunkBuffer.length >= 50) {
                         flushChunkBuffer()
                     }
                 },
@@ -928,7 +928,7 @@ class ChatViewModel(
                     chunkBuffer.append(chunk)
                     val now = System.currentTimeMillis()
 
-                    if (now - lastChunkFlushTime >= 80 || chunkBuffer.length >= 30) {
+                    if (now - lastChunkFlushTime >= 150 || chunkBuffer.length >= 50) {
                         flushChunkBuffer()
                     }
                 },
