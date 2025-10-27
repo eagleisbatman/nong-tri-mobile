@@ -187,3 +187,5 @@ resume_voice_message,Resume,Tiếp tục,"Action to resume paused voice message.
 plant_image_being_analyzed,Plant image being analyzed,Hình ảnh cây trồng đang được phân tích,"Content description for diagnosis pending image. For screen readers. Describes what's happening.",Diagnosis,Accessibility
 no_image,No image,Không có hình ảnh,"Message shown when image is missing or not available. Simple statement.",Image,Empty States
 crop_label,Crop,Cây trồng,"Label for crop/plant in diagnosis response. Noun, singular.",Diagnosis,Labels
+error_server_updating,Server is updating. Please try again in a few seconds.,Máy chủ đang cập nhật. Vui lòng thử lại sau vài giây.,"Error when server is deploying/updating. Two sentences. Polite, asks to wait.",Errors,Specific
+error_connection_failed,Unable to connect to server. Check your network connection.,Không thể kết nối với máy chủ. Kiểm tra kết nối mạng.,"Connection error. Two sentences. Network troubleshooting.",Errors,Specific

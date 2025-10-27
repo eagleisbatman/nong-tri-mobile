@@ -252,6 +252,8 @@ interface Strings {
     val errorFailedToSubmitDiagnosis: String
     val errorImageTooLarge: String  // Needs size parameter
     val errorFailedToProcessImage: String
+    val errorServerUpdating: String
+    val errorConnectionFailed: String
     val errorLoadingConversations: String
 
     // Diagnosis errors
@@ -655,6 +657,8 @@ object EnglishStrings : Strings {
     override val errorFailedToDeleteConversation = "Failed to delete conversation"
     override val errorFailedToArchiveConversation = "Failed to archive conversation"
     override val errorFailedToSubmitDiagnosis = "Failed to submit diagnosis"
+    override val errorServerUpdating = "Server is updating. Please try again in a few seconds."
+    override val errorConnectionFailed = "Unable to connect to server. Check your network connection."
     override val errorImageTooLarge = "Image is too large. Please try a smaller image."
     override val errorFailedToProcessImage = "Failed to process image. Please try again."
     override val errorLoadingConversations = "Error loading conversations"
@@ -1042,6 +1046,8 @@ object VietnameseStrings : Strings {
     override val errorFailedToDeleteConversation = "Không xóa được cuộc trò chuyện"
     override val errorFailedToArchiveConversation = "Không lưu trữ được cuộc trò chuyện"
     override val errorFailedToSubmitDiagnosis = "Không gửi được chẩn đoán"
+    override val errorServerUpdating = "Máy chủ đang cập nhật. Vui lòng thử lại sau vài giây."
+    override val errorConnectionFailed = "Không thể kết nối với máy chủ. Kiểm tra kết nối mạng."
     override val errorImageTooLarge = "Hình ảnh quá lớn. Vui lòng thử hình ảnh nhỏ hơn."
     override val errorFailedToProcessImage = "Không xử lý được hình ảnh. Vui lòng thử lại."
     override val errorLoadingConversations = "Lỗi tải cuộc trò chuyện"
@@ -1438,6 +1444,8 @@ class DynamicStrings(
     override val errorFailedToLoadConversations get() = t("error_failed_to_load_conversations", fallbackStrings.errorFailedToLoadConversations)
     override val errorFailedToCreateConversation get() = t("error_failed_to_create_conversation", fallbackStrings.errorFailedToCreateConversation)
     override val errorFailedToDeleteConversation get() = t("error_failed_to_delete_conversation", fallbackStrings.errorFailedToDeleteConversation)
+    override val errorServerUpdating get() = t("error_server_updating", fallbackStrings.errorServerUpdating)
+    override val errorConnectionFailed get() = t("error_connection_failed", fallbackStrings.errorConnectionFailed)
     override val errorFailedToArchiveConversation get() = t("error_failed_to_archive_conversation", fallbackStrings.errorFailedToArchiveConversation)
     override val errorFailedToSubmitDiagnosis get() = t("error_failed_to_submit_diagnosis", fallbackStrings.errorFailedToSubmitDiagnosis)
     override val errorImageTooLarge get() = t("error_image_too_large", fallbackStrings.errorImageTooLarge)

@@ -745,6 +745,8 @@ class ChatViewModel(
                         error.message?.contains("timeout", ignoreCase = true) == true -> "timeout"
                         error.message?.contains("network", ignoreCase = true) == true -> "network"
                         error.message?.contains("connect", ignoreCase = true) == true -> "connection"
+                        error.message?.contains("503", ignoreCase = true) == true -> "service_unavailable"
+                        error.message?.contains("502", ignoreCase = true) == true -> "bad_gateway"
                         else -> "unknown"
                     }
 
@@ -755,13 +757,33 @@ class ChatViewModel(
                         errorMessage = error.message ?: "Unknown error"
                     )
 
-                    // Remove the placeholder message and show error
+                    // Determine user-friendly error message using localized strings
                     val strings = LocalizationProvider.getStrings(userPreferences.language.value)
+                    val errorMessage = when (errorType) {
+                        "service_unavailable", "bad_gateway", "timeout" ->
+                            "⚠️ ${strings.errorServerUpdating}"
+                        "connection", "network" ->
+                            "🌐 ${strings.errorConnectionFailed}"
+                        else -> error.message ?: strings.errorFailedToSendMessage
+                    }
+
+                    // KEEP the assistant message but show error content instead of removing it
+                    // This prevents the UI from "going blank" during Railway deployments
                     _uiState.update { state ->
                         state.copy(
-                            messages = state.messages.filter { it.id != assistantMessageId },
+                            messages = state.messages.map { msg ->
+                                if (msg.id == assistantMessageId) {
+                                    msg.copy(
+                                        content = errorMessage,
+                                        isLoading = false,
+                                        responseType = "error"
+                                    )
+                                } else {
+                                    msg
+                                }
+                            },
                             isLoading = false,
-                            error = error.message ?: strings.errorFailedToSendMessage
+                            error = null  // Don't show banner error, error is already in message bubble
                         )
                     }
                 }
@@ -981,12 +1003,42 @@ class ChatViewModel(
                     chunkBuffer.clear()
                     currentStreamingMessageId = null
 
+                    // Track error for analytics
+                    val errorType = when {
+                        error.message?.contains("timeout", ignoreCase = true) == true -> "timeout"
+                        error.message?.contains("network", ignoreCase = true) == true -> "network"
+                        error.message?.contains("connect", ignoreCase = true) == true -> "connection"
+                        error.message?.contains("503", ignoreCase = true) == true -> "service_unavailable"
+                        error.message?.contains("502", ignoreCase = true) == true -> "bad_gateway"
+                        else -> "unknown"
+                    }
+
+                    // Determine user-friendly error message using localized strings
                     val strings = LocalizationProvider.getStrings(userPreferences.language.value)
+                    val errorMessage = when (errorType) {
+                        "service_unavailable", "bad_gateway", "timeout" ->
+                            "⚠️ ${strings.errorServerUpdating}"
+                        "connection", "network" ->
+                            "🌐 ${strings.errorConnectionFailed}"
+                        else -> error.message ?: strings.errorFailedToSendMessage
+                    }
+
+                    // KEEP the assistant message but show error content instead of removing it
                     _uiState.update { state ->
                         state.copy(
-                            messages = state.messages.filter { it.id != assistantMessageId },
+                            messages = state.messages.map { msg ->
+                                if (msg.id == assistantMessageId) {
+                                    msg.copy(
+                                        content = errorMessage,
+                                        isLoading = false,
+                                        responseType = "error"
+                                    )
+                                } else {
+                                    msg
+                                }
+                            },
                             isLoading = false,
-                            error = error.message ?: strings.errorFailedToSendMessage
+                            error = null  // Don't show banner error, error is already in message bubble
                         )
                     }
                 }
