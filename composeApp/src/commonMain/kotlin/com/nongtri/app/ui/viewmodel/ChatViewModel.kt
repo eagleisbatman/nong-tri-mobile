@@ -841,12 +841,14 @@ class ChatViewModel(
         _uiState.update { it.copy(currentMessage = "") }
 
         // Add user's voice message to chat
+        // Note: content is empty because transcription is shown inside VoiceMessageBubble
         val userMessage = ChatMessage(
             role = MessageRole.USER,
-            content = transcription.trim(),
+            content = "",  // Empty - transcription shown in voice bubble
             timestamp = Clock.System.now(),
             messageType = "voice",
-            voiceAudioUrl = voiceAudioUrl
+            voiceAudioUrl = voiceAudioUrl,
+            voiceTranscription = transcription.trim()  // Transcription for voice bubble display
         )
 
         _uiState.update { state ->
