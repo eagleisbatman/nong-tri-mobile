@@ -1085,9 +1085,10 @@ private fun StreamingMessageBubble(
     val content by streamingContent.collectAsState()
 
     // Create display message with streaming content
+    // Keep isLoading = true to hide action buttons and follow-up questions during streaming
     val displayMessage = message.copy(
-        content = content.ifEmpty { message.content },
-        isLoading = false  // Don't show loading indicator during streaming
+        content = content.ifEmpty { message.content }
+        // isLoading stays true - don't set to false!
     )
 
     MessageBubble(

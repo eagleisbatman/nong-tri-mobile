@@ -651,11 +651,11 @@ class ChatViewModel(
                     chunkBuffer.append(chunk)
                     val now = System.currentTimeMillis()
 
-                    // Optimized for smooth UI updates without flickering
-                    // 500ms interval = large text chunks per update
-                    // 2 updates per second = smooth, no visible flickering
-                    // ChatGPT uses similar slow update rate for smooth UX
-                    if (now - lastChunkFlushTime >= 500) {
+                    // CRITICAL: Very slow updates to eliminate flickering
+                    // 1000ms (1 second) = only 1 update per second
+                    // Large text chunks appear in sentence/paragraph sized blocks
+                    // Eliminates visible flickering at cost of less "live" feeling
+                    if (now - lastChunkFlushTime >= 1000) {
                         flushChunkBuffer()
                         lastChunkFlushTime = now
                     }
