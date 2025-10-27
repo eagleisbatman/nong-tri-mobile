@@ -30,12 +30,12 @@ fun App() {
     }
 
     // Load translations on app start and when language changes
-    // Uses version checking to only fetch if translations were updated
+    // Fetches fresh translations every time (webhooks not working yet)
     LaunchedEffect(selectedLanguage) {
         launch {
             try {
-                println("🌐 Checking translations for ${selectedLanguage.displayName}...")
-                val translations = translationRepository.getTranslationsWithVersionCheck(selectedLanguage.code)
+                println("🌐 Fetching translations for ${selectedLanguage.displayName}...")
+                val translations = translationRepository.getTranslations(selectedLanguage.code)
 
                 if (translations.isNotEmpty()) {
                     // Update LocalizationProvider with API translations
