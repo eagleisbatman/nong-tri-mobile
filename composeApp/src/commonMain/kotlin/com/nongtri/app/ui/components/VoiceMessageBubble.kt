@@ -138,8 +138,8 @@ fun VoiceMessageBubble(
                 } else {
                     Text(
                         text = transcription,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onBackground,
                         fontWeight = FontWeight.Normal
                     )
                 }
