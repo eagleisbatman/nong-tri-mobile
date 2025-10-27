@@ -9,9 +9,11 @@ import com.nongtri.app.data.model.MessageRole
 import com.nongtri.app.data.preferences.UserPreferences
 import com.nongtri.app.data.repository.LocationRepository
 import com.nongtri.app.l10n.LocalizationProvider
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
@@ -651,10 +653,9 @@ class ChatViewModel(
                     chunkBuffer.append(chunk)
                     val now = System.currentTimeMillis()
 
-                    // FINAL SOLUTION: Very infrequent updates to eliminate flickering
-                    // 2000ms (2 seconds) = only 0.5 updates per second
-                    // Paragraphs appear in large chunks - eliminates all flickering
-                    if (now - lastChunkFlushTime >= 2000) {
+                    // Buffer interval: 100ms provides smooth streaming without flicker
+                    // Fast enough to feel real-time (~10 updates/sec) but slow enough to avoid layout thrashing
+                    if (now - lastChunkFlushTime >= 100) {
                         flushChunkBuffer()
                         lastChunkFlushTime = now
                     }

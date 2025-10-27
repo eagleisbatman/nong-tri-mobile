@@ -196,6 +196,20 @@ fun ChatScreen(
         }
     }
 
+    // Auto-scroll during streaming content updates
+    LaunchedEffect(streamingContent) {
+        if (streamingContent.isNotEmpty() && uiState.messages.isNotEmpty()) {
+            // Only auto-scroll if user is near the bottom (not scrolled up to read history)
+            if (isScrolledToBottom) {
+                coroutineScope.launch {
+                    listState.animateScrollToItem(
+                        index = maxOf(0, listState.layoutInfo.totalItemsCount - 1)
+                    )
+                }
+            }
+        }
+    }
+
     Scaffold(
         modifier = modifier
             .fillMaxSize()
@@ -639,7 +653,8 @@ fun ChatScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .testTag(TestTags.MESSAGE_LIST),
-                contentPadding = PaddingValues(top = 8.dp, bottom = 16.dp)
+                contentPadding = PaddingValues(top = 8.dp, bottom = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)  // Better performance with spacedBy
             ) {
                 // Welcome card (only show when no messages)
                 if (uiState.messages.isEmpty() && !uiState.isLoading) {
@@ -662,7 +677,8 @@ fun ChatScreen(
                 // Messages
                 itemsIndexed(
                     items = uiState.messages,
-                    key = { _, message -> message.id }
+                    key = { _, message -> message.id },  // Stable unique key
+                    contentType = { _, message -> message.role }  // Helps Compose optimize item reuse
                 ) { index, message ->
                     // Render specialized bubbles for image messages
                     when {
