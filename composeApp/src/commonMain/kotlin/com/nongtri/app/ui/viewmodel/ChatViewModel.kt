@@ -684,12 +684,12 @@ class ChatViewModel(
                     // Flush any remaining buffered chunks
                     flushChunkBuffer()
 
-                    // Update the final message with complete content
+                    // Update the final message with complete content and mark as not loading
                     _uiState.update { state ->
                         state.copy(
                             messages = state.messages.map { msg ->
                                 if (msg.id == assistantMessageId) {
-                                    msg.copy(content = _streamingContent.value)
+                                    msg.copy(content = _streamingContent.value, isLoading = false)
                                 } else {
                                     msg
                                 }
@@ -990,12 +990,12 @@ class ChatViewModel(
                     // Flush any remaining buffered chunks
                     flushChunkBuffer()
 
-                    // Update the final message with complete content
+                    // Update the final message with complete content and mark as not loading
                     _uiState.update { state ->
                         state.copy(
                             messages = state.messages.map { msg ->
                                 if (msg.id == assistantMessageId) {
-                                    msg.copy(content = _streamingContent.value)
+                                    msg.copy(content = _streamingContent.value, isLoading = false)
                                 } else {
                                     msg
                                 }

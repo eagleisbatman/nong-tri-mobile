@@ -703,13 +703,12 @@ fun ChatScreen(
                         }
                         else -> {
                             // Regular text/voice message
-                            // If this is the last assistant message and we're streaming, show streaming content
-                            val displayMessage = if (
-                                message.role == com.nongtri.app.data.model.MessageRole.ASSISTANT &&
-                                index == uiState.messages.lastIndex &&
-                                streamingContent.isNotEmpty()
-                            ) {
-                                message.copy(content = streamingContent)
+                            // If this message is loading (streaming), show streaming content
+                            val displayMessage = if (message.isLoading && streamingContent.isNotEmpty()) {
+                                message.copy(content = streamingContent, isLoading = false)
+                            } else if (message.isLoading) {
+                                // Still loading but no content yet - keep showing as loading
+                                message
                             } else {
                                 message
                             }
