@@ -39,11 +39,20 @@ fun ChatScreen(
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val streamingContent by viewModel.streamingContent.collectAsState()
     val strings = LocalizationProvider.getStrings(language)
     val isLightTheme = !isSystemInDarkTheme()
 
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
+
+    // Auto-scroll to bottom when streaming content updates
+    LaunchedEffect(streamingContent) {
+        if (streamingContent.isNotEmpty() && uiState.messages.isNotEmpty()) {
+            // Scroll to last item (the streaming message)
+            listState.animateScrollToItem(uiState.messages.size - 1)
+        }
+    }
 
     var showMenu by remember { mutableStateOf(false) }
     var showLocationBottomSheet by remember { mutableStateOf(false) }

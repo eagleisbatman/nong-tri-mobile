@@ -651,11 +651,10 @@ class ChatViewModel(
                     chunkBuffer.append(chunk)
                     val now = System.currentTimeMillis()
 
-                    // CRITICAL: Very slow updates to eliminate flickering
-                    // 1000ms (1 second) = only 1 update per second
-                    // Large text chunks appear in sentence/paragraph sized blocks
-                    // Eliminates visible flickering at cost of less "live" feeling
-                    if (now - lastChunkFlushTime >= 1000) {
+                    // Fast updates now that auto-scroll handles layout shifts
+                    // 100ms = 10 updates per second for smooth character-by-character feel
+                    // Auto-scroll prevents jerky movement
+                    if (now - lastChunkFlushTime >= 100) {
                         flushChunkBuffer()
                         lastChunkFlushTime = now
                     }
