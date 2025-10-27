@@ -1077,7 +1077,7 @@ private fun StreamingMessageBubble(
     index: Int,
     isLightTheme: Boolean,
     language: Language,
-    onFeedback: (Int, Boolean) -> Unit,
+    onFeedback: (Int?, Boolean) -> Unit,
     onFollowUpClick: (String) -> Unit,
     onAudioUrlCached: (String, String) -> Unit
 ) {

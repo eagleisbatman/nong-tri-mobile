@@ -651,10 +651,11 @@ class ChatViewModel(
                     chunkBuffer.append(chunk)
                     val now = System.currentTimeMillis()
 
-                    // Optimized for GPT-4o streaming rate (~55 tokens/sec = ~220 chars/sec)
-                    // 300ms interval = ~66 chars per update = ~12-15 words per chunk
-                    // 3.3 updates per second = smooth, natural reading pace without flickering
-                    if (now - lastChunkFlushTime >= 300) {
+                    // Optimized for smooth UI updates without flickering
+                    // 500ms interval = large text chunks per update
+                    // 2 updates per second = smooth, no visible flickering
+                    // ChatGPT uses similar slow update rate for smooth UX
+                    if (now - lastChunkFlushTime >= 500) {
                         flushChunkBuffer()
                         lastChunkFlushTime = now
                     }
