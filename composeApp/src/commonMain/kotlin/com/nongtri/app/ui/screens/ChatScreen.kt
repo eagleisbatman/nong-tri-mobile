@@ -46,11 +46,11 @@ fun ChatScreen(
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
 
-    // Auto-scroll to bottom when streaming content updates
+    // Auto-scroll to bottom when streaming content updates (instant, no animation)
     LaunchedEffect(streamingContent) {
         if (streamingContent.isNotEmpty() && uiState.messages.isNotEmpty()) {
-            // Scroll to last item (the streaming message)
-            listState.animateScrollToItem(uiState.messages.size - 1)
+            // Instant scroll to last item (no animation to prevent flickering)
+            listState.scrollToItem(uiState.messages.size - 1)
         }
     }
 
