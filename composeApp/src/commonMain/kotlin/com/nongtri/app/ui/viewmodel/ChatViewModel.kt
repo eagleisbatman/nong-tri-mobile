@@ -656,11 +656,12 @@ class ChatViewModel(
                     chunkBuffer.append(chunk)
                     val now = System.currentTimeMillis()
 
-                    // Flush every 150ms OR when buffer reaches 50 characters
-                    // 150ms = ~6-7 updates per second (smooth, sentence-like chunks)
-                    // 50 chars = roughly 8-10 words (better reading experience)
-                    if (now - lastChunkFlushTime >= 150 || chunkBuffer.length >= 50) {
+                    // Flush every 100ms OR when buffer reaches 100 characters
+                    // 100ms = ~10 updates per second (smoother with real streaming)
+                    // 100 chars = roughly 15-20 words (larger chunks reduce flickering)
+                    if (now - lastChunkFlushTime >= 100 || chunkBuffer.length >= 100) {
                         flushChunkBuffer()
+                        lastChunkFlushTime = now
                     }
                 },
                 onMetadata = { metadata ->
