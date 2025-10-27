@@ -493,13 +493,22 @@ fun ChatScreen(
                                 // Check if this is a voice message with pending metadata
                                 if (pendingVoiceUrl != null) {
                                     println("[ChatScreen] Sending voice message with transcription: ${uiState.currentMessage}")
-                                    // Send as voice message with stored metadata
+
+                                    // Add user's voice message to UI first (optimistic update)
+                                    viewModel.addUserVoiceMessage(
+                                        transcription = uiState.currentMessage,
+                                        voiceAudioUrl = pendingVoiceUrl,
+                                        durationMs = pendingVoiceDuration ?: 0L
+                                    )
+
+                                    // Then trigger AI response
                                     viewModel.sendVoiceMessage(
                                         transcription = uiState.currentMessage,
                                         voiceAudioUrl = pendingVoiceUrl,
                                         durationMs = pendingVoiceDuration ?: 0L
                                     )
-                                    // Clear pending voice metadata
+
+                                    // Clear pending voice metadata and input field
                                     pendingVoiceUrl = null
                                     pendingVoiceDuration = null
                                 } else {

@@ -831,6 +831,31 @@ class ChatViewModel(
     }
 
     /**
+     * Add user's voice message to UI (optimistic update)
+     * Should be called BEFORE sendVoiceMessage() to show the user's message immediately
+     */
+    fun addUserVoiceMessage(transcription: String, voiceAudioUrl: String?, durationMs: Long = 0) {
+        if (transcription.isBlank()) return
+
+        // Clear input field
+        _uiState.update { it.copy(currentMessage = "") }
+
+        // Add user's voice message to chat
+        val userMessage = ChatMessage(
+            role = MessageRole.USER,
+            content = transcription.trim(),
+            timestamp = Clock.System.now(),
+            messageType = MessageType.VOICE,
+            voiceAudioUrl = voiceAudioUrl,
+            voiceDurationMs = durationMs
+        )
+
+        _uiState.update { state ->
+            state.copy(messages = state.messages + userMessage)
+        }
+    }
+
+    /**
      * Send voice message with transcription and audio URL
      * Voice messages are displayed with audio playback controls
      * @param transcription Transcribed text from Whisper
