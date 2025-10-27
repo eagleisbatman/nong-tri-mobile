@@ -71,11 +71,7 @@ fun MessageBubble(
 
     AnimatedVisibility(
         visible = visible,
-        enter = fadeIn(animationSpec = tween(300)) +
-                slideInVertically(
-                    initialOffsetY = { it / 4 },
-                    animationSpec = tween(300)
-                ),
+        enter = fadeIn(animationSpec = tween(100)),  // Removed slideIn - causes flickering during streaming
         modifier = modifier
     ) {
         Row(
