@@ -37,6 +37,7 @@ fun ChatScreen(
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val streamingContent by viewModel.streamingContent.collectAsState()
     val strings = LocalizationProvider.getStrings(language)
     val isLightTheme = !isSystemInDarkTheme()
 
@@ -702,8 +703,19 @@ fun ChatScreen(
                         }
                         else -> {
                             // Regular text/voice message
+                            // If this is the last assistant message and we're streaming, show streaming content
+                            val displayMessage = if (
+                                message.role == com.nongtri.app.data.model.MessageRole.ASSISTANT &&
+                                index == uiState.messages.lastIndex &&
+                                streamingContent.isNotEmpty()
+                            ) {
+                                message.copy(content = streamingContent)
+                            } else {
+                                message
+                            }
+
                             MessageBubble(
-                                message = message,
+                                message = displayMessage,
                                 index = index,
                                 isLightTheme = isLightTheme,
                                 language = language,

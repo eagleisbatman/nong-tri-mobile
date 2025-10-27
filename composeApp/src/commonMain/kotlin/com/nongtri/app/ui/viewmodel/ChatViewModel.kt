@@ -57,6 +57,10 @@ class ChatViewModel(
     private var currentStreamingMessageId: String? = null
     private var isFirstChunk = true  // Track first chunk for haptic feedback
 
+    // Separate state for streaming content to avoid full list recomposition
+    private val _streamingContent = MutableStateFlow("")
+    val streamingContent: StateFlow<String> = _streamingContent.asStateFlow()
+
     // Getters for MainActivity to access session stats
     fun getSessionMessageCount() = sessionMessageCount
     fun getSessionVoiceMessageCount() = sessionVoiceMessageCount
@@ -70,19 +74,9 @@ class ChatViewModel(
         if (chunkBuffer.isEmpty() || currentStreamingMessageId == null) return
 
         val content = chunkBuffer.toString()
-        val messageId = currentStreamingMessageId!!
 
-        _uiState.update { state ->
-            state.copy(
-                messages = state.messages.map { msg ->
-                    if (msg.id == messageId) {
-                        msg.copy(content = msg.content + content)
-                    } else {
-                        msg
-                    }
-                }
-            )
-        }
+        // Update streaming content without triggering full list recomposition
+        _streamingContent.value = _streamingContent.value + content
 
         chunkBuffer.clear()
         lastChunkFlushTime = System.currentTimeMillis()
@@ -634,6 +628,7 @@ class ChatViewModel(
 
         // Initialize streaming state
         currentStreamingMessageId = assistantMessageId
+        _streamingContent.value = ""  // Reset streaming content
         chunkBuffer.clear()
         lastChunkFlushTime = System.currentTimeMillis()
         isFirstChunk = true  // Reset for new response
@@ -688,7 +683,22 @@ class ChatViewModel(
                 onSuccess = { fullResponse ->
                     // Flush any remaining buffered chunks
                     flushChunkBuffer()
+
+                    // Update the final message with complete content
+                    _uiState.update { state ->
+                        state.copy(
+                            messages = state.messages.map { msg ->
+                                if (msg.id == assistantMessageId) {
+                                    msg.copy(content = _streamingContent.value)
+                                } else {
+                                    msg
+                                }
+                            }
+                        )
+                    }
+
                     currentStreamingMessageId = null
+                    _streamingContent.value = ""  // Clear streaming content
 
                     // Haptic feedback - AI response completed
                     hapticFeedback?.tick()
@@ -935,6 +945,7 @@ class ChatViewModel(
 
         // Initialize streaming state
         currentStreamingMessageId = assistantMessageId
+        _streamingContent.value = ""  // Reset streaming content
         chunkBuffer.clear()
         lastChunkFlushTime = System.currentTimeMillis()
         isFirstChunk = true  // Reset for new response
@@ -978,7 +989,22 @@ class ChatViewModel(
                 onSuccess = { fullResponse ->
                     // Flush any remaining buffered chunks
                     flushChunkBuffer()
+
+                    // Update the final message with complete content
+                    _uiState.update { state ->
+                        state.copy(
+                            messages = state.messages.map { msg ->
+                                if (msg.id == assistantMessageId) {
+                                    msg.copy(content = _streamingContent.value)
+                                } else {
+                                    msg
+                                }
+                            }
+                        )
+                    }
+
                     currentStreamingMessageId = null
+                    _streamingContent.value = ""  // Clear streaming content
 
                     // Haptic feedback - AI response completed
                     hapticFeedback?.tick()
