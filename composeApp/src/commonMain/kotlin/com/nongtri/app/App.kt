@@ -25,8 +25,7 @@ fun App() {
     // Translation repository for loading translations from API
     val translationRepository = remember {
         TranslationRepository(
-            api = NongTriApi.getInstance(),
-            userPreferences = userPreferences
+            api = NongTriApi()
         )
     }
 

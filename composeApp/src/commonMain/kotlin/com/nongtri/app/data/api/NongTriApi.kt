@@ -755,6 +755,33 @@ class NongTriApi(
         }
     }
 
+    /**
+     * Get translations for a specific language from Weblate
+     */
+    suspend fun getTranslations(languageCode: String): Result<com.nongtri.app.data.model.TranslationResponse> {
+        return try {
+            val response: com.nongtri.app.data.model.TranslationResponse = client.get("$baseUrl/api/translations/$languageCode").body()
+            Result.success(response)
+        } catch (e: Exception) {
+            println("[NongTriApi] Failed to fetch translations: ${e.message}")
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Get translation version for a specific language
+     */
+    suspend fun getTranslationVersion(languageCode: String): Result<Int> {
+        return try {
+            val response: kotlinx.serialization.json.JsonObject = client.get("$baseUrl/api/translations/version/$languageCode").body()
+            val version = response["version"]?.toString()?.toIntOrNull() ?: 0
+            Result.success(version)
+        } catch (e: Exception) {
+            println("[NongTriApi] Failed to fetch translation version: ${e.message}")
+            Result.failure(e)
+        }
+    }
+
     fun close() {
         client.close()
     }
