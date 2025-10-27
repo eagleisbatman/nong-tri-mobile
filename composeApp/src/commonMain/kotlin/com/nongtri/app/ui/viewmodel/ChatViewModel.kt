@@ -77,8 +77,21 @@ class ChatViewModel(
 
         val content = chunkBuffer.toString()
 
-        // Update streaming content without triggering full list recomposition
+        // Update BOTH streaming content AND the message list
+        // This ensures compatibility with both StreamingMessageBubble and regular MessageBubble
         _streamingContent.value = _streamingContent.value + content
+
+        _uiState.update { state ->
+            state.copy(
+                messages = state.messages.map { msg ->
+                    if (msg.id == currentStreamingMessageId) {
+                        msg.copy(content = msg.content + content)
+                    } else {
+                        msg
+                    }
+                }
+            )
+        }
 
         chunkBuffer.clear()
         lastChunkFlushTime = System.currentTimeMillis()
