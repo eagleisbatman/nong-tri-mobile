@@ -46,11 +46,11 @@ fun ChatScreen(
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
 
-    // Auto-scroll to bottom when streaming content updates (instant, no animation)
+    // Auto-scroll to bottom when streaming (only if already at bottom)
     LaunchedEffect(streamingContent) {
-        if (streamingContent.isNotEmpty() && uiState.messages.isNotEmpty()) {
-            // Instant scroll to last item (no animation to prevent flickering)
-            listState.scrollToItem(uiState.messages.size - 1)
+        if (streamingContent.isNotEmpty() && listState.firstVisibleItemIndex == 0) {
+            // Only scroll if user is at the newest message (index 0 with reverseLayout)
+            listState.scrollToItem(0)
         }
     }
 
@@ -644,6 +644,7 @@ fun ChatScreen(
         ) {
             LazyColumn(
                 state = listState,
+                reverseLayout = true,  // CRITICAL: Stack from bottom like chat apps
                 modifier = Modifier
                     .fillMaxSize()
                     .testTag(TestTags.MESSAGE_LIST),
@@ -667,9 +668,9 @@ fun ChatScreen(
                     }
                 }
 
-                // Messages
+                // Messages (reversed for reverseLayout - newest at index 0)
                 itemsIndexed(
-                    items = uiState.messages,
+                    items = uiState.messages.reversed(),
                     key = { _, message -> message.id }
                 ) { index, message ->
                     // Render specialized bubbles for image messages
