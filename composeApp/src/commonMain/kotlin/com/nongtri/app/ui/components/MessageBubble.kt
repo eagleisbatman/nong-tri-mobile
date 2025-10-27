@@ -55,30 +55,34 @@ fun MessageBubble(
     // TTS manager for stopping TTS when voice message plays
     val ttsManager = com.nongtri.app.platform.LocalTextToSpeechManager.current
 
-    // Entrance animation
-    var visible by remember { mutableStateOf(false) }
-    LaunchedEffect(message.id) {
-        visible = true
+    // Entrance animation - DISABLE during streaming to prevent bouncing
+    val shouldAnimate = !message.isLoading  // No animation for streaming messages
+    var visible by remember { mutableStateOf(!shouldAnimate) }  // Start visible if no animation
+    LaunchedEffect(message.id, shouldAnimate) {
+        if (shouldAnimate) {
+            visible = true
+        }
     }
 
     val scale by animateFloatAsState(
-        targetValue = if (visible) 1f else 0.8f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessLow
-        )
+        targetValue = if (visible || !shouldAnimate) 1f else 0.8f,
+        animationSpec = if (shouldAnimate) {
+            spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessLow
+            )
+        } else {
+            spring(stiffness = Spring.StiffnessHigh)  // Instant for streaming
+        }
     )
 
-    AnimatedVisibility(
-        visible = visible,
-        enter = fadeIn(animationSpec = tween(100)),  // Removed slideIn - causes flickering during streaming
-        modifier = modifier
-    ) {
+    // For streaming messages, skip AnimatedVisibility entirely
+    if (!shouldAnimate || visible) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 4.dp)
-                .scale(scale)
+                .scale(if (shouldAnimate) scale else 1f)  // No scale animation during streaming
                 .testTag(TestTags.messageBubble(index)),
             horizontalArrangement = Arrangement.Start
         ) {

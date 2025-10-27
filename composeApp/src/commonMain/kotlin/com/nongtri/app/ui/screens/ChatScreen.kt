@@ -185,8 +185,8 @@ fun ChatScreen(
     // Track the content of the last message for auto-scrolling during streaming
     val lastMessageContent = uiState.messages.lastOrNull()?.content ?: ""
 
-    // Auto-scroll to bottom when new messages arrive, loading starts, or message content changes (streaming)
-    LaunchedEffect(uiState.messages.size, uiState.isLoading, lastMessageContent) {
+    // Auto-scroll to bottom when new messages arrive or loading starts (NOT during streaming)
+    LaunchedEffect(uiState.messages.size, uiState.isLoading) {
         if (uiState.messages.isNotEmpty() || uiState.isLoading) {
             coroutineScope.launch {
                 listState.animateScrollToItem(
@@ -196,16 +196,16 @@ fun ChatScreen(
         }
     }
 
-    // Auto-scroll during streaming content updates
-    LaunchedEffect(streamingContent) {
-        if (streamingContent.isNotEmpty() && uiState.messages.isNotEmpty()) {
-            // Only auto-scroll if user is near the bottom (not scrolled up to read history)
-            if (isScrolledToBottom) {
-                coroutineScope.launch {
-                    listState.animateScrollToItem(
-                        index = maxOf(0, listState.layoutInfo.totalItemsCount - 1)
-                    )
-                }
+    // INSTANT scroll during streaming to prevent bouncing/flickering
+    // Key insight: scrollToItem (not animated) keeps position stable as content grows
+    LaunchedEffect(lastMessageContent) {
+        val isStreaming = uiState.messages.lastOrNull()?.isLoading == true
+        if (isStreaming && lastMessageContent.isNotEmpty() && isScrolledToBottom) {
+            coroutineScope.launch {
+                // Use scrollToItem (instant) instead of animateScrollToItem to prevent bouncing
+                listState.scrollToItem(
+                    index = maxOf(0, listState.layoutInfo.totalItemsCount - 1)
+                )
             }
         }
     }
