@@ -6,16 +6,13 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import com.mikepenz.markdown.m3.Markdown
 import com.mikepenz.markdown.m3.markdownColor
-import com.mikepenz.markdown.m3.markdownPadding
 import com.mikepenz.markdown.m3.markdownTypography
 
 /**
@@ -76,12 +73,6 @@ fun MarkdownText(
                 ordered = MaterialTheme.typography.bodyLarge,
                 bullet = MaterialTheme.typography.bodyLarge,
                 list = MaterialTheme.typography.bodyLarge
-            ),
-            // Reduce paragraph spacing for tighter, cleaner formatting
-            // Default is 8.dp for paragraphs which creates excessive spacing
-            padding = markdownPadding(
-                block = PaddingValues(vertical = 4.dp),  // Reduced from default 8.dp
-                indentList = PaddingValues(start = 16.dp)
             )
         )
     }
