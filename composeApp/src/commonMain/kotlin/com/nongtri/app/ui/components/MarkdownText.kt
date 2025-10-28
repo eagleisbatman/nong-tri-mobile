@@ -79,10 +79,11 @@ fun MarkdownText(
         indentList = 16.dp       // Better indentation for nested lists
     )
 
-    // Custom dimensions for table formatting
+    // Custom dimensions for table formatting and dividers
     val customDimens = markdownDimens(
         tableCellPadding = 12.dp,   // Generous padding in table cells
-        tableCornerSize = 6.dp       // Rounded corners for tables
+        tableCornerSize = 6.dp,      // Rounded corners for tables
+        dividerThickness = 2.dp      // More visible horizontal rules on mobile
     )
 
     // Custom bullet and ordered list handlers for better formatting
