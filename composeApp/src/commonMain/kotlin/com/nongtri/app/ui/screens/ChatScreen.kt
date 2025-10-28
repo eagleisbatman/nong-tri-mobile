@@ -712,8 +712,6 @@ fun ChatScreen(
                                 index = index,
                                 isLightTheme = isLightTheme,
                                 language = language,
-                                // Pass streaming updates ONLY for the streaming message
-                                streamingUpdates = if (message.isLoading) viewModel.streamingContent else null,
                                 onFeedback = { conversationId, isPositive ->
                                     viewModel.submitFeedback(conversationId, isPositive)
                                 },

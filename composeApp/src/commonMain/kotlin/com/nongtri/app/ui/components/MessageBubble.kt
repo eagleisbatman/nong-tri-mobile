@@ -10,7 +10,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -19,8 +18,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import com.nongtri.app.data.model.ChatMessage
 import com.nongtri.app.data.model.MessageRole
 import com.nongtri.app.ui.theme.DarkColors
@@ -40,39 +37,13 @@ fun MessageBubble(
     onFeedback: (Int?, Boolean) -> Unit = { _, _ -> },
     onFollowUpClick: (String) -> Unit = {},
     onAudioUrlCached: (String, String) -> Unit = { _, _ -> },  // (messageId, audioUrl)
-    streamingUpdates: kotlinx.coroutines.flow.StateFlow<String>? = null,  // For streaming content
     modifier: Modifier = Modifier
 ) {
     val strings = com.nongtri.app.l10n.LocalizationProvider.getStrings(language)
     val isUser = message.role == MessageRole.USER
 
-    // Use derivedStateOf to prevent recomposition when content doesn't actually change
-    val displayContent by remember(message.id) {
-        derivedStateOf {
-            if (message.isLoading && streamingUpdates != null) {
-                // For streaming messages, use the streaming content
-                val streaming = (streamingUpdates as? StateFlow<String>)?.value ?: ""
-                streaming.ifEmpty { message.content }
-            } else {
-                message.content
-            }
-        }
-    }
-
-    // Only collect streaming updates for actual streaming messages
-    val streamingText = if (message.isLoading && streamingUpdates != null) {
-        val flow = streamingUpdates as? StateFlow<String> ?: MutableStateFlow("")
-        flow.collectAsState().value
-    } else {
-        ""
-    }
-
-    // Use the streaming text if available, otherwise use display content
-    val finalContent = if (message.isLoading && streamingText.isNotEmpty()) {
-        streamingText
-    } else {
-        displayContent
-    }
+    // Simply use the message content directly - no streaming StateFlow
+    val displayContent = message.content
 
     // Voice message player for user voice recordings
     val voicePlayer = com.nongtri.app.platform.LocalVoiceMessagePlayer.current
@@ -165,7 +136,7 @@ fun MessageBubble(
                         } else {
                             // Regular text message
                             Text(
-                                text = finalContent,  // Use final content with streaming
+                                text = displayContent,  // Use message content directly
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.onBackground,
                                 modifier = Modifier.testTag(TestTags.messageText(index))
@@ -174,7 +145,7 @@ fun MessageBubble(
                     } else {
                         // Render markdown for AI responses
                         MarkdownText(
-                            text = finalContent,  // Use final content with streaming
+                            text = displayContent,  // Use message content directly
                             color = MaterialTheme.colorScheme.onBackground,
                             modifier = Modifier.testTag(TestTags.messageText(index))
                         )

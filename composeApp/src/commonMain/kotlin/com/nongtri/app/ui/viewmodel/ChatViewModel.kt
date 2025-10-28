@@ -85,9 +85,21 @@ class ChatViewModel(
         if (chunkBuffer.isEmpty() || currentStreamingMessageId == null) return
 
         val content = chunkBuffer.toString()
+        val messageId = currentStreamingMessageId ?: return
 
-        // SIMPLIFIED: Just accumulate content, DON'T update list during streaming
-        _streamingContent.value = _streamingContent.value + content
+        // Update the message content directly in the list
+        _uiState.update { state ->
+            state.copy(
+                messages = state.messages.map { msg ->
+                    if (msg.id == messageId) {
+                        // Append new content to existing content
+                        msg.copy(content = msg.content + content)
+                    } else {
+                        msg
+                    }
+                }
+            )
+        }
 
         chunkBuffer.clear()
         lastChunkFlushTime = System.currentTimeMillis()
@@ -694,12 +706,12 @@ class ChatViewModel(
                     // Flush any remaining buffered chunks
                     flushChunkBuffer()
 
-                    // Update the final message with complete content and mark as not loading
+                    // Mark the message as not loading (content is already updated via flushChunkBuffer)
                     _uiState.update { state ->
                         state.copy(
                             messages = state.messages.map { msg ->
                                 if (msg.id == assistantMessageId) {
-                                    msg.copy(content = _streamingContent.value, isLoading = false)
+                                    msg.copy(isLoading = false)
                                 } else {
                                     msg
                                 }
@@ -708,7 +720,6 @@ class ChatViewModel(
                     }
 
                     currentStreamingMessageId = null
-                    _streamingContent.value = ""  // Clear streaming content
 
                     // Haptic feedback - AI response completed
                     hapticFeedback?.tick()
@@ -1000,12 +1011,12 @@ class ChatViewModel(
                     // Flush any remaining buffered chunks
                     flushChunkBuffer()
 
-                    // Update the final message with complete content and mark as not loading
+                    // Mark the message as not loading (content is already updated via flushChunkBuffer)
                     _uiState.update { state ->
                         state.copy(
                             messages = state.messages.map { msg ->
                                 if (msg.id == assistantMessageId) {
-                                    msg.copy(content = _streamingContent.value, isLoading = false)
+                                    msg.copy(isLoading = false)
                                 } else {
                                     msg
                                 }
@@ -1014,7 +1025,6 @@ class ChatViewModel(
                     }
 
                     currentStreamingMessageId = null
-                    _streamingContent.value = ""  // Clear streaming content
 
                     // Haptic feedback - AI response completed
                     hapticFeedback?.tick()
