@@ -10,6 +10,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -45,14 +46,32 @@ fun MessageBubble(
     val strings = com.nongtri.app.l10n.LocalizationProvider.getStrings(language)
     val isUser = message.role == MessageRole.USER
 
-    // SIMPLIFIED: For streaming messages, use streamingContent from ViewModel
-    val displayContent = if (message.isLoading && streamingUpdates != null) {
-        // Collect streaming content for this specific message
-        val streamingContent by (streamingUpdates as? StateFlow<String>
-            ?: MutableStateFlow("")).collectAsState()
-        streamingContent.ifEmpty { message.content }
+    // Use derivedStateOf to prevent recomposition when content doesn't actually change
+    val displayContent by remember(message.id) {
+        derivedStateOf {
+            if (message.isLoading && streamingUpdates != null) {
+                // For streaming messages, use the streaming content
+                val streaming = (streamingUpdates as? StateFlow<String>)?.value ?: ""
+                streaming.ifEmpty { message.content }
+            } else {
+                message.content
+            }
+        }
+    }
+
+    // Only collect streaming updates for actual streaming messages
+    val streamingText = if (message.isLoading && streamingUpdates != null) {
+        val flow = streamingUpdates as? StateFlow<String> ?: MutableStateFlow("")
+        flow.collectAsState().value
     } else {
-        message.content
+        ""
+    }
+
+    // Use the streaming text if available, otherwise use display content
+    val finalContent = if (message.isLoading && streamingText.isNotEmpty()) {
+        streamingText
+    } else {
+        displayContent
     }
 
     // Voice message player for user voice recordings
@@ -146,7 +165,7 @@ fun MessageBubble(
                         } else {
                             // Regular text message
                             Text(
-                                text = displayContent,  // Use local state content!
+                                text = finalContent,  // Use final content with streaming
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.onBackground,
                                 modifier = Modifier.testTag(TestTags.messageText(index))
@@ -155,7 +174,7 @@ fun MessageBubble(
                     } else {
                         // Render markdown for AI responses
                         MarkdownText(
-                            text = displayContent,  // Use local state content!
+                            text = finalContent,  // Use final content with streaming
                             color = MaterialTheme.colorScheme.onBackground,
                             modifier = Modifier.testTag(TestTags.messageText(index))
                         )
