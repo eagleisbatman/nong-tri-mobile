@@ -18,7 +18,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import com.nongtri.app.data.model.ChatMessage
 import com.nongtri.app.data.model.MessageRole
 import com.nongtri.app.ui.theme.DarkColors
@@ -38,30 +39,20 @@ fun MessageBubble(
     onFeedback: (Int?, Boolean) -> Unit = { _, _ -> },
     onFollowUpClick: (String) -> Unit = {},
     onAudioUrlCached: (String, String) -> Unit = { _, _ -> },  // (messageId, audioUrl)
-    streamingUpdates: kotlinx.coroutines.flow.Flow<com.nongtri.app.ui.viewmodel.ChatViewModel.StreamingChunk>? = null,
+    streamingUpdates: kotlinx.coroutines.flow.StateFlow<String>? = null,  // For streaming content
     modifier: Modifier = Modifier
 ) {
     val strings = com.nongtri.app.l10n.LocalizationProvider.getStrings(language)
     val isUser = message.role == MessageRole.USER
 
-    // APPROACH 1: Local state for streaming content - no list recomposition!
-    var displayContent by remember(message.id) {
-        androidx.compose.runtime.mutableStateOf(message.content)
-    }
-
-    // Subscribe to streaming updates if this message is loading
-    if (message.isLoading && streamingUpdates != null) {
-        LaunchedEffect(message.id) {
-            streamingUpdates
-                .collect { chunk ->
-                    if (chunk.messageId == message.id) {
-                        displayContent += chunk.chunk  // Only THIS updates, not the list!
-                    }
-                }
-        }
+    // SIMPLIFIED: For streaming messages, use streamingContent from ViewModel
+    val displayContent = if (message.isLoading && streamingUpdates != null) {
+        // Collect streaming content for this specific message
+        val streamingContent by (streamingUpdates as? StateFlow<String>
+            ?: MutableStateFlow("")).collectAsState()
+        streamingContent.ifEmpty { message.content }
     } else {
-        // Use final content when not streaming
-        displayContent = message.content
+        message.content
     }
 
     // Voice message player for user voice recordings

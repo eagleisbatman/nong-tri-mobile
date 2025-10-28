@@ -86,14 +86,7 @@ class ChatViewModel(
 
         val content = chunkBuffer.toString()
 
-        // APPROACH 1: Send to channel - NO list update during streaming!
-        viewModelScope.launch {
-            _streamingChannel.send(
-                StreamingChunk(messageId = currentStreamingMessageId!!, chunk = content)
-            )
-        }
-
-        // Keep track for final update
+        // SIMPLIFIED: Just accumulate content, DON'T update list during streaming
         _streamingContent.value = _streamingContent.value + content
 
         chunkBuffer.clear()

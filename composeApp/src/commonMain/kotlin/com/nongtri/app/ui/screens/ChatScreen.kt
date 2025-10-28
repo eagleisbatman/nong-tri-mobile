@@ -182,29 +182,14 @@ fun ChatScreen(
         }
     }
 
-    // Track the content of the last message for auto-scrolling during streaming
-    val lastMessageContent = uiState.messages.lastOrNull()?.content ?: ""
-
-    // Auto-scroll to bottom when new messages arrive
+    // Auto-scroll to bottom ONLY when new messages arrive
+    // DO NOT track content or scroll during streaming - causes jumping!
     LaunchedEffect(uiState.messages.size) {
         if (uiState.messages.isNotEmpty()) {
             coroutineScope.launch {
                 val lastIndex = listState.layoutInfo.totalItemsCount - 1
                 if (lastIndex >= 0) {
                     listState.scrollToItem(lastIndex)  // Instant scroll to bottom
-                }
-            }
-        }
-    }
-
-    // Keep scroll at bottom during streaming - INSTANT, no animation
-    LaunchedEffect(lastMessageContent) {
-        val isStreaming = uiState.messages.lastOrNull()?.isLoading == true
-        if (isStreaming && lastMessageContent.isNotEmpty()) {
-            coroutineScope.launch {
-                val lastIndex = listState.layoutInfo.totalItemsCount - 1
-                if (lastIndex >= 0) {
-                    listState.scrollToItem(lastIndex)  // Instant scroll, no bouncing
                 }
             }
         }
@@ -727,7 +712,7 @@ fun ChatScreen(
                                 index = index,
                                 isLightTheme = isLightTheme,
                                 language = language,
-                                streamingUpdates = if (message.isLoading) viewModel.streamingUpdates else null,
+                                streamingUpdates = if (message.isLoading) viewModel.streamingContent else null,
                                 onFeedback = { conversationId, isPositive ->
                                     viewModel.submitFeedback(conversationId, isPositive)
                                 },
