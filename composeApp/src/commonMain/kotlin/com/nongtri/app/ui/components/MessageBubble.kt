@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.flow.collect
 import com.nongtri.app.data.model.ChatMessage
 import com.nongtri.app.data.model.MessageRole
 import com.nongtri.app.ui.theme.DarkColors
@@ -37,10 +38,31 @@ fun MessageBubble(
     onFeedback: (Int?, Boolean) -> Unit = { _, _ -> },
     onFollowUpClick: (String) -> Unit = {},
     onAudioUrlCached: (String, String) -> Unit = { _, _ -> },  // (messageId, audioUrl)
+    streamingUpdates: kotlinx.coroutines.flow.Flow<com.nongtri.app.ui.viewmodel.ChatViewModel.StreamingChunk>? = null,
     modifier: Modifier = Modifier
 ) {
     val strings = com.nongtri.app.l10n.LocalizationProvider.getStrings(language)
     val isUser = message.role == MessageRole.USER
+
+    // APPROACH 1: Local state for streaming content - no list recomposition!
+    var displayContent by remember(message.id) {
+        androidx.compose.runtime.mutableStateOf(message.content)
+    }
+
+    // Subscribe to streaming updates if this message is loading
+    if (message.isLoading && streamingUpdates != null) {
+        LaunchedEffect(message.id) {
+            streamingUpdates
+                .collect { chunk ->
+                    if (chunk.messageId == message.id) {
+                        displayContent += chunk.chunk  // Only THIS updates, not the list!
+                    }
+                }
+        }
+    } else {
+        // Use final content when not streaming
+        displayContent = message.content
+    }
 
     // Voice message player for user voice recordings
     val voicePlayer = com.nongtri.app.platform.LocalVoiceMessagePlayer.current
@@ -133,7 +155,7 @@ fun MessageBubble(
                         } else {
                             // Regular text message
                             Text(
-                                text = message.content,
+                                text = displayContent,  // Use local state content!
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.onBackground,
                                 modifier = Modifier.testTag(TestTags.messageText(index))
@@ -142,7 +164,7 @@ fun MessageBubble(
                     } else {
                         // Render markdown for AI responses
                         MarkdownText(
-                            text = message.content,
+                            text = displayContent,  // Use local state content!
                             color = MaterialTheme.colorScheme.onBackground,
                             modifier = Modifier.testTag(TestTags.messageText(index))
                         )

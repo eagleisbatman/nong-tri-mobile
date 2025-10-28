@@ -12,10 +12,12 @@ import com.nongtri.app.l10n.LocalizationProvider
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
@@ -61,7 +63,12 @@ class ChatViewModel(
     private var currentStreamingMessageId: String? = null
     private var isFirstChunk = true  // Track first chunk for haptic feedback
 
-    // Separate state for streaming content to avoid full list recomposition
+    // APPROACH 1: Channel for streaming updates - no list recomposition
+    data class StreamingChunk(val messageId: String, val chunk: String)
+    private val _streamingChannel = Channel<StreamingChunk>(Channel.UNLIMITED)
+    val streamingUpdates = _streamingChannel.receiveAsFlow()
+
+    // Keep for backward compatibility
     private val _streamingContent = MutableStateFlow("")
     val streamingContent: StateFlow<String> = _streamingContent.asStateFlow()
 
@@ -79,33 +86,15 @@ class ChatViewModel(
 
         val content = chunkBuffer.toString()
 
-        // Update BOTH streaming content AND the message list
-        // OPTIMIZATION: Only update the last message instead of mapping the entire list
-        _streamingContent.value = _streamingContent.value + content
-
-        _uiState.update { state ->
-            // Find the index of the streaming message (should be last)
-            val lastIndex = state.messages.lastIndex
-            if (lastIndex >= 0 && state.messages[lastIndex].id == currentStreamingMessageId) {
-                // Create a new list with only the last message updated
-                val updatedMessages = state.messages.toMutableList()
-                updatedMessages[lastIndex] = updatedMessages[lastIndex].copy(
-                    content = updatedMessages[lastIndex].content + content
-                )
-                state.copy(messages = updatedMessages)
-            } else {
-                // Fallback to mapping if message is not last (shouldn't happen in normal flow)
-                state.copy(
-                    messages = state.messages.map { msg ->
-                        if (msg.id == currentStreamingMessageId) {
-                            msg.copy(content = msg.content + content)
-                        } else {
-                            msg
-                        }
-                    }
-                )
-            }
+        // APPROACH 1: Send to channel - NO list update during streaming!
+        viewModelScope.launch {
+            _streamingChannel.send(
+                StreamingChunk(messageId = currentStreamingMessageId!!, chunk = content)
+            )
         }
+
+        // Keep track for final update
+        _streamingContent.value = _streamingContent.value + content
 
         chunkBuffer.clear()
         lastChunkFlushTime = System.currentTimeMillis()

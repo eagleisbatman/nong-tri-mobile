@@ -721,45 +721,25 @@ fun ChatScreen(
                             )
                         }
                         else -> {
-                            // Regular text/voice message
-                            // For streaming messages, collect content inside the composable
-                            if (message.isLoading) {
-                                StreamingMessageBubble(
-                                    message = message,
-                                    streamingContent = viewModel.streamingContent,
-                                    index = index,
-                                    isLightTheme = isLightTheme,
-                                    language = language,
-                                    onFeedback = { conversationId, isPositive ->
-                                        viewModel.submitFeedback(conversationId, isPositive)
-                                    },
-                                    onFollowUpClick = { question ->
-                                        hapticFeedback.tick()
-                                        viewModel.sendMessage(question)
-                                    },
-                                    onAudioUrlCached = { messageId, audioUrl ->
-                                        viewModel.updateMessageAudioUrl(messageId, audioUrl)
-                                    }
-                                )
-                            } else {
-                                MessageBubble(
-                                    message = message,
-                                    index = index,
-                                    isLightTheme = isLightTheme,
-                                    language = language,
-                                    onFeedback = { conversationId, isPositive ->
-                                        viewModel.submitFeedback(conversationId, isPositive)
-                                    },
-                                    onFollowUpClick = { question ->
-                                        // Light haptic feedback - follow-up question clicked
-                                        hapticFeedback.tick()
-                                        viewModel.sendMessage(question)
-                                    },
-                                    onAudioUrlCached = { messageId, audioUrl ->
-                                        viewModel.updateMessageAudioUrl(messageId, audioUrl)
-                                    }
-                                )
-                            }
+                            // Regular text/voice message - pass streamingUpdates for local state approach
+                            MessageBubble(
+                                message = message,
+                                index = index,
+                                isLightTheme = isLightTheme,
+                                language = language,
+                                streamingUpdates = if (message.isLoading) viewModel.streamingUpdates else null,
+                                onFeedback = { conversationId, isPositive ->
+                                    viewModel.submitFeedback(conversationId, isPositive)
+                                },
+                                onFollowUpClick = { question ->
+                                    // Light haptic feedback - follow-up question clicked
+                                    hapticFeedback.tick()
+                                    viewModel.sendMessage(question)
+                                },
+                                onAudioUrlCached = { messageId, audioUrl ->
+                                    viewModel.updateMessageAudioUrl(messageId, audioUrl)
+                                }
+                            )
                         }
                     }
                 }
@@ -1086,38 +1066,3 @@ fun ChatScreen(
     }
 }
 
-/**
- * Specialized MessageBubble for streaming content
- * Only this composable recomposes when streaming content changes
- */
-@Composable
-private fun StreamingMessageBubble(
-    message: com.nongtri.app.data.model.ChatMessage,
-    streamingContent: kotlinx.coroutines.flow.StateFlow<String>,
-    index: Int,
-    isLightTheme: Boolean,
-    language: Language,
-    onFeedback: (Int?, Boolean) -> Unit,
-    onFollowUpClick: (String) -> Unit,
-    onAudioUrlCached: (String, String) -> Unit
-) {
-    // Only collect streaming content in THIS composable
-    val content by streamingContent.collectAsState()
-
-    // Create display message with streaming content
-    // Keep isLoading = true to hide action buttons and follow-up questions during streaming
-    val displayMessage = message.copy(
-        content = content.ifEmpty { message.content }
-        // isLoading stays true - don't set to false!
-    )
-
-    MessageBubble(
-        message = displayMessage,
-        index = index,
-        isLightTheme = isLightTheme,
-        language = language,
-        onFeedback = onFeedback,
-        onFollowUpClick = onFollowUpClick,
-        onAudioUrlCached = onAudioUrlCached
-    )
-}
