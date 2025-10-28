@@ -229,7 +229,6 @@ fun MessageBubble(
             }
         }
     }
-}
 
 private fun formatTimestamp(timestamp: Instant): String {
     val localDateTime = timestamp.toLocalDateTime(TimeZone.currentSystemDefault())
