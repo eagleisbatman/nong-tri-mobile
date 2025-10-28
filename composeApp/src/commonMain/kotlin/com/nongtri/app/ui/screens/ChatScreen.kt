@@ -660,9 +660,13 @@ fun ChatScreen(
                     }
                 }
 
-                // Messages
+                // Messages - EXCLUDE streaming AI messages to prevent recomposition
+                val stableMessages = uiState.messages.filterNot { msg ->
+                    msg.isLoading && msg.role == com.nongtri.app.data.model.MessageRole.ASSISTANT
+                }
+
                 itemsIndexed(
-                    items = uiState.messages,
+                    items = stableMessages,
                     key = { _, message -> message.id },  // Stable unique key
                     contentType = { _, message -> message.role }  // Helps Compose optimize item reuse
                 ) { index, message ->
@@ -712,7 +716,8 @@ fun ChatScreen(
                                 index = index,
                                 isLightTheme = isLightTheme,
                                 language = language,
-                                streamingUpdates = if (message.isLoading) viewModel.streamingContent else null,
+                                // NO streaming updates in LazyColumn - prevents recomposition
+                                streamingUpdates = null,
                                 onFeedback = { conversationId, isPositive ->
                                     viewModel.submitFeedback(conversationId, isPositive)
                                 },
@@ -729,16 +734,58 @@ fun ChatScreen(
                     }
                 }
 
-                // Typing indicator
-                if (uiState.isLoading) {
-                    item {
-                        TypingIndicator()
-                    }
-                }
+                // NO typing indicator - we show streaming content in overlay instead
 
                 // Bottom spacing to prevent overlap with input
                 item {
                     Spacer(modifier = Modifier.height(16.dp))
+                }
+            }
+
+            // STREAMING CONTENT - Render in a fixed position to prevent LazyColumn recomposition
+            // This approach completely isolates streaming from the stable message list
+            val streamingContent by viewModel.streamingContent.collectAsState()
+            val hasStreamingMessage = uiState.messages.any {
+                it.isLoading && it.role == com.nongtri.app.data.model.MessageRole.ASSISTANT
+            }
+
+            if (hasStreamingMessage && streamingContent.isNotEmpty()) {
+                // Fixed streaming message container at bottom
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.BottomStart)
+                        .background(MaterialTheme.colorScheme.background)
+                        .padding(bottom = 16.dp) // Above input area
+                ) {
+                    // Simple streaming indicator with content
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 4.dp),
+                        horizontalArrangement = Arrangement.Start
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            // AI label
+                            Text(
+                                text = strings.aiLabel,
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(bottom = 4.dp)
+                            )
+
+                            // Streaming content with markdown
+                            MarkdownText(
+                                text = streamingContent,
+                                color = MaterialTheme.colorScheme.onBackground
+                            )
+                        }
+                    }
                 }
             }
 
