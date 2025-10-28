@@ -146,12 +146,26 @@ fun MessageBubble(
                             )
                         }
                     } else {
-                        // Render markdown for AI responses
-                        MarkdownText(
-                            text = displayContent,  // Use message content directly
-                            color = MaterialTheme.colorScheme.onBackground,
-                            modifier = Modifier.testTag(TestTags.messageText(index))
-                        )
+                        // Show typing indicator if message is loading with no content yet
+                        if (message.isLoading && displayContent.isEmpty()) {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                repeat(3) { dotIndex ->
+                                    TypingDot(
+                                        delay = dotIndex * 200
+                                    )
+                                }
+                            }
+                        } else {
+                            // Render markdown for AI responses
+                            MarkdownText(
+                                text = displayContent,  // Use message content directly
+                                color = MaterialTheme.colorScheme.onBackground,
+                                modifier = Modifier.testTag(TestTags.messageText(index))
+                            )
+                        }
 
                         // Action buttons for AI messages (only show when message is complete)
                         if (!message.isLoading && message.content.isNotEmpty()) {

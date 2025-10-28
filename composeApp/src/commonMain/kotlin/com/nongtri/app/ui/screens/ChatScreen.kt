@@ -728,12 +728,7 @@ fun ChatScreen(
                     }
                 }
 
-                // Typing indicator when loading
-                if (uiState.isLoading && uiState.messages.none { it.isLoading }) {
-                    item {
-                        TypingIndicator()
-                    }
-                }
+                // Typing indicator is now handled inside MessageBubble when message.isLoading && content.isEmpty()
 
                 // Bottom spacing to prevent overlap with input
                 item {
