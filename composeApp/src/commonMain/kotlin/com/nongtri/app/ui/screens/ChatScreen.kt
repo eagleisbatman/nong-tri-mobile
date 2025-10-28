@@ -182,10 +182,7 @@ fun ChatScreen(
         }
     }
 
-    // Track the content of the last message for auto-scrolling during streaming
-    val lastMessageContent = uiState.messages.lastOrNull()?.content ?: ""
-
-    // Auto-scroll to bottom when new messages arrive
+    // Auto-scroll to bottom ONLY when new messages arrive (not during streaming!)
     LaunchedEffect(uiState.messages.size) {
         if (uiState.messages.isNotEmpty()) {
             coroutineScope.launch {
@@ -197,18 +194,7 @@ fun ChatScreen(
         }
     }
 
-    // Keep scroll at bottom during streaming - INSTANT, no animation
-    LaunchedEffect(lastMessageContent) {
-        val isStreaming = uiState.messages.lastOrNull()?.isLoading == true
-        if (isStreaming && lastMessageContent.isNotEmpty()) {
-            coroutineScope.launch {
-                val lastIndex = listState.layoutInfo.totalItemsCount - 1
-                if (lastIndex >= 0) {
-                    listState.scrollToItem(lastIndex)  // Instant scroll, no bouncing
-                }
-            }
-        }
-    }
+    // NO AUTO-SCROLL DURING STREAMING - this causes the jumping!
 
     Scaffold(
         modifier = modifier
@@ -648,12 +634,22 @@ fun ChatScreen(
                 .padding(paddingValues)
                 .background(MaterialTheme.colorScheme.background)
         ) {
+            // APPROACH 2: Check if we're streaming
+            val streamingMessage = uiState.messages.lastOrNull { it.isLoading }
+            val completedMessages = if (streamingMessage != null) {
+                // Don't show streaming message in LazyColumn
+                uiState.messages.filter { !it.isLoading }
+            } else {
+                uiState.messages
+            }
+
             LazyColumn(
                 state = listState,
                 reverseLayout = false,  // Keep normal order - oldest at top, newest at bottom
                 modifier = Modifier
                     .fillMaxSize()
-                    .testTag(TestTags.MESSAGE_LIST),
+                    .testTag(TestTags.MESSAGE_LIST)
+                    .padding(bottom = if (streamingMessage != null) 120.dp else 0.dp),  // Make room for streaming
                 contentPadding = PaddingValues(top = 8.dp, bottom = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp)  // Better performance with spacedBy
             ) {
@@ -675,9 +671,9 @@ fun ChatScreen(
                     }
                 }
 
-                // Messages
+                // Messages - ONLY completed messages in LazyColumn
                 itemsIndexed(
-                    items = uiState.messages,
+                    items = completedMessages,  // Use filtered list without streaming message
                     key = { _, message -> message.id },  // Stable unique key
                     contentType = { _, message -> message.role }  // Helps Compose optimize item reuse
                 ) { index, message ->
@@ -754,6 +750,38 @@ fun ChatScreen(
                 // Bottom spacing to prevent overlap with input
                 item {
                     Spacer(modifier = Modifier.height(16.dp))
+                }
+            }
+
+            // APPROACH 2: Streaming message rendered OUTSIDE LazyColumn
+            if (streamingMessage != null) {
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.background)
+                        .padding(bottom = 80.dp)  // Room for input field
+                ) {
+                    // Collect streaming content
+                    val streamingContent by viewModel.streamingContent.collectAsState()
+
+                    // Create a display message with current streaming content
+                    val displayMessage = streamingMessage.copy(
+                        content = streamingContent,
+                        isLoading = true  // Keep loading to hide buttons
+                    )
+
+                    // Render the streaming message
+                    MessageBubble(
+                        message = displayMessage,
+                        index = 999,  // Dummy index
+                        isLightTheme = isLightTheme,
+                        language = language,
+                        streamingUpdates = viewModel.streamingUpdates,
+                        onFeedback = { _, _ -> },
+                        onFollowUpClick = { },
+                        onAudioUrlCached = { _, _ -> }
+                    )
                 }
             }
 
