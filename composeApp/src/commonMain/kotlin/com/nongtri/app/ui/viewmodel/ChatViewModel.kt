@@ -92,8 +92,9 @@ class ChatViewModel(
             state.copy(
                 messages = state.messages.map { msg ->
                     if (msg.id == messageId) {
-                        // Append new content to existing content
-                        msg.copy(content = msg.content + content)
+                        // Clear dots on first real content, then append
+                        val currentContent = if (msg.content == "●●●") "" else msg.content
+                        msg.copy(content = currentContent + content)
                     } else {
                         msg
                     }
@@ -632,12 +633,13 @@ class ChatViewModel(
             )
         }
 
-        // Create placeholder for streaming assistant message
+        // Create placeholder for streaming assistant message WITH INITIAL DOTS
+        // This shows immediately to prevent empty screen during SSE connection
         val assistantMessageId = Uuid.random().toString()
         val initialAssistantMessage = ChatMessage(
             id = assistantMessageId,
             role = MessageRole.ASSISTANT,
-            content = "",
+            content = "●●●",  // Show dots immediately for visual feedback
             timestamp = Clock.System.now(),
             isLoading = true  // Mark as loading during streaming
         )
@@ -951,12 +953,13 @@ class ChatViewModel(
             )
         }
 
-        // Create placeholder for streaming assistant message
+        // Create placeholder for streaming assistant message WITH INITIAL DOTS
+        // This shows immediately to prevent empty screen during SSE connection
         val assistantMessageId = Uuid.random().toString()
         val initialAssistantMessage = ChatMessage(
             id = assistantMessageId,
             role = MessageRole.ASSISTANT,
-            content = "",
+            content = "●●●",  // Show dots immediately for visual feedback
             timestamp = Clock.System.now(),
             isLoading = true  // Mark as loading during streaming
         )
