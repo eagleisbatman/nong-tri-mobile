@@ -11,8 +11,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import com.mikepenz.markdown.m3.Markdown
 import com.mikepenz.markdown.m3.markdownColor
+import com.mikepenz.markdown.m3.markdownDimens
 import com.mikepenz.markdown.m3.markdownTypography
 
 /**
@@ -33,8 +35,45 @@ fun MarkdownText(
         .replace("\\\"", "\"")
         .replace("\\'", "'")
         .replace("\\\\", "\\")
-        // Reduce multiple consecutive newlines to maximum of 1 (no blank lines between paragraphs)
-        .replace(Regex("\n{2,}"), "\n")
+        // Preserve one blank line between paragraphs (convert 2+ newlines to exactly 2)
+        .replace(Regex("\n{3,}"), "\n\n")  // Collapse 3+ newlines to 2
+        // Note: Keep \n\n for proper paragraph spacing
+
+    // Custom markdown colors for better visual treatment
+    val customColors = markdownColor(
+        text = color,
+        codeText = MaterialTheme.colorScheme.primary,
+        linkText = MaterialTheme.colorScheme.primary,
+        codeBackground = MaterialTheme.colorScheme.surfaceVariant,
+        dividerColor = MaterialTheme.colorScheme.outlineVariant,
+        inlineCodeBackground = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+    )
+
+    // Custom dimensions for better spacing and table formatting
+    val customDimens = markdownDimens(
+        defaultPadding = 8.dp,
+        listIndent = 24.dp,
+        blockQuotePadding = 12.dp,
+        codeBlockPadding = 12.dp,
+        indentSize = 16.dp
+    )
+
+    // Custom typography for consistent text styling
+    val customTypography = markdownTypography(
+        h1 = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+        h2 = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+        h3 = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold),
+        h4 = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+        h5 = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+        h6 = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Medium),
+        text = MaterialTheme.typography.bodyLarge,
+        code = MaterialTheme.typography.bodyMedium,
+        quote = MaterialTheme.typography.bodyLarge,
+        paragraph = MaterialTheme.typography.bodyLarge,
+        ordered = MaterialTheme.typography.bodyLarge,
+        bullet = MaterialTheme.typography.bodyLarge,
+        list = MaterialTheme.typography.bodyLarge
+    )
 
     // During streaming, render directly without animation to prevent flickering
     // Only animate once when the message is complete
@@ -42,27 +81,9 @@ fun MarkdownText(
         // Direct rendering - no animation during streaming
         Markdown(
             content = processedText,
-            colors = markdownColor(
-                text = color,
-                codeText = color,
-                linkText = color,
-                codeBackground = color.copy(alpha = 0.1f)
-            ),
-            typography = markdownTypography(
-                h1 = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                h2 = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                h3 = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-                h4 = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-                h5 = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-                h6 = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-                text = MaterialTheme.typography.bodyLarge,
-                code = MaterialTheme.typography.bodyLarge,
-                quote = MaterialTheme.typography.bodyLarge,
-                paragraph = MaterialTheme.typography.bodyLarge,
-                ordered = MaterialTheme.typography.bodyLarge,
-                bullet = MaterialTheme.typography.bodyLarge,
-                list = MaterialTheme.typography.bodyLarge
-            ),
+            colors = customColors,
+            typography = customTypography,
+            dimens = customDimens,
             modifier = modifier
         )
     } else {
@@ -83,27 +104,9 @@ fun MarkdownText(
         ) { animatedText ->
             Markdown(
                 content = animatedText,
-                colors = markdownColor(
-                    text = color,
-                    codeText = color,
-                    linkText = color,
-                    codeBackground = color.copy(alpha = 0.1f)
-                ),
-                typography = markdownTypography(
-                    h1 = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                    h2 = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                    h3 = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-                    h4 = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-                    h5 = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-                    h6 = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-                    text = MaterialTheme.typography.bodyLarge,
-                    code = MaterialTheme.typography.bodyLarge,
-                    quote = MaterialTheme.typography.bodyLarge,
-                    paragraph = MaterialTheme.typography.bodyLarge,
-                    ordered = MaterialTheme.typography.bodyLarge,
-                    bullet = MaterialTheme.typography.bodyLarge,
-                    list = MaterialTheme.typography.bodyLarge
-                )
+                colors = customColors,
+                typography = customTypography,
+                dimens = customDimens
             )
         }
     }

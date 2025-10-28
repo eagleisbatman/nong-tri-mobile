@@ -58,12 +58,11 @@ fun MessageBubble(
     // TTS manager for stopping TTS when voice message plays
     val ttsManager = com.nongtri.app.platform.LocalTextToSpeechManager.current
 
-    // Fixed height container to prevent layout shifts
+    // Container without artificial minimum height for natural spacing
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .defaultMinSize(minHeight = 80.dp)  // Fixed minimum height to prevent jumps
-            .padding(horizontal = 16.dp, vertical = 4.dp)
+            .padding(horizontal = 16.dp, vertical = 8.dp)  // Increased vertical padding for better spacing
             .testTag(TestTags.messageBubble(index))
     ) {
         Row(
