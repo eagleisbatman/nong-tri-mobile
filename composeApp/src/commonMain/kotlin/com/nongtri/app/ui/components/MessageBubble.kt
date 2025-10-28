@@ -167,8 +167,9 @@ fun MessageBubble(
                             )
                         }
 
-                        // Follow-up question chips (only for agricultural responses with questions)
-                        if (!message.isLoading && !message.isGenericResponse && message.followUpQuestions.isNotEmpty()) {
+                        // Follow-up question chips (only AFTER streaming completes)
+                        // Check both !isLoading AND content not empty to prevent showing during streaming
+                        if (!message.isLoading && message.content.isNotEmpty() && !message.isGenericResponse && message.followUpQuestions.isNotEmpty()) {
                             // ROUND 9: Track follow-up questions displayed
                             LaunchedEffect(message.id, message.followUpQuestions.size) {
                                 com.nongtri.app.analytics.Events.logFollowUpQuestionsDisplayed(

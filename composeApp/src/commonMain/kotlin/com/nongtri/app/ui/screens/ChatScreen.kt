@@ -174,11 +174,11 @@ fun ChatScreen(
         }
     }
 
-    // Check if user has scrolled up (with reverseLayout, bottom is index 0)
+    // Check if user has scrolled up
     val isScrolledToBottom by remember {
         derivedStateOf {
-            val firstVisibleItem = listState.layoutInfo.visibleItemsInfo.firstOrNull()
-            firstVisibleItem?.index == 0  // With reverseLayout, bottom is at index 0
+            val lastVisibleItem = listState.layoutInfo.visibleItemsInfo.lastOrNull()
+            lastVisibleItem?.index == listState.layoutInfo.totalItemsCount - 1
         }
     }
 
@@ -186,22 +186,26 @@ fun ChatScreen(
     val lastMessageContent = uiState.messages.lastOrNull()?.content ?: ""
 
     // Auto-scroll to bottom when new messages arrive
-    // With reverseLayout=true, index 0 is at the bottom
     LaunchedEffect(uiState.messages.size) {
         if (uiState.messages.isNotEmpty()) {
             coroutineScope.launch {
-                listState.scrollToItem(0)  // Instant scroll to bottom (index 0 with reverseLayout)
+                val lastIndex = listState.layoutInfo.totalItemsCount - 1
+                if (lastIndex >= 0) {
+                    listState.scrollToItem(lastIndex)  // Instant scroll to bottom
+                }
             }
         }
     }
 
-    // Keep scroll at bottom during streaming
-    // No animation to prevent bouncing
+    // Keep scroll at bottom during streaming - INSTANT, no animation
     LaunchedEffect(lastMessageContent) {
         val isStreaming = uiState.messages.lastOrNull()?.isLoading == true
         if (isStreaming && lastMessageContent.isNotEmpty()) {
             coroutineScope.launch {
-                listState.scrollToItem(0)  // Keep at bottom during streaming
+                val lastIndex = listState.layoutInfo.totalItemsCount - 1
+                if (lastIndex >= 0) {
+                    listState.scrollToItem(lastIndex)  // Instant scroll, no bouncing
+                }
             }
         }
     }
@@ -646,11 +650,11 @@ fun ChatScreen(
         ) {
             LazyColumn(
                 state = listState,
-                reverseLayout = true,  // Standard for chat apps - newest at bottom
+                reverseLayout = false,  // Keep normal order - oldest at top, newest at bottom
                 modifier = Modifier
                     .fillMaxSize()
                     .testTag(TestTags.MESSAGE_LIST),
-                contentPadding = PaddingValues(top = 16.dp, bottom = 8.dp),  // Swap padding for reverseLayout
+                contentPadding = PaddingValues(top = 8.dp, bottom = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp)  // Better performance with spacedBy
             ) {
                 // Welcome card (only show when no messages)
