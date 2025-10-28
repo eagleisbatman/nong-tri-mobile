@@ -13,7 +13,17 @@ import com.nongtri.app.data.model.ChatMessage
 import com.nongtri.app.data.model.MessageRole
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.encodeToString
+import kotlinx.serialization.Serializable
 // Remove androidx.webkit imports - not available in all configurations
+
+@Serializable
+data class WebMessage(
+    val id: String,
+    val role: String,
+    val content: String,
+    val isLoading: Boolean,
+    val followUpQuestions: List<String>
+)
 
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
@@ -74,17 +84,16 @@ actual fun WebViewChat(
     // Update messages when they change (excluding streaming messages)
     LaunchedEffect(messages) {
         val nonStreamingMessages = messages.filter { !it.isLoading }
-        val messagesJson = Json.encodeToString(
-            nonStreamingMessages.map { msg ->
-                mapOf(
-                    "id" to msg.id,
-                    "role" to if (msg.role == MessageRole.USER) "user" else "assistant",
-                    "content" to msg.content,
-                    "isLoading" to msg.isLoading,
-                    "followUpQuestions" to msg.followUpQuestions
-                )
-            }
-        )
+        val webMessages = nonStreamingMessages.map { msg ->
+            WebMessage(
+                id = msg.id,
+                role = if (msg.role == MessageRole.USER) "user" else "assistant",
+                content = msg.content,
+                isLoading = msg.isLoading,
+                followUpQuestions = msg.followUpQuestions
+            )
+        }
+        val messagesJson = Json.encodeToString(webMessages)
         webView.evaluateJavascript("updateMessages($messagesJson)", null)
     }
 

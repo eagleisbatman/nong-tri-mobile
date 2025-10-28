@@ -634,7 +634,7 @@ fun ChatScreen(
                 .background(MaterialTheme.colorScheme.background)
         ) {
             // Use WebView for chat display to eliminate flickering
-            val useWebView = true // Can be made into a preference later
+            val useWebView = false // Disabled due to serialization issues, using optimized LazyColumn instead
 
             if (useWebView) {
                 WebViewChat(
