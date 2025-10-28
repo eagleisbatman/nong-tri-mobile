@@ -136,11 +136,12 @@ fun MessageBubble(
                                 modifier = Modifier.testTag(TestTags.messageText(index))
                             )
                         } else {
-                            // Regular text message
-                            Text(
+                            // Regular text message - use MarkdownText for consistency with AI messages
+                            // This allows inline formatting like **bold** in user messages too
+                            MarkdownText(
                                 text = displayContent,  // Use message content directly
-                                style = MaterialTheme.typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.onBackground,
+                                isStreaming = false,  // User messages are never streaming
                                 modifier = Modifier.testTag(TestTags.messageText(index))
                             )
                         }

@@ -11,10 +11,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import com.mikepenz.markdown.m3.Markdown
 import com.mikepenz.markdown.m3.markdownColor
-import com.mikepenz.markdown.m3.markdownDimens
 import com.mikepenz.markdown.m3.markdownTypography
 
 /**
@@ -49,15 +47,6 @@ fun MarkdownText(
         inlineCodeBackground = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
     )
 
-    // Custom dimensions for better spacing and table formatting
-    val customDimens = markdownDimens(
-        defaultPadding = 8.dp,
-        listIndent = 24.dp,
-        blockQuotePadding = 12.dp,
-        codeBlockPadding = 12.dp,
-        indentSize = 16.dp
-    )
-
     // Custom typography for consistent text styling
     val customTypography = markdownTypography(
         h1 = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
@@ -83,7 +72,6 @@ fun MarkdownText(
             content = processedText,
             colors = customColors,
             typography = customTypography,
-            dimens = customDimens,
             modifier = modifier
         )
     } else {
@@ -105,8 +93,7 @@ fun MarkdownText(
             Markdown(
                 content = animatedText,
                 colors = customColors,
-                typography = customTypography,
-                dimens = customDimens
+                typography = customTypography
             )
         }
     }
