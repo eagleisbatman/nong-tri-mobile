@@ -37,18 +37,13 @@ fun MessageBubble(
     onFeedback: (Int?, Boolean) -> Unit = { _, _ -> },
     onFollowUpClick: (String) -> Unit = {},
     onAudioUrlCached: (String, String) -> Unit = { _, _ -> },  // (messageId, audioUrl)
-    streamingContent: String? = null,  // Optional streaming content to use instead of message.content
     modifier: Modifier = Modifier
 ) {
     val strings = com.nongtri.app.l10n.LocalizationProvider.getStrings(language)
     val isUser = message.role == MessageRole.USER
 
-    // Use streaming content if available and message is loading, otherwise use message content
-    val displayContent = if (message.isLoading && streamingContent != null) {
-        streamingContent
-    } else {
-        message.content
-    }
+    // Use message content directly - it's now updated via throttled flushing
+    val displayContent = message.content
 
     // Voice message player for user voice recordings
     val voicePlayer = com.nongtri.app.platform.LocalVoiceMessagePlayer.current
@@ -168,6 +163,7 @@ fun MessageBubble(
                             MarkdownText(
                                 text = displayContent,  // Use message content directly
                                 color = MaterialTheme.colorScheme.onBackground,
+                                isStreaming = message.isLoading,  // Disable animation during streaming
                                 modifier = Modifier.testTag(TestTags.messageText(index))
                             )
                         }

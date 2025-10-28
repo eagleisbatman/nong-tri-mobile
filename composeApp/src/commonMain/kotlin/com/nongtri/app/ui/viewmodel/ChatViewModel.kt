@@ -20,6 +20,8 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.Job
 import kotlinx.datetime.Clock
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -59,9 +61,9 @@ class ChatViewModel(
 
     // Chunk throttling for smoother streaming (reduces layout reflows)
     private val chunkBuffer = StringBuilder()
-    private var lastChunkFlushTime = 0L
     private var currentStreamingMessageId: String? = null
     private var isFirstChunk = true  // Track first chunk for haptic feedback
+    private var flushJob: kotlinx.coroutines.Job? = null  // Coroutine for throttled flushing
 
     // APPROACH 1: Channel for streaming updates - no list recomposition
     data class StreamingChunk(val messageId: String, val chunk: String)
@@ -89,16 +91,12 @@ class ChatViewModel(
 
         println("[ChatViewModel] Flushing chunk buffer: ${content.length} chars")
 
-        // Update both the streaming content AND the message
-        // Streaming content for immediate display
-        _streamingContent.value += content
-
-        // Update the message content directly in the list
+        // Update ONLY the specific message in the list
+        // LazyColumn with proper keys will only recompose this one item
         _uiState.update { state ->
             state.copy(
                 messages = state.messages.map { msg ->
                     if (msg.id == messageId) {
-                        // Simply append content - no special handling needed
                         msg.copy(content = msg.content + content)
                     } else {
                         msg
@@ -108,7 +106,6 @@ class ChatViewModel(
         }
 
         chunkBuffer.clear()
-        lastChunkFlushTime = System.currentTimeMillis()
     }
 
     init {
@@ -657,7 +654,7 @@ class ChatViewModel(
 
         // Initialize streaming state
         currentStreamingMessageId = assistantMessageId
-        _streamingContent.value = ""  // Reset streaming content
+        chunkBuffer.clear()
         isFirstChunk = true  // Reset for new response
 
         // Send to API with streaming
@@ -675,16 +672,18 @@ class ChatViewModel(
                         hapticFeedback?.gentleTick()
                         isFirstChunk = false
                         println("[ChatViewModel] First chunk received - haptic feedback triggered")
+
+                        // Start the flush coroutine for throttled updates
+                        flushJob = viewModelScope.launch {
+                            while (currentStreamingMessageId != null) {
+                                delay(30) // 30ms = ~33 updates/second - smooth but not excessive
+                                flushChunkBuffer()
+                            }
+                        }
                     }
 
-                    // Update ONLY streaming content during streaming
-                    // DO NOT update the message list to avoid recomposition
-                    currentStreamingMessageId?.let { messageId ->
-                        // Update streaming content immediately for display
-                        _streamingContent.value += chunk
-
-                        // DON'T update message list until complete to avoid flickering
-                    }
+                    // Buffer chunks for throttled flushing
+                    chunkBuffer.append(chunk)
                 },
                 onMetadata = { metadata ->
                     println("[ChatViewModel] onMetadata received: ${metadata.followUpQuestions.size} follow-up questions, conversationId=${metadata.conversationId}")
@@ -710,18 +709,19 @@ class ChatViewModel(
                 }
             ).fold(
                 onSuccess = { fullResponse ->
-                    // Now update the message with the complete content
-                    val completeContent = _streamingContent.value
+                    // Flush any remaining buffered chunks
+                    flushChunkBuffer()
 
-                    // Update message with complete content and mark as not loading
+                    // Cancel the flush coroutine
+                    flushJob?.cancel()
+                    flushJob = null
+
+                    // Mark the message as not loading (content already updated via flushChunkBuffer)
                     _uiState.update { state ->
                         state.copy(
                             messages = state.messages.map { msg ->
                                 if (msg.id == assistantMessageId) {
-                                    msg.copy(
-                                        content = completeContent,
-                                        isLoading = false
-                                    )
+                                    msg.copy(isLoading = false)
                                 } else {
                                     msg
                                 }
@@ -730,7 +730,6 @@ class ChatViewModel(
                     }
 
                     currentStreamingMessageId = null
-                    _streamingContent.value = ""  // Clear streaming content
 
                     // Haptic feedback - AI response completed
                     hapticFeedback?.tick()
@@ -781,7 +780,9 @@ class ChatViewModel(
 
                     // Clear streaming state on error
                     currentStreamingMessageId = null
-                    _streamingContent.value = ""
+                    flushJob?.cancel()
+                    flushJob = null
+                    chunkBuffer.clear()
 
                     // Track error for analytics
                     val errorType = when {
@@ -977,7 +978,7 @@ class ChatViewModel(
 
         // Initialize streaming state
         currentStreamingMessageId = assistantMessageId
-        _streamingContent.value = ""  // Reset streaming content
+        chunkBuffer.clear()
         isFirstChunk = true  // Reset for new response
 
         // Send transcription to API with streaming (same as sendMessage)
@@ -988,13 +989,8 @@ class ChatViewModel(
                 language = userPreferences.language.value.code,  // Pass current language to backend
                 messageType = "voice",  // CRITICAL: Mark as voice to prevent duplicate message creation
                 onChunk = { chunk ->
-                    // Update ONLY streaming content during streaming
-                    currentStreamingMessageId?.let { messageId ->
-                        // Update streaming content immediately for display
-                        _streamingContent.value += chunk
-
-                        // DON'T update message list until complete to avoid flickering
-                    }
+                    // Buffer chunks for throttled flushing (same as text messages)
+                    chunkBuffer.append(chunk)
                 },
                 onMetadata = { metadata ->
                     _uiState.update { state ->
@@ -1017,18 +1013,19 @@ class ChatViewModel(
                 }
             ).fold(
                 onSuccess = { fullResponse ->
-                    // Now update the message with the complete content
-                    val completeContent = _streamingContent.value
+                    // Flush any remaining buffered chunks
+                    flushChunkBuffer()
 
-                    // Update message with complete content and mark as not loading
+                    // Cancel the flush coroutine
+                    flushJob?.cancel()
+                    flushJob = null
+
+                    // Mark the message as not loading (content already updated via flushChunkBuffer)
                     _uiState.update { state ->
                         state.copy(
                             messages = state.messages.map { msg ->
                                 if (msg.id == assistantMessageId) {
-                                    msg.copy(
-                                        content = completeContent,
-                                        isLoading = false
-                                    )
+                                    msg.copy(isLoading = false)
                                 } else {
                                     msg
                                 }
@@ -1037,7 +1034,6 @@ class ChatViewModel(
                     }
 
                     currentStreamingMessageId = null
-                    _streamingContent.value = ""  // Clear streaming content
 
                     // Haptic feedback - AI response completed
                     hapticFeedback?.tick()
@@ -1061,7 +1057,9 @@ class ChatViewModel(
 
                     // Clear streaming state on error
                     currentStreamingMessageId = null
-                    _streamingContent.value = ""
+                    flushJob?.cancel()
+                    flushJob = null
+                    chunkBuffer.clear()
 
                     // Track error for analytics
                     val errorType = when {

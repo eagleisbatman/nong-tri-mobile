@@ -706,15 +706,12 @@ fun ChatScreen(
                             )
                         }
                         else -> {
-                            // Regular text/voice message - pass streaming content for smooth display
-                            val streamingContent by viewModel.streamingContent.collectAsState()
-
+                            // Regular text/voice message
                             MessageBubble(
                                 message = message,
                                 index = index,
                                 isLightTheme = isLightTheme,
                                 language = language,
-                                streamingContent = if (message.isLoading) streamingContent else null,
                                 onFeedback = { conversationId, isPositive ->
                                     viewModel.submitFeedback(conversationId, isPositive)
                                 },
