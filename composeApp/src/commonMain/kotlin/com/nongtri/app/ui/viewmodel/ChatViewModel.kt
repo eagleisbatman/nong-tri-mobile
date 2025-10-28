@@ -9,6 +9,8 @@ import com.nongtri.app.data.model.MessageRole
 import com.nongtri.app.data.preferences.UserPreferences
 import com.nongtri.app.data.repository.LocationRepository
 import com.nongtri.app.l10n.LocalizationProvider
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -78,19 +80,31 @@ class ChatViewModel(
         val content = chunkBuffer.toString()
 
         // Update BOTH streaming content AND the message list
-        // This ensures compatibility with both StreamingMessageBubble and regular MessageBubble
+        // OPTIMIZATION: Only update the last message instead of mapping the entire list
         _streamingContent.value = _streamingContent.value + content
 
         _uiState.update { state ->
-            state.copy(
-                messages = state.messages.map { msg ->
-                    if (msg.id == currentStreamingMessageId) {
-                        msg.copy(content = msg.content + content)
-                    } else {
-                        msg
+            // Find the index of the streaming message (should be last)
+            val lastIndex = state.messages.lastIndex
+            if (lastIndex >= 0 && state.messages[lastIndex].id == currentStreamingMessageId) {
+                // Create a new list with only the last message updated
+                val updatedMessages = state.messages.toMutableList()
+                updatedMessages[lastIndex] = updatedMessages[lastIndex].copy(
+                    content = updatedMessages[lastIndex].content + content
+                )
+                state.copy(messages = updatedMessages)
+            } else {
+                // Fallback to mapping if message is not last (shouldn't happen in normal flow)
+                state.copy(
+                    messages = state.messages.map { msg ->
+                        if (msg.id == currentStreamingMessageId) {
+                            msg.copy(content = msg.content + content)
+                        } else {
+                            msg
+                        }
                     }
-                }
-            )
+                )
+            }
         }
 
         chunkBuffer.clear()

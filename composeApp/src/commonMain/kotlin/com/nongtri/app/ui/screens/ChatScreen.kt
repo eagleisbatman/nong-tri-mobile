@@ -174,38 +174,34 @@ fun ChatScreen(
         }
     }
 
-    // Check if user has scrolled up
+    // Check if user has scrolled up (with reverseLayout, bottom is index 0)
     val isScrolledToBottom by remember {
         derivedStateOf {
-            val lastVisibleItem = listState.layoutInfo.visibleItemsInfo.lastOrNull()
-            lastVisibleItem?.index == listState.layoutInfo.totalItemsCount - 1
+            val firstVisibleItem = listState.layoutInfo.visibleItemsInfo.firstOrNull()
+            firstVisibleItem?.index == 0  // With reverseLayout, bottom is at index 0
         }
     }
 
     // Track the content of the last message for auto-scrolling during streaming
     val lastMessageContent = uiState.messages.lastOrNull()?.content ?: ""
 
-    // Auto-scroll to bottom when new messages arrive or loading starts (NOT during streaming)
-    LaunchedEffect(uiState.messages.size, uiState.isLoading) {
-        if (uiState.messages.isNotEmpty() || uiState.isLoading) {
+    // Auto-scroll to bottom when new messages arrive
+    // With reverseLayout=true, index 0 is at the bottom
+    LaunchedEffect(uiState.messages.size) {
+        if (uiState.messages.isNotEmpty()) {
             coroutineScope.launch {
-                listState.animateScrollToItem(
-                    index = maxOf(0, listState.layoutInfo.totalItemsCount - 1)
-                )
+                listState.scrollToItem(0)  // Instant scroll to bottom (index 0 with reverseLayout)
             }
         }
     }
 
-    // INSTANT scroll during streaming to prevent bouncing/flickering
-    // Key insight: scrollToItem (not animated) keeps position stable as content grows
+    // Keep scroll at bottom during streaming
+    // No animation to prevent bouncing
     LaunchedEffect(lastMessageContent) {
         val isStreaming = uiState.messages.lastOrNull()?.isLoading == true
-        if (isStreaming && lastMessageContent.isNotEmpty() && isScrolledToBottom) {
+        if (isStreaming && lastMessageContent.isNotEmpty()) {
             coroutineScope.launch {
-                // Use scrollToItem (instant) instead of animateScrollToItem to prevent bouncing
-                listState.scrollToItem(
-                    index = maxOf(0, listState.layoutInfo.totalItemsCount - 1)
-                )
+                listState.scrollToItem(0)  // Keep at bottom during streaming
             }
         }
     }
@@ -650,10 +646,11 @@ fun ChatScreen(
         ) {
             LazyColumn(
                 state = listState,
+                reverseLayout = true,  // Standard for chat apps - newest at bottom
                 modifier = Modifier
                     .fillMaxSize()
                     .testTag(TestTags.MESSAGE_LIST),
-                contentPadding = PaddingValues(top = 8.dp, bottom = 16.dp),
+                contentPadding = PaddingValues(top = 16.dp, bottom = 8.dp),  // Swap padding for reverseLayout
                 verticalArrangement = Arrangement.spacedBy(4.dp)  // Better performance with spacedBy
             ) {
                 // Welcome card (only show when no messages)
