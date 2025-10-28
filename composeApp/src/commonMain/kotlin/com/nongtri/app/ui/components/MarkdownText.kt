@@ -11,9 +11,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.CompositionLocalProvider
+import com.mikepenz.markdown.compose.LocalBulletListHandler
+import com.mikepenz.markdown.compose.LocalOrderedListHandler
 import com.mikepenz.markdown.m3.Markdown
+import com.mikepenz.markdown.model.BulletHandler
 import com.mikepenz.markdown.m3.markdownColor
 import com.mikepenz.markdown.m3.markdownTypography
+import com.mikepenz.markdown.model.markdownDimens
+import com.mikepenz.markdown.model.markdownPadding
 
 /**
  * Professional markdown renderer using multiplatform-markdown-renderer
@@ -64,16 +71,41 @@ fun MarkdownText(
         list = MaterialTheme.typography.bodyLarge
     )
 
+    // Custom padding for better list and block spacing
+    val customPadding = markdownPadding(
+        block = 4.dp,
+        list = 4.dp,
+        listItemBottom = 6.dp,  // More breathing room between list items
+        indentList = 16.dp       // Better indentation for nested lists
+    )
+
+    // Custom dimensions for table formatting
+    val customDimens = markdownDimens(
+        tableCellPadding = 12.dp,   // Generous padding in table cells
+        tableCornerSize = 6.dp       // Rounded corners for tables
+    )
+
+    // Custom bullet and ordered list handlers for better formatting
+    val bulletHandler = BulletHandler { _, _, _ -> "• " }  // Bullet with space
+    val orderedHandler = BulletHandler { _, _, index -> "${index + 1}. " }  // Numbers with period and space
+
     // During streaming, render directly without animation to prevent flickering
     // Only animate once when the message is complete
     if (isStreaming) {
         // Direct rendering - no animation during streaming
-        Markdown(
-            content = processedText,
-            colors = customColors,
-            typography = customTypography,
-            modifier = modifier
-        )
+        CompositionLocalProvider(
+            LocalBulletListHandler provides bulletHandler,
+            LocalOrderedListHandler provides orderedHandler
+        ) {
+            Markdown(
+                content = processedText,
+                colors = customColors,
+                typography = customTypography,
+                padding = customPadding,
+                dimens = customDimens,
+                modifier = modifier
+            )
+        }
     } else {
         // Animate content only when message is complete (not streaming)
         AnimatedContent(
@@ -90,11 +122,18 @@ fun MarkdownText(
             label = "markdown_complete_animation",
             modifier = modifier
         ) { animatedText ->
-            Markdown(
-                content = animatedText,
-                colors = customColors,
-                typography = customTypography
-            )
+            CompositionLocalProvider(
+                LocalBulletListHandler provides bulletHandler,
+                LocalOrderedListHandler provides orderedHandler
+            ) {
+                Markdown(
+                    content = animatedText,
+                    colors = customColors,
+                    typography = customTypography,
+                    padding = customPadding,
+                    dimens = customDimens
+                )
+            }
         }
     }
 }
