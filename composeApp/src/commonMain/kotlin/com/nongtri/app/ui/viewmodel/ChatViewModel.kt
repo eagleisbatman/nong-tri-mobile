@@ -676,7 +676,8 @@ class ChatViewModel(
 
                     // Buffer interval: 100ms provides smooth streaming without flicker
                     // Fast enough to feel real-time (~10 updates/sec) but slow enough to avoid layout thrashing
-                    if (now - lastChunkFlushTime >= 100) {
+                    // Reduce update frequency to minimize flickering
+                    if (now - lastChunkFlushTime >= 300) {
                         flushChunkBuffer()
                         lastChunkFlushTime = now
                     }

@@ -58,15 +58,18 @@ fun MessageBubble(
     // TTS manager for stopping TTS when voice message plays
     val ttsManager = com.nongtri.app.platform.LocalTextToSpeechManager.current
 
-    // NO ANIMATIONS for streaming messages to prevent flickering
-    // Based on research: animations during streaming cause the bouncing effect
-    Row(
+    // Fixed height container to prevent layout shifts
+    Box(
         modifier = Modifier
             .fillMaxWidth()
+            .defaultMinSize(minHeight = 80.dp)  // Fixed minimum height to prevent jumps
             .padding(horizontal = 16.dp, vertical = 4.dp)
-            .testTag(TestTags.messageBubble(index)),
-        horizontalArrangement = Arrangement.Start
+            .testTag(TestTags.messageBubble(index))
     ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Start
+        ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -233,6 +236,7 @@ fun MessageBubble(
             }
         }
     }
+}
 
 private fun formatTimestamp(timestamp: Instant): String {
     val localDateTime = timestamp.toLocalDateTime(TimeZone.currentSystemDefault())
