@@ -87,14 +87,15 @@ class ChatViewModel(
         val content = chunkBuffer.toString()
         val messageId = currentStreamingMessageId ?: return
 
+        println("[ChatViewModel] Flushing chunk buffer: ${content.length} chars")
+
         // Update the message content directly in the list
         _uiState.update { state ->
             state.copy(
                 messages = state.messages.map { msg ->
                     if (msg.id == messageId) {
-                        // Clear dots on first real content, then append
-                        val currentContent = if (msg.content == "●●●") "" else msg.content
-                        msg.copy(content = currentContent + content)
+                        // Simply append content - no special handling needed
+                        msg.copy(content = msg.content + content)
                     } else {
                         msg
                     }
@@ -633,13 +634,12 @@ class ChatViewModel(
             )
         }
 
-        // Create placeholder for streaming assistant message WITH INITIAL DOTS
-        // This shows immediately to prevent empty screen during SSE connection
+        // Create placeholder for streaming assistant message
         val assistantMessageId = Uuid.random().toString()
         val initialAssistantMessage = ChatMessage(
             id = assistantMessageId,
             role = MessageRole.ASSISTANT,
-            content = "●●●",  // Show dots immediately for visual feedback
+            content = "",  // Start empty - typing indicator will show
             timestamp = Clock.System.now(),
             isLoading = true  // Mark as loading during streaming
         )
@@ -666,25 +666,28 @@ class ChatViewModel(
                 language = userPreferences.language.value.code,  // Pass current language to backend
                 imageData = imageData,  // Pass image if attached
                 onChunk = { chunk ->
+                    println("[ChatViewModel] onChunk received: '${chunk.take(50)}' (${chunk.length} chars)")
+
                     // Haptic feedback - AI response started (first chunk only)
                     if (isFirstChunk) {
                         hapticFeedback?.gentleTick()
                         isFirstChunk = false
+                        println("[ChatViewModel] First chunk received - haptic feedback triggered")
                     }
 
                     // Throttle chunks for smoother rendering (reduces layout reflows)
                     chunkBuffer.append(chunk)
                     val now = System.currentTimeMillis()
 
-                    // Buffer interval: 100ms provides smooth streaming without flicker
-                    // Fast enough to feel real-time (~10 updates/sec) but slow enough to avoid layout thrashing
-                    // Reduce update frequency to minimize flickering
+                    // Buffer interval: 300ms to reduce flicker on low-end devices
                     if (now - lastChunkFlushTime >= 300) {
                         flushChunkBuffer()
                         lastChunkFlushTime = now
                     }
                 },
                 onMetadata = { metadata ->
+                    println("[ChatViewModel] onMetadata received: ${metadata.followUpQuestions.size} follow-up questions, conversationId=${metadata.conversationId}")
+
                     // Update the assistant message with metadata (response type, follow-up questions, conversation ID, etc.)
                     _uiState.update { state ->
                         state.copy(
@@ -953,13 +956,12 @@ class ChatViewModel(
             )
         }
 
-        // Create placeholder for streaming assistant message WITH INITIAL DOTS
-        // This shows immediately to prevent empty screen during SSE connection
+        // Create placeholder for streaming assistant message
         val assistantMessageId = Uuid.random().toString()
         val initialAssistantMessage = ChatMessage(
             id = assistantMessageId,
             role = MessageRole.ASSISTANT,
-            content = "●●●",  // Show dots immediately for visual feedback
+            content = "",  // Start empty - typing indicator will show
             timestamp = Clock.System.now(),
             isLoading = true  // Mark as loading during streaming
         )

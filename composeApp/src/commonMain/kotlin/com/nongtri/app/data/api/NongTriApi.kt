@@ -87,6 +87,7 @@ class NongTriApi(
 
                     if (line.startsWith("data: ")) {
                         val jsonData = line.substring(6)
+                        println("[SSE] Raw data received: ${jsonData.take(100)}")
                         try {
                             val parsed = Json.parseToJsonElement(jsonData).jsonObject
 
@@ -145,8 +146,14 @@ class NongTriApi(
                             // Extract content chunk
                             parsed["content"]?.let { content ->
                                 val chunk = content.toString().trim('"')
+                                println("[SSE] Content chunk received: '${chunk.take(50)}' (${chunk.length} chars)")
                                 fullResponse += chunk
                                 onChunk(chunk)
+                            } ?: run {
+                                // Log if we received data without content field
+                                if (!parsed.containsKey("__metadata") && !parsed.containsKey("done")) {
+                                    println("[SSE] WARNING: Received data without 'content' field: $parsed")
+                                }
                             }
                         } catch (e: Exception) {
                             println("Failed to parse SSE data: $jsonData - ${e.message}")
@@ -209,6 +216,7 @@ class NongTriApi(
 
                     if (line.startsWith("data: ")) {
                         val jsonData = line.substring(6)
+                        println("[SSE] Raw data received: ${jsonData.take(100)}")
                         try {
                             val parsed = Json.parseToJsonElement(jsonData).jsonObject
 
@@ -284,8 +292,14 @@ class NongTriApi(
                             // Extract content chunk
                             parsed["content"]?.let { content ->
                                 val chunk = content.toString().trim('"')
+                                println("[SSE] Content chunk received: '${chunk.take(50)}' (${chunk.length} chars)")
                                 fullResponse += chunk
                                 onChunk(chunk)
+                            } ?: run {
+                                // Log if we received data without content field
+                                if (!parsed.containsKey("__metadata") && !parsed.containsKey("done")) {
+                                    println("[SSE] WARNING: Received data without 'content' field: $parsed")
+                                }
                             }
                         } catch (e: Exception) {
                             println("[ImageDiagnosis] Failed to parse SSE data: $jsonData - ${e.message}")
