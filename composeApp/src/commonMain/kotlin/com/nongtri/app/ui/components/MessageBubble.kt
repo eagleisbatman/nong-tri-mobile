@@ -37,13 +37,18 @@ fun MessageBubble(
     onFeedback: (Int?, Boolean) -> Unit = { _, _ -> },
     onFollowUpClick: (String) -> Unit = {},
     onAudioUrlCached: (String, String) -> Unit = { _, _ -> },  // (messageId, audioUrl)
+    streamingContent: String? = null,  // Optional streaming content to use instead of message.content
     modifier: Modifier = Modifier
 ) {
     val strings = com.nongtri.app.l10n.LocalizationProvider.getStrings(language)
     val isUser = message.role == MessageRole.USER
 
-    // Simply use the message content directly - no streaming StateFlow
-    val displayContent = message.content
+    // Use streaming content if available and message is loading, otherwise use message content
+    val displayContent = if (message.isLoading && streamingContent != null) {
+        streamingContent
+    } else {
+        message.content
+    }
 
     // Voice message player for user voice recordings
     val voicePlayer = com.nongtri.app.platform.LocalVoiceMessagePlayer.current

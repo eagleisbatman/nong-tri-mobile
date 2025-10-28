@@ -677,24 +677,13 @@ class ChatViewModel(
                         println("[ChatViewModel] First chunk received - haptic feedback triggered")
                     }
 
-                    // Immediate streaming - no buffering for instant character display
-                    // This provides the smoothest possible experience
+                    // Update ONLY streaming content during streaming
+                    // DO NOT update the message list to avoid recomposition
                     currentStreamingMessageId?.let { messageId ->
-                        // Update streaming content immediately
+                        // Update streaming content immediately for display
                         _streamingContent.value += chunk
 
-                        // Also update the message directly for persistence
-                        _uiState.update { state ->
-                            state.copy(
-                                messages = state.messages.map { msg ->
-                                    if (msg.id == messageId) {
-                                        msg.copy(content = msg.content + chunk)
-                                    } else {
-                                        msg
-                                    }
-                                }
-                            )
-                        }
+                        // DON'T update message list until complete to avoid flickering
                     }
                 },
                 onMetadata = { metadata ->
@@ -721,14 +710,18 @@ class ChatViewModel(
                 }
             ).fold(
                 onSuccess = { fullResponse ->
-                    // No need to flush - we're streaming immediately now
+                    // Now update the message with the complete content
+                    val completeContent = _streamingContent.value
 
-                    // Mark the message as not loading (content is already updated via streaming)
+                    // Update message with complete content and mark as not loading
                     _uiState.update { state ->
                         state.copy(
                             messages = state.messages.map { msg ->
                                 if (msg.id == assistantMessageId) {
-                                    msg.copy(isLoading = false)
+                                    msg.copy(
+                                        content = completeContent,
+                                        isLoading = false
+                                    )
                                 } else {
                                     msg
                                 }
@@ -995,23 +988,12 @@ class ChatViewModel(
                 language = userPreferences.language.value.code,  // Pass current language to backend
                 messageType = "voice",  // CRITICAL: Mark as voice to prevent duplicate message creation
                 onChunk = { chunk ->
-                    // Immediate streaming for voice messages too
+                    // Update ONLY streaming content during streaming
                     currentStreamingMessageId?.let { messageId ->
-                        // Update streaming content immediately
+                        // Update streaming content immediately for display
                         _streamingContent.value += chunk
 
-                        // Also update the message directly for persistence
-                        _uiState.update { state ->
-                            state.copy(
-                                messages = state.messages.map { msg ->
-                                    if (msg.id == messageId) {
-                                        msg.copy(content = msg.content + chunk)
-                                    } else {
-                                        msg
-                                    }
-                                }
-                            )
-                        }
+                        // DON'T update message list until complete to avoid flickering
                     }
                 },
                 onMetadata = { metadata ->
@@ -1035,14 +1017,18 @@ class ChatViewModel(
                 }
             ).fold(
                 onSuccess = { fullResponse ->
-                    // No need to flush - we're streaming immediately now
+                    // Now update the message with the complete content
+                    val completeContent = _streamingContent.value
 
-                    // Mark the message as not loading (content is already updated via streaming)
+                    // Update message with complete content and mark as not loading
                     _uiState.update { state ->
                         state.copy(
                             messages = state.messages.map { msg ->
                                 if (msg.id == assistantMessageId) {
-                                    msg.copy(isLoading = false)
+                                    msg.copy(
+                                        content = completeContent,
+                                        isLoading = false
+                                    )
                                 } else {
                                     msg
                                 }
