@@ -89,6 +89,10 @@ class ChatViewModel(
 
         println("[ChatViewModel] Flushing chunk buffer: ${content.length} chars")
 
+        // Update both the streaming content AND the message
+        // Streaming content for immediate display
+        _streamingContent.value += content
+
         // Update the message content directly in the list
         _uiState.update { state ->
             state.copy(
@@ -654,8 +658,6 @@ class ChatViewModel(
         // Initialize streaming state
         currentStreamingMessageId = assistantMessageId
         _streamingContent.value = ""  // Reset streaming content
-        chunkBuffer.clear()
-        lastChunkFlushTime = System.currentTimeMillis()
         isFirstChunk = true  // Reset for new response
 
         // Send to API with streaming
@@ -675,14 +677,24 @@ class ChatViewModel(
                         println("[ChatViewModel] First chunk received - haptic feedback triggered")
                     }
 
-                    // Throttle chunks for smoother rendering (reduces layout reflows)
-                    chunkBuffer.append(chunk)
-                    val now = System.currentTimeMillis()
+                    // Immediate streaming - no buffering for instant character display
+                    // This provides the smoothest possible experience
+                    currentStreamingMessageId?.let { messageId ->
+                        // Update streaming content immediately
+                        _streamingContent.value += chunk
 
-                    // Buffer interval: 300ms to reduce flicker on low-end devices
-                    if (now - lastChunkFlushTime >= 300) {
-                        flushChunkBuffer()
-                        lastChunkFlushTime = now
+                        // Also update the message directly for persistence
+                        _uiState.update { state ->
+                            state.copy(
+                                messages = state.messages.map { msg ->
+                                    if (msg.id == messageId) {
+                                        msg.copy(content = msg.content + chunk)
+                                    } else {
+                                        msg
+                                    }
+                                }
+                            )
+                        }
                     }
                 },
                 onMetadata = { metadata ->
@@ -709,10 +721,9 @@ class ChatViewModel(
                 }
             ).fold(
                 onSuccess = { fullResponse ->
-                    // Flush any remaining buffered chunks
-                    flushChunkBuffer()
+                    // No need to flush - we're streaming immediately now
 
-                    // Mark the message as not loading (content is already updated via flushChunkBuffer)
+                    // Mark the message as not loading (content is already updated via streaming)
                     _uiState.update { state ->
                         state.copy(
                             messages = state.messages.map { msg ->
@@ -726,6 +737,7 @@ class ChatViewModel(
                     }
 
                     currentStreamingMessageId = null
+                    _streamingContent.value = ""  // Clear streaming content
 
                     // Haptic feedback - AI response completed
                     hapticFeedback?.tick()
@@ -775,8 +787,8 @@ class ChatViewModel(
                     hapticFeedback?.error()
 
                     // Clear streaming state on error
-                    chunkBuffer.clear()
                     currentStreamingMessageId = null
+                    _streamingContent.value = ""
 
                     // Track error for analytics
                     val errorType = when {
@@ -973,8 +985,6 @@ class ChatViewModel(
         // Initialize streaming state
         currentStreamingMessageId = assistantMessageId
         _streamingContent.value = ""  // Reset streaming content
-        chunkBuffer.clear()
-        lastChunkFlushTime = System.currentTimeMillis()
         isFirstChunk = true  // Reset for new response
 
         // Send transcription to API with streaming (same as sendMessage)
@@ -985,12 +995,23 @@ class ChatViewModel(
                 language = userPreferences.language.value.code,  // Pass current language to backend
                 messageType = "voice",  // CRITICAL: Mark as voice to prevent duplicate message creation
                 onChunk = { chunk ->
-                    // Throttle chunks for smoother rendering (same as text messages)
-                    chunkBuffer.append(chunk)
-                    val now = System.currentTimeMillis()
+                    // Immediate streaming for voice messages too
+                    currentStreamingMessageId?.let { messageId ->
+                        // Update streaming content immediately
+                        _streamingContent.value += chunk
 
-                    if (now - lastChunkFlushTime >= 150 || chunkBuffer.length >= 50) {
-                        flushChunkBuffer()
+                        // Also update the message directly for persistence
+                        _uiState.update { state ->
+                            state.copy(
+                                messages = state.messages.map { msg ->
+                                    if (msg.id == messageId) {
+                                        msg.copy(content = msg.content + chunk)
+                                    } else {
+                                        msg
+                                    }
+                                }
+                            )
+                        }
                     }
                 },
                 onMetadata = { metadata ->
@@ -1014,10 +1035,9 @@ class ChatViewModel(
                 }
             ).fold(
                 onSuccess = { fullResponse ->
-                    // Flush any remaining buffered chunks
-                    flushChunkBuffer()
+                    // No need to flush - we're streaming immediately now
 
-                    // Mark the message as not loading (content is already updated via flushChunkBuffer)
+                    // Mark the message as not loading (content is already updated via streaming)
                     _uiState.update { state ->
                         state.copy(
                             messages = state.messages.map { msg ->
@@ -1031,6 +1051,7 @@ class ChatViewModel(
                     }
 
                     currentStreamingMessageId = null
+                    _streamingContent.value = ""  // Clear streaming content
 
                     // Haptic feedback - AI response completed
                     hapticFeedback?.tick()
@@ -1053,8 +1074,8 @@ class ChatViewModel(
                     hapticFeedback?.error()
 
                     // Clear streaming state on error
-                    chunkBuffer.clear()
                     currentStreamingMessageId = null
+                    _streamingContent.value = ""
 
                     // Track error for analytics
                     val errorType = when {
