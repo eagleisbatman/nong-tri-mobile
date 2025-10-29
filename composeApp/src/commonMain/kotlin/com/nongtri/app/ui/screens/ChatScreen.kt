@@ -220,15 +220,22 @@ fun ChatScreen(
         }
     }
 
-    // Auto-scroll during streaming to keep latest content visible
-    // Only if user hasn't scrolled away
+    // Auto-scroll during streaming - monitor both streaming content and list state
     LaunchedEffect(streamingContent) {
-        // Only auto-scroll during streaming if we're already at bottom
-        if (!streamingContent.isNullOrEmpty() && isScrolledToBottom) {
-            // Gentle scroll to keep streaming content visible
-            val lastIndex = listState.layoutInfo.totalItemsCount - 1
+        if (!streamingContent.isNullOrEmpty()) {
+            // Wait a tiny bit for layout to update
+            kotlinx.coroutines.delay(50)
+
+            val totalItems = listState.layoutInfo.totalItemsCount
+            val lastIndex = totalItems - 1
+
             if (lastIndex >= 0) {
-                listState.scrollToItem(lastIndex)
+                try {
+                    // Force scroll to bottom during streaming
+                    listState.scrollToItem(lastIndex)
+                } catch (e: Exception) {
+                    // Ignore
+                }
             }
         }
     }
@@ -693,15 +700,22 @@ fun ChatScreen(
                 FloatingActionButton(
                     onClick = {
                         coroutineScope.launch {
-                            // Wait for a valid lastIndex using fresh state
-                            val lastIndex = snapshotFlow { viewModel.uiState.value.messages.lastIndex }
-                                .first { it >= 0 }
+                            // Use the actual LazyColumn item count for accurate scrolling
+                            val totalItems = listState.layoutInfo.totalItemsCount
+                            val lastIndex = totalItems - 1
 
-                            // Smooth animated scroll to the last message
-                            listState.animateScrollToItem(
-                                index = lastIndex,
-                                scrollOffset = 0
-                            )
+                            if (lastIndex >= 0) {
+                                // Smooth animated scroll to the very last item
+                                try {
+                                    listState.animateScrollToItem(
+                                        index = lastIndex,
+                                        scrollOffset = 0
+                                    )
+                                } catch (e: Exception) {
+                                    // Fallback to instant scroll if animation fails
+                                    listState.scrollToItem(lastIndex)
+                                }
+                            }
                         }
                     },
                     containerColor = MaterialTheme.colorScheme.primary,

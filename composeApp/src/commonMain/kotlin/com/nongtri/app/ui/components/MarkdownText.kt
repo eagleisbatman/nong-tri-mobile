@@ -81,8 +81,8 @@ fun MarkdownText(
 
     // Custom dimensions for table formatting and dividers
     val customDimens = markdownDimens(
-        tableCellPadding = 12.dp,   // Generous padding in table cells
-        tableCornerSize = 6.dp,      // Rounded corners for tables
+        tableCellPadding = 14.dp,    // More generous padding for better readability
+        tableCornerSize = 8.dp,       // More rounded corners for modern look
         dividerThickness = 2.dp      // More visible horizontal rules on mobile
     )
 
