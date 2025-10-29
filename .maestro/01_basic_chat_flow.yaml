@@ -13,11 +13,12 @@ name: Basic Chat Flow - Test messaging and streaming
 - takeScreenshot: "02_home_screen"
 
 # Test sending a simple greeting
-- tapOn: "Type your message..."
+- tapOn:
+    id: "text_field"
 - inputText: "Hello"
 - takeScreenshot: "03_message_typed"
 - tapOn:
-    point: "95%,95%"
+    id: "send_button"
 - takeScreenshot: "04_message_sent"
 
 # Wait for AI response to start streaming
@@ -27,11 +28,12 @@ name: Basic Chat Flow - Test messaging and streaming
 - takeScreenshot: "05_ai_response_received"
 
 # Test auto-scroll behavior - send another message
-- tapOn: "Type your message..."
+- tapOn:
+    id: "text_field"
 - inputText: "What's the weather today?"
 - takeScreenshot: "06_second_message_typed"
 - tapOn:
-    point: "95%,95%"
+    id: "send_button"
 
 # Verify streaming and auto-scroll
 - waitForAnimationToEnd
