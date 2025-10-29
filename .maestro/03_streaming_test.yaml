@@ -29,7 +29,6 @@ name: Streaming Test - Verify smooth content streaming
 - takeScreenshot: "05_typing_indicator"
 
 # Wait for content to start streaming
-- wait: 500
 
 # Verify content appears gradually (not all at once)
 - assertVisible:
@@ -37,12 +36,10 @@ name: Streaming Test - Verify smooth content streaming
 - takeScreenshot: "06_streaming_started"
 
 # Capture mid-stream screenshot
-- wait: 1000
 - takeScreenshot: "07_streaming_in_progress"
 
 # Wait for full response
 - waitForAnimationToEnd
-- wait: 2000
 
 # Verify response is complete (no more typing indicator)
 - assertNotVisible:

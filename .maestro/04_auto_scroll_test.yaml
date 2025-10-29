@@ -12,21 +12,18 @@ name: Auto-Scroll Test - Verify scroll behavior
 - inputText: "Hello"
 - tapOn:
     id: ".*send.*|.*Send.*"
-- wait: 2000
 - takeScreenshot: "02_first_message_sent"
 
 - tapOn: "Type your message..."
 - inputText: "Tell me about farming"
 - tapOn:
     id: ".*send.*|.*Send.*"
-- wait: 3000
 - takeScreenshot: "03_second_message_sent"
 
 - tapOn: "Type your message..."
 - inputText: "What crops grow in winter?"
 - tapOn:
     id: ".*send.*|.*Send.*"
-- wait: 3000
 - takeScreenshot: "04_third_message_sent"
 
 # Scroll up to read earlier messages
@@ -48,7 +45,6 @@ name: Auto-Scroll Test - Verify scroll behavior
 - takeScreenshot: "07_message_sent_while_scrolled"
 
 # Should auto-scroll to bottom for user's message
-- wait: 1000
 - assertNotVisible:
     id: ".*scroll.*bottom.*|.*fab.*"  # FAB should disappear when at bottom
 - takeScreenshot: "08_auto_scrolled_to_bottom"
@@ -64,7 +60,6 @@ name: Auto-Scroll Test - Verify scroll behavior
 - takeScreenshot: "10_fab_clicked"
 
 # Should animate scroll to bottom
-- wait: 1000
 - assertNotVisible:
     id: ".*scroll.*bottom.*|.*fab.*"
 - takeScreenshot: "11_scrolled_to_bottom"

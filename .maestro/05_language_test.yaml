@@ -32,7 +32,6 @@ name: Language Test - Test Vietnamese language
 
 # Verify Vietnamese response
 - waitForAnimationToEnd
-- wait: 2000
 - assertVisible:
     text: ".*chào.*|.*Nông Trí.*"
 - takeScreenshot: "07_vietnamese_response"
@@ -48,7 +47,6 @@ name: Language Test - Test Vietnamese language
 
 # Verify Vietnamese agricultural response
 - waitForAnimationToEnd
-- wait: 3000
 - assertVisible:
     text: ".*lúa.*|.*nước.*|.*giống.*"
 - takeScreenshot: "10_vietnamese_agricultural_response"

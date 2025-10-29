@@ -23,7 +23,6 @@ name: Basic Chat Flow - Test messaging and streaming
 
 # Wait for AI response to start streaming
 - waitForAnimationToEnd
-- wait: 2000  # Give time for streaming to complete
 - assertVisible:
     text: ".*Nông Trí.*"  # AI should introduce itself
 - takeScreenshot: "05_ai_response_received"
@@ -38,7 +37,6 @@ name: Basic Chat Flow - Test messaging and streaming
 
 # Verify streaming and auto-scroll
 - waitForAnimationToEnd
-- wait: 3000  # Give time for streaming to complete
 - assertVisible:
     text: ".*weather.*|.*Weather.*"
 - takeScreenshot: "07_weather_response"

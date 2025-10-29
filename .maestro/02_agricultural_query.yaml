@@ -23,7 +23,6 @@ name: Agricultural Query - Test farming questions
 
 # Wait for response with agricultural content
 - waitForAnimationToEnd
-- wait: 3000  # Give time for AI to stream full response
 - extendedWaitUntil:
     visible:
       text: ".*rice.*|.*Rice.*|.*paddy.*|.*water.*"
@@ -43,7 +42,6 @@ name: Agricultural Query - Test farming questions
 
 # Verify auto-scroll when follow-up is clicked
 - waitForAnimationToEnd
-- wait: 3000  # Give time for streaming
 - assertVisible:
     text: ".*forecast.*|.*temperature.*|.*rain.*"
 - takeScreenshot: "08_follow_up_response"
