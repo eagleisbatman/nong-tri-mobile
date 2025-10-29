@@ -716,6 +716,34 @@ class ChatViewModel(
                     flushJob?.cancel()
                     flushJob = null
 
+                    // Check if response is empty - this means backend failed silently
+                    if (fullResponse.trim().isEmpty()) {
+                        println("[ChatViewModel] ⚠️ Empty response received from backend")
+
+                        // Haptic feedback - error
+                        hapticFeedback?.error()
+
+                        val strings = LocalizationProvider.getStrings(userPreferences.language.value)
+                        _uiState.update { state ->
+                            state.copy(
+                                messages = state.messages.map { msg ->
+                                    if (msg.id == assistantMessageId) {
+                                        msg.copy(
+                                            content = "⚠️ ${strings.errorServerUpdating}",
+                                            isLoading = false,
+                                            responseType = "error"
+                                        )
+                                    } else {
+                                        msg
+                                    }
+                                },
+                                isLoading = false
+                            )
+                        }
+                        currentStreamingMessageId = null
+                        return@fold
+                    }
+
                     // Mark the message as not loading (content already updated via flushChunkBuffer)
                     _uiState.update { state ->
                         state.copy(
@@ -1019,6 +1047,34 @@ class ChatViewModel(
                     // Cancel the flush coroutine
                     flushJob?.cancel()
                     flushJob = null
+
+                    // Check if response is empty - this means backend failed silently
+                    if (fullResponse.trim().isEmpty()) {
+                        println("[ChatViewModel] ⚠️ Empty response received from backend (voice message)")
+
+                        // Haptic feedback - error
+                        hapticFeedback?.error()
+
+                        val strings = LocalizationProvider.getStrings(userPreferences.language.value)
+                        _uiState.update { state ->
+                            state.copy(
+                                messages = state.messages.map { msg ->
+                                    if (msg.id == assistantMessageId) {
+                                        msg.copy(
+                                            content = "⚠️ ${strings.errorServerUpdating}",
+                                            isLoading = false,
+                                            responseType = "error"
+                                        )
+                                    } else {
+                                        msg
+                                    }
+                                },
+                                isLoading = false
+                            )
+                        }
+                        currentStreamingMessageId = null
+                        return@fold
+                    }
 
                     // Mark the message as not loading (content already updated via flushChunkBuffer)
                     _uiState.update { state ->
