@@ -95,8 +95,8 @@ fun StarterQuestions(
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                                 modifier = Modifier
-                                    .size(20.dp)
-                                    .padding(start = 8.dp)
+                                    .size(28.dp)
+                                    .padding(start = 4.dp)
                             )
                         }
                     },
