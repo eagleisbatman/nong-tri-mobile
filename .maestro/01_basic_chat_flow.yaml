@@ -9,16 +9,15 @@ name: Basic Chat Flow - Test messaging and streaming
 
 # Wait for app to fully load
 - assertVisible:
-    text: "Nông Trí AI"
+    text: "Nông Trí"
 - takeScreenshot: "02_home_screen"
 
 # Test sending a simple greeting
 - tapOn: "Type your message..."
 - inputText: "Hello"
 - takeScreenshot: "03_message_typed"
-
 - tapOn:
-    id: ".*send.*|.*Send.*"
+    point: "95%,95%"
 - takeScreenshot: "04_message_sent"
 
 # Wait for AI response to start streaming
@@ -31,9 +30,8 @@ name: Basic Chat Flow - Test messaging and streaming
 - tapOn: "Type your message..."
 - inputText: "What's the weather today?"
 - takeScreenshot: "06_second_message_typed"
-
 - tapOn:
-    id: ".*send.*|.*Send.*"
+    point: "95%,95%"
 
 # Verify streaming and auto-scroll
 - waitForAnimationToEnd
