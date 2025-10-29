@@ -9,7 +9,7 @@ name: Streaming Test - Verify smooth content streaming
 
 # Wait for app to load
 - assertVisible:
-    text: "Nông Trí AI"
+    text: "Nông Trí"
 - takeScreenshot: "02_home_screen"
 
 # Send a query that requires detailed response

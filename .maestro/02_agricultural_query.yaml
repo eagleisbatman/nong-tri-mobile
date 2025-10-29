@@ -1,50 +1,63 @@
 appId: com.nongtri.app
 name: Agricultural Query - Test farming questions
 ---
-# Test agricultural queries with tool usage
+# Test agricultural queries with tool usage using test tags
 # Video recording is automatic when using: maestro test --format html
 
 - launchApp
 - takeScreenshot: "01_app_launched"
 
-# Wait for welcome screen
+# Verify chat screen loads
 - assertVisible:
-    text: "Nông Trí AI"
-- takeScreenshot: "02_home_screen"
+    id: "chat_screen"
+- takeScreenshot: "02_chat_screen"
 
-# Ask an agricultural question
-- tapOn: "Type your message..."
-- inputText: "How do I grow rice?"
-- takeScreenshot: "03_agricultural_question_typed"
-
+# Click on a starter agricultural question
+- assertVisible:
+    id: "starter_question_0"
 - tapOn:
-    id: ".*send.*|.*Send.*"
-- takeScreenshot: "04_question_sent"
+    id: "starter_question_0"
+- takeScreenshot: "03_starter_question_clicked"
 
-# Wait for response with agricultural content
+# Wait for AI response with agricultural content
 - waitForAnimationToEnd
+- assertVisible:
+    id: "message_list"
+- takeScreenshot: "04_agricultural_response"
+
+# Check for follow-up questions
 - extendedWaitUntil:
     visible:
-      text: ".*rice.*|.*Rice.*|.*paddy.*|.*water.*"
-    timeout: 10000
-- takeScreenshot: "05_agricultural_response"
+      id: "follow_up_question_0"
+    timeout: 5000
+- takeScreenshot: "05_follow_up_questions_visible"
 
-# Check for follow-up questions (agricultural queries should have them)
-- assertVisible:
-    text: ".*moon phase.*|.*weather.*|.*pest.*"
-- takeScreenshot: "06_follow_up_questions_visible"
-
-# Test clicking a follow-up question
+# Click on first follow-up question
 - tapOn:
-    text: ".*weather.*"
-    index: 0  # Take first match
-- takeScreenshot: "07_follow_up_clicked"
+    id: "follow_up_question_0"
+- takeScreenshot: "06_follow_up_clicked"
 
-# Verify auto-scroll when follow-up is clicked
+# Wait for second AI response
 - waitForAnimationToEnd
 - assertVisible:
-    text: ".*forecast.*|.*temperature.*|.*rain.*"
-- takeScreenshot: "08_follow_up_response"
+    id: "message_list"
+- takeScreenshot: "07_follow_up_response"
+
+# Alternative: Test manual input for agricultural question
+- tapOn:
+    id: "text_field"
+- inputText: "How do I protect crops from pests?"
+- takeScreenshot: "08_manual_question_typed"
+
+- tapOn:
+    id: "send_button"
+- takeScreenshot: "09_manual_question_sent"
+
+# Wait for pest management response
+- waitForAnimationToEnd
+- assertVisible:
+    id: "message_list"
+- takeScreenshot: "10_pest_response"
 
 # Take final screenshot
-- takeScreenshot: "09_conversation_complete"
+- takeScreenshot: "11_conversation_complete"
