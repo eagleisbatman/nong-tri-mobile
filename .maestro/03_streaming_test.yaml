@@ -1,0 +1,44 @@
+appId: com.nongtri.app
+name: Streaming Test - Verify smooth content streaming
+---
+# Test streaming behavior and performance
+
+- launchApp
+
+# Wait for app to load
+- assertVisible:
+    text: "Nông Trí AI"
+
+# Send a query that requires detailed response
+- tapOn: "Type your message..."
+- inputText: "What are the best practices for growing tomatoes?"
+- tapOn:
+    id: ".*send.*|.*Send.*"
+
+# Observe typing indicator (three dots)
+- extendedWaitUntil:
+    visible:
+      id: ".*typing.*|.*loading.*"
+    timeout: 2000
+
+# Wait for content to start streaming
+- wait: 500
+
+# Verify content appears gradually (not all at once)
+- assertVisible:
+    text: ".*tomato.*|.*Tomato.*"
+
+# Wait for full response
+- waitForAnimationToEnd
+- wait: 2000
+
+# Verify response is complete (no more typing indicator)
+- assertNotVisible:
+    id: ".*typing.*|.*loading.*"
+
+# Check for proper markdown formatting (bullet points or tables)
+- assertVisible:
+    text: ".*•.*|.*-.*|.*\\|.*"  # Bullets or table
+
+# Take screenshot of formatted response
+- takeScreenshot: "streaming_complete"

@@ -1,0 +1,45 @@
+appId: com.nongtri.app
+name: Language Test - Test Vietnamese language
+---
+# Test language switching and Vietnamese responses
+
+- launchApp
+
+# Open menu
+- tapOn:
+    id: ".*menu.*|.*more.*"
+
+# Switch to Vietnamese
+- tapOn:
+    text: ".*Tiếng Việt.*|.*🇻🇳.*"
+
+# Close menu if still open
+- back
+
+# Send Vietnamese greeting
+- tapOn: "Type your message..."
+- inputText: "Xin chào"
+- tapOn:
+    id: ".*send.*|.*Send.*"
+
+# Verify Vietnamese response
+- waitForAnimationToEnd
+- assertVisible:
+    text: ".*chào.*|.*Nông Trí.*"
+
+# Ask agricultural question in Vietnamese
+- tapOn: "Type your message..."
+- inputText: "Cách trồng lúa như thế nào?"
+- tapOn:
+    id: ".*send.*|.*Send.*"
+
+# Verify Vietnamese agricultural response
+- waitForAnimationToEnd
+- assertVisible:
+    text: ".*lúa.*|.*nước.*|.*giống.*"
+
+# Check for Vietnamese follow-up questions
+- assertVisible:
+    text: ".*thời tiết.*|.*sâu bệnh.*"
+
+- takeScreenshot: "vietnamese_language"

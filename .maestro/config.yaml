@@ -1,0 +1,24 @@
+# Maestro Test Configuration for Nông Trí App
+
+flows:
+  - 01_basic_chat_flow.yaml
+  - 02_agricultural_query.yaml
+  - 03_streaming_test.yaml
+  - 04_auto_scroll_test.yaml
+  - 05_language_test.yaml
+
+tags:
+  smoke:
+    - 01_basic_chat_flow.yaml
+    - 02_agricultural_query.yaml
+
+  regression:
+    - 01_basic_chat_flow.yaml
+    - 02_agricultural_query.yaml
+    - 03_streaming_test.yaml
+    - 04_auto_scroll_test.yaml
+    - 05_language_test.yaml
+
+  streaming:
+    - 03_streaming_test.yaml
+    - 04_auto_scroll_test.yaml

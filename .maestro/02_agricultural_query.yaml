@@ -1,0 +1,40 @@
+appId: com.nongtri.app
+name: Agricultural Query - Test farming questions
+---
+# Test agricultural queries with tool usage
+
+- launchApp
+
+# Wait for welcome screen
+- assertVisible:
+    text: "Nông Trí AI"
+
+# Ask an agricultural question
+- tapOn: "Type your message..."
+- inputText: "How do I grow rice?"
+- tapOn:
+    id: ".*send.*|.*Send.*"
+
+# Wait for response with agricultural content
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      text: ".*rice.*|.*Rice.*|.*paddy.*|.*water.*"
+    timeout: 10000
+
+# Check for follow-up questions (agricultural queries should have them)
+- assertVisible:
+    text: ".*moon phase.*|.*weather.*|.*pest.*"
+
+# Test clicking a follow-up question
+- tapOn:
+    text: ".*weather.*"
+    index: 0  # Take first match
+
+# Verify auto-scroll when follow-up is clicked
+- waitForAnimationToEnd
+- assertVisible:
+    text: ".*forecast.*|.*temperature.*|.*rain.*"
+
+# Take screenshot
+- takeScreenshot: "agricultural_query"

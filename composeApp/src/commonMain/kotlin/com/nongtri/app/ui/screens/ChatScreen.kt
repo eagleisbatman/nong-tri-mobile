@@ -14,6 +14,7 @@ import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -194,16 +195,24 @@ fun ChatScreen(
                  uiState.messages.lastOrNull()?.role == com.nongtri.app.data.model.MessageRole.USER)
 
             if (shouldAutoScroll) {
-                // Small delay to ensure layout is complete
-                kotlinx.coroutines.delay(50)
+                // Wait for the list to update with new items
+                kotlinx.coroutines.delay(100)
 
-                val targetIndex = uiState.messages.size - 1
+                // Use the actual item count from LazyListState
+                val totalItems = listState.layoutInfo.totalItemsCount
+                val targetIndex = totalItems - 1
+
                 if (targetIndex >= 0) {
-                    // Smooth animation for better UX
-                    listState.animateScrollToItem(
-                        index = targetIndex,
-                        scrollOffset = 0
-                    )
+                    // Smooth animated scroll to the last item
+                    try {
+                        listState.animateScrollToItem(
+                            index = targetIndex,
+                            scrollOffset = 0
+                        )
+                    } catch (e: Exception) {
+                        // Fallback to instant scroll if animation fails
+                        listState.scrollToItem(targetIndex)
+                    }
                 }
             }
         }
@@ -220,6 +229,28 @@ fun ChatScreen(
                 listState.scrollToItem(lastIndex)
             }
         }
+    }
+
+    // Additional auto-scroll trigger based on actual list changes
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.layoutInfo.totalItemsCount }
+            .collect { itemCount ->
+                // Auto-scroll when a new user message is added
+                if (itemCount > 0) {
+                    // Use fresh state from viewModel
+                    val messages = viewModel.uiState.value.messages
+                    val lastMessage = messages.lastOrNull()
+
+                    if (lastMessage?.role == com.nongtri.app.data.model.MessageRole.USER) {
+                        // User just sent a message - scroll to it
+                        kotlinx.coroutines.delay(50)
+                        val targetIndex = messages.lastIndex
+                        if (targetIndex >= 0) {
+                            listState.animateScrollToItem(targetIndex)
+                        }
+                    }
+                }
+            }
     }
 
     Scaffold(
@@ -545,14 +576,18 @@ fun ChatScreen(
                                     viewModel.sendMessage(uiState.currentMessage)
                                 }
 
-                                // Immediately scroll to show the new message
-                                // This ensures user sees their query at the top
+                                // Immediately scroll to show the new message using fresh state
                                 coroutineScope.launch {
-                                    kotlinx.coroutines.delay(100) // Small delay for message to be added
-                                    val targetIndex = uiState.messages.size - 1
-                                    if (targetIndex >= 0) {
+                                    // Wait for the message list to actually update
+                                    val newSize = snapshotFlow { viewModel.uiState.value.messages.size }
+                                        .drop(1)  // Skip the current value, wait for the change
+                                        .first()
+
+                                    // Now scroll to the last item with the fresh state
+                                    val lastIndex = viewModel.uiState.value.messages.lastIndex
+                                    if (lastIndex >= 0) {
                                         listState.animateScrollToItem(
-                                            index = targetIndex,
+                                            index = lastIndex,
                                             scrollOffset = 0
                                         )
                                     }
@@ -656,14 +691,15 @@ fun ChatScreen(
                 FloatingActionButton(
                     onClick = {
                         coroutineScope.launch {
-                            // Smooth animated scroll to latest message
-                            val targetIndex = uiState.messages.size - 1
-                            if (targetIndex >= 0) {
-                                listState.animateScrollToItem(
-                                    index = targetIndex,
-                                    scrollOffset = 0
-                                )
-                            }
+                            // Wait for a valid lastIndex using fresh state
+                            val lastIndex = snapshotFlow { viewModel.uiState.value.messages.lastIndex }
+                                .first { it >= 0 }
+
+                            // Smooth animated scroll to the last message
+                            listState.animateScrollToItem(
+                                index = lastIndex,
+                                scrollOffset = 0
+                            )
                         }
                     },
                     containerColor = MaterialTheme.colorScheme.primary,
@@ -708,14 +744,18 @@ fun ChatScreen(
                                 hapticFeedback.tick()
                                 viewModel.sendMessage(question)
 
-                                // Auto-scroll to show the new message
+                                // Auto-scroll to show the new message using snapshotFlow
                                 coroutineScope.launch {
-                                    kotlinx.coroutines.delay(100) // Small delay for message to be added
-                                    // Re-read the latest state to get the updated message count
-                                    val latestSize = viewModel.uiState.value.messages.size
-                                    if (latestSize > 0) {
+                                    // Wait for the message list to actually update
+                                    val newSize = snapshotFlow { viewModel.uiState.value.messages.size }
+                                        .drop(1)  // Skip the current value, wait for the change
+                                        .first()
+
+                                    // Now scroll to the last item with the fresh state
+                                    val lastIndex = viewModel.uiState.value.messages.lastIndex
+                                    if (lastIndex >= 0) {
                                         listState.animateScrollToItem(
-                                            index = latestSize - 1,
+                                            index = lastIndex,
                                             scrollOffset = 0
                                         )
                                     }
@@ -785,14 +825,18 @@ fun ChatScreen(
                                     hapticFeedback.tick()
                                     viewModel.sendMessage(question)
 
-                                    // Auto-scroll to show the new message
+                                    // Auto-scroll to show the new message using snapshotFlow
                                     coroutineScope.launch {
-                                        kotlinx.coroutines.delay(100) // Small delay for message to be added
-                                        // Re-read the latest state to get the updated message count
-                                        val latestSize = viewModel.uiState.value.messages.size
-                                        if (latestSize > 0) {
+                                        // Wait for the message list to actually update
+                                        val newSize = snapshotFlow { viewModel.uiState.value.messages.size }
+                                            .drop(1)  // Skip the current value, wait for the change
+                                            .first()
+
+                                        // Now scroll to the last item with the fresh state
+                                        val lastIndex = viewModel.uiState.value.messages.lastIndex
+                                        if (lastIndex >= 0) {
                                             listState.animateScrollToItem(
-                                                index = latestSize - 1,
+                                                index = lastIndex,
                                                 scrollOffset = 0
                                             )
                                         }

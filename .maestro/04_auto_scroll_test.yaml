@@ -1,0 +1,60 @@
+appId: com.nongtri.app
+name: Auto-Scroll Test - Verify scroll behavior
+---
+# Test auto-scroll functionality
+
+- launchApp
+
+# Send multiple messages to create scrollable content
+- tapOn: "Type your message..."
+- inputText: "Hello"
+- tapOn:
+    id: ".*send.*|.*Send.*"
+- wait: 2000
+
+- tapOn: "Type your message..."
+- inputText: "Tell me about farming"
+- tapOn:
+    id: ".*send.*|.*Send.*"
+- wait: 3000
+
+- tapOn: "Type your message..."
+- inputText: "What crops grow in winter?"
+- tapOn:
+    id: ".*send.*|.*Send.*"
+- wait: 3000
+
+# Scroll up to read earlier messages
+- scroll:
+    direction: UP
+    duration: 2000
+
+# Verify FAB (scroll to bottom) button appears
+- assertVisible:
+    id: ".*scroll.*bottom.*|.*fab.*"
+
+# Send a new message while scrolled up
+- tapOn: "Type your message..."
+- inputText: "What about summer crops?"
+- tapOn:
+    id: ".*send.*|.*Send.*"
+
+# Should auto-scroll to bottom for user's message
+- wait: 1000
+- assertNotVisible:
+    id: ".*scroll.*bottom.*|.*fab.*"  # FAB should disappear when at bottom
+
+# Test FAB button functionality
+- scroll:
+    direction: UP
+    duration: 2000
+
+- tapOn:
+    id: ".*scroll.*bottom.*|.*fab.*"
+
+# Should animate scroll to bottom
+- wait: 1000
+- assertNotVisible:
+    id: ".*scroll.*bottom.*|.*fab.*"
+
+- takeScreenshot: "auto_scroll_test"

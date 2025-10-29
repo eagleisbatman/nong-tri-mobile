@@ -1,0 +1,41 @@
+appId: com.nongtri.app
+name: Basic Chat Flow - Test messaging and streaming
+---
+# Test basic chat functionality with streaming
+
+- launchApp
+
+# Wait for app to fully load
+- assertVisible:
+    text: "Nông Trí AI"
+
+# Test sending a simple greeting
+- tapOn: "Type your message..."
+- inputText: "Hello"
+- tapOn:
+    id: ".*send.*|.*Send.*"
+
+# Wait for AI response to start streaming
+- waitForAnimationToEnd
+- assertVisible:
+    text: ".*Nông Trí.*"  # AI should introduce itself
+
+# Test auto-scroll behavior - send another message
+- tapOn: "Type your message..."
+- inputText: "What's the weather today?"
+- tapOn:
+    id: ".*send.*|.*Send.*"
+
+# Verify streaming and auto-scroll
+- waitForAnimationToEnd
+- assertVisible:
+    text: ".*weather.*|.*Weather.*"
+
+# Test follow-up questions if they appear
+- extendedWaitUntil:
+    visible:
+      text: ".*7-day.*|.*forecast.*"
+    timeout: 5000
+
+# Take screenshot for review
+- takeScreenshot: "chat_conversation"
