@@ -182,15 +182,42 @@ fun ChatScreen(
         }
     }
 
-    // Auto-scroll to bottom ONLY when new messages arrive
-    // DO NOT track content or scroll during streaming - causes jumping!
+    // Auto-scroll behavior
+    // 1. Scroll to bottom when new messages arrive (user sends or AI responds)
+    // 2. Only auto-scroll if user is already near bottom (not reading old messages)
     LaunchedEffect(uiState.messages.size) {
         if (uiState.messages.isNotEmpty()) {
-            coroutineScope.launch {
-                val lastIndex = listState.layoutInfo.totalItemsCount - 1
-                if (lastIndex >= 0) {
-                    listState.scrollToItem(lastIndex)  // Instant scroll to bottom
+            // Calculate if we should auto-scroll
+            val shouldAutoScroll = isScrolledToBottom ||
+                // Also auto-scroll if this is a new user message (just sent)
+                (uiState.messages.size > 0 &&
+                 uiState.messages.lastOrNull()?.role == com.nongtri.app.data.model.MessageRole.USER)
+
+            if (shouldAutoScroll) {
+                // Small delay to ensure layout is complete
+                kotlinx.coroutines.delay(50)
+
+                val targetIndex = uiState.messages.size - 1
+                if (targetIndex >= 0) {
+                    // Smooth animation for better UX
+                    listState.animateScrollToItem(
+                        index = targetIndex,
+                        scrollOffset = 0
+                    )
                 }
+            }
+        }
+    }
+
+    // Auto-scroll during streaming to keep latest content visible
+    // Only if user hasn't scrolled away
+    LaunchedEffect(streamingContent) {
+        // Only auto-scroll during streaming if we're already at bottom
+        if (!streamingContent.isNullOrEmpty() && isScrolledToBottom) {
+            // Gentle scroll to keep streaming content visible
+            val lastIndex = listState.layoutInfo.totalItemsCount - 1
+            if (lastIndex >= 0) {
+                listState.scrollToItem(lastIndex)
             }
         }
     }
@@ -517,6 +544,19 @@ fun ChatScreen(
                                     // Regular text message
                                     viewModel.sendMessage(uiState.currentMessage)
                                 }
+
+                                // Immediately scroll to show the new message
+                                // This ensures user sees their query at the top
+                                coroutineScope.launch {
+                                    kotlinx.coroutines.delay(100) // Small delay for message to be added
+                                    val targetIndex = uiState.messages.size - 1
+                                    if (targetIndex >= 0) {
+                                        listState.animateScrollToItem(
+                                            index = targetIndex,
+                                            scrollOffset = 0
+                                        )
+                                    }
+                                }
                             },
                             hasAttachedImage = uiState.attachedImageUri != null,
                             onImageClick = {
@@ -607,11 +647,23 @@ fun ChatScreen(
         },
         floatingActionButton = {
             // Show scroll-to-bottom button when not at bottom
-            if (!isScrolledToBottom && uiState.messages.isNotEmpty()) {
+            // Add fade animation for smooth appearance/disappearance
+            androidx.compose.animation.AnimatedVisibility(
+                visible = !isScrolledToBottom && uiState.messages.isNotEmpty(),
+                enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.scaleIn(),
+                exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.scaleOut()
+            ) {
                 FloatingActionButton(
                     onClick = {
                         coroutineScope.launch {
-                            listState.animateScrollToItem(listState.layoutInfo.totalItemsCount - 1)
+                            // Smooth animated scroll to latest message
+                            val targetIndex = uiState.messages.size - 1
+                            if (targetIndex >= 0) {
+                                listState.animateScrollToItem(
+                                    index = targetIndex,
+                                    scrollOffset = 0
+                                )
+                            }
                         }
                     },
                     containerColor = MaterialTheme.colorScheme.primary,
@@ -655,6 +707,18 @@ fun ChatScreen(
                                 // Light haptic feedback - starter question clicked
                                 hapticFeedback.tick()
                                 viewModel.sendMessage(question)
+
+                                // Auto-scroll to show the new message
+                                coroutineScope.launch {
+                                    kotlinx.coroutines.delay(100) // Small delay for message to be added
+                                    val targetIndex = uiState.messages.size
+                                    if (targetIndex >= 0) {
+                                        listState.animateScrollToItem(
+                                            index = targetIndex,
+                                            scrollOffset = 0
+                                        )
+                                    }
+                                }
                             }
                         )
                     }
@@ -719,6 +783,18 @@ fun ChatScreen(
                                     // Light haptic feedback - follow-up question clicked
                                     hapticFeedback.tick()
                                     viewModel.sendMessage(question)
+
+                                    // Auto-scroll to show the new message
+                                    coroutineScope.launch {
+                                        kotlinx.coroutines.delay(100) // Small delay for message to be added
+                                        val targetIndex = uiState.messages.size
+                                        if (targetIndex >= 0) {
+                                            listState.animateScrollToItem(
+                                                index = targetIndex,
+                                                scrollOffset = 0
+                                            )
+                                        }
+                                    }
                                 },
                                 onAudioUrlCached = { messageId, audioUrl ->
                                     viewModel.updateMessageAudioUrl(messageId, audioUrl)
