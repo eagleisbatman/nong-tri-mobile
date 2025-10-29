@@ -711,10 +711,11 @@ fun ChatScreen(
                                 // Auto-scroll to show the new message
                                 coroutineScope.launch {
                                     kotlinx.coroutines.delay(100) // Small delay for message to be added
-                                    val targetIndex = uiState.messages.size
-                                    if (targetIndex >= 0) {
+                                    // Re-read the latest state to get the updated message count
+                                    val latestSize = viewModel.uiState.value.messages.size
+                                    if (latestSize > 0) {
                                         listState.animateScrollToItem(
-                                            index = targetIndex,
+                                            index = latestSize - 1,
                                             scrollOffset = 0
                                         )
                                     }
@@ -787,10 +788,11 @@ fun ChatScreen(
                                     // Auto-scroll to show the new message
                                     coroutineScope.launch {
                                         kotlinx.coroutines.delay(100) // Small delay for message to be added
-                                        val targetIndex = uiState.messages.size
-                                        if (targetIndex >= 0) {
+                                        // Re-read the latest state to get the updated message count
+                                        val latestSize = viewModel.uiState.value.messages.size
+                                        if (latestSize > 0) {
                                             listState.animateScrollToItem(
-                                                index = targetIndex,
+                                                index = latestSize - 1,
                                                 scrollOffset = 0
                                             )
                                         }
