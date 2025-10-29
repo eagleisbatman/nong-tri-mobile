@@ -6,12 +6,23 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.material3.Text
 import androidx.compose.runtime.CompositionLocalProvider
 import com.mikepenz.markdown.compose.LocalBulletListHandler
 import com.mikepenz.markdown.compose.LocalOrderedListHandler
@@ -26,6 +37,9 @@ import com.mikepenz.markdown.model.markdownPadding
  * Professional markdown renderer using multiplatform-markdown-renderer
  * Supports full CommonMark spec with proper parsing and rendering
  * With smooth fade-in animation for streaming text
+ *
+ * Note: Table text wrapping is limited by the markdown library's internal implementation.
+ * We've configured wider columns (120dp) and appropriate max width to minimize truncation.
  */
 @Composable
 fun MarkdownText(
@@ -81,11 +95,11 @@ fun MarkdownText(
 
     // Custom dimensions for table formatting and dividers
     val customDimens = markdownDimens(
-        tableMaxWidth = 340.dp,      // Constrain total table width for mobile viewport
-        tableCellWidth = 110.dp,     // Smaller fixed column width to prevent blow-out
-        tableCellPadding = 14.dp,    // More generous padding for better readability
-        tableCornerSize = 8.dp,       // More rounded corners for modern look
-        dividerThickness = 2.dp      // More visible horizontal rules on mobile
+        tableMaxWidth = 400.dp,      // Allow wider table for horizontal scroll
+        tableCellWidth = 130.dp,     // Wider columns to reduce truncation
+        tableCellPadding = 12.dp,    // Generous padding for readability
+        tableCornerSize = 8.dp,       // Rounded corners for modern look
+        dividerThickness = 2.dp      // Visible horizontal rules on mobile
     )
 
     // Custom bullet and ordered list handlers for better formatting
