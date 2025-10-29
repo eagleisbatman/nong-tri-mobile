@@ -10,11 +10,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.unit.dp
 import com.nongtri.app.l10n.Strings
 import com.nongtri.app.ui.components.TestTags
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun WhatsAppStyleInputBar(
     value: String,
@@ -64,7 +68,10 @@ fun WhatsAppStyleInputBar(
             OutlinedTextField(
                 value = value,
                 onValueChange = onValueChange,
-                modifier = Modifier.weight(1f).testTag(TestTags.TEXT_FIELD),
+                modifier = Modifier
+                    .weight(1f)
+                    .semantics { testTagsAsResourceId = true }
+                    .testTag(TestTags.TEXT_FIELD),
                 placeholder = {
                     Text(
                         text = if (isTranscribing) strings.transcribing else strings.typeMessage,
@@ -103,7 +110,10 @@ fun WhatsAppStyleInputBar(
                     colors = IconButtonDefaults.filledIconButtonColors(
                         containerColor = MaterialTheme.colorScheme.primary
                     ),
-                    modifier = Modifier.size(44.dp).testTag(TestTags.SEND_BUTTON)  // Slightly smaller
+                    modifier = Modifier
+                        .size(44.dp)
+                        .semantics { testTagsAsResourceId = true }
+                        .testTag(TestTags.SEND_BUTTON)  // Slightly smaller
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.Send,

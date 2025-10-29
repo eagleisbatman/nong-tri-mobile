@@ -14,28 +14,30 @@ name: Basic Chat Flow - Test messaging and streaming
 # Verify Nông Trí title is visible
 - assertVisible: "Nông Trí"
 
-# Test sending a simple greeting - tap on text field placeholder
-- tapOn: "Type your message..."
+# Test sending a simple greeting - tap on text field using test tag
+- tapOn:
+    id: "text_field"
 - inputText: "Hello"
 - takeScreenshot: "04_message_typed"
 
-# Send message - send button appears after typing, tap bottom right
+# Send message using send button test tag
 - tapOn:
-    point: "95%,95%"
+    id: "send_button"
 - takeScreenshot: "05_message_sent"
 
 # Wait for AI response - wait for animation
 - waitForAnimationToEnd
 - takeScreenshot: "06_ai_response_received"
 
-# Test second message - tap text field again
-- tapOn: "Type your message..."
+# Test second message - tap text field again using test tag
+- tapOn:
+    id: "text_field"
 - inputText: "Tell me about farming"
 - takeScreenshot: "07_second_message_typed"
 
-# Send second message
+# Send second message using test tag
 - tapOn:
-    point: "95%,95%"
+    id: "send_button"
 - takeScreenshot: "08_second_message_sent"
 
 # Wait for second response
