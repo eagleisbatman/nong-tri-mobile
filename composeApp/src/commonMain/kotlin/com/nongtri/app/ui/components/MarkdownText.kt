@@ -22,24 +22,113 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.CompositionLocalProvider
 import com.mikepenz.markdown.compose.LocalBulletListHandler
+import com.mikepenz.markdown.compose.LocalMarkdownColors
+import com.mikepenz.markdown.compose.LocalMarkdownComponents
+import com.mikepenz.markdown.compose.LocalMarkdownDimens
 import com.mikepenz.markdown.compose.LocalOrderedListHandler
+import com.mikepenz.markdown.compose.components.markdownComponents
 import com.mikepenz.markdown.m3.Markdown
 import com.mikepenz.markdown.model.BulletHandler
 import com.mikepenz.markdown.m3.markdownColor
 import com.mikepenz.markdown.m3.markdownTypography
 import com.mikepenz.markdown.model.markdownDimens
 import com.mikepenz.markdown.model.markdownPadding
+import org.intellij.markdown.MarkdownElementTypes
+import org.intellij.markdown.MarkdownTokenTypes
+import org.intellij.markdown.ast.ASTNode
+import org.intellij.markdown.ast.findChildOfType
+import org.intellij.markdown.ast.getTextInNode
+
+/**
+ * Custom table renderer that wraps text within fixed-width columns
+ * instead of truncating with ellipsis
+ */
+@Composable
+private fun WrappedMarkdownTable(content: String, node: ASTNode, style: TextStyle) {
+    val dimens = LocalMarkdownDimens.current
+    val colors = LocalMarkdownColors.current
+    val columnWidth = dimens.tableCellWidth
+    val padding = dimens.tableCellPadding
+
+    val headers = remember {
+        node.children.firstOrNull { it.type.toString() == "HEADER" }?.children?.count { it.type.toString() == "TABLE_CELL" } ?: 0
+    }
+    val tableWidth = columnWidth * headers
+
+    Box(
+        modifier = Modifier
+            .background(colors.codeBackground, RoundedCornerShape(dimens.tableCornerSize))
+            .horizontalScroll(rememberScrollState())
+            .requiredWidth(tableWidth)
+    ) {
+        Column {
+            node.children.forEach { child ->
+                when (child.type.toString()) {
+                    "HEADER" -> TableRow(
+                        content = content,
+                        node = child,
+                        style = style.copy(fontWeight = FontWeight.Bold),
+                        columnWidth = columnWidth,
+                        padding = padding
+                    )
+                    "TABLE_ROW" -> TableRow(
+                        content = content,
+                        node = child,
+                        style = style,
+                        columnWidth = columnWidth,
+                        padding = padding
+                    )
+                    "TABLE_SEPARATOR" -> HorizontalDivider(
+                        modifier = Modifier.padding(vertical = 4.dp),
+                        thickness = dimens.dividerThickness,
+                        color = colors.dividerColor
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Renders a single table row with fixed-width columns that wrap text
+ */
+@Composable
+private fun TableRow(
+    content: String,
+    node: ASTNode,
+    style: TextStyle,
+    columnWidth: Dp,
+    padding: Dp
+) {
+    val colors = LocalMarkdownColors.current
+
+    Row(verticalAlignment = Alignment.Top) {
+        node.children.filter { it.type.toString() == "TABLE_CELL" }.forEach { cell ->
+            // Extract plain text from cell
+            val cellText = cell.getTextInNode(content).toString().trim()
+
+            Text(
+                text = cellText,
+                style = style,
+                color = colors.text,
+                maxLines = Int.MAX_VALUE,  // Allow wrapping instead of truncating
+                overflow = TextOverflow.Visible,
+                modifier = Modifier
+                    .requiredWidth(columnWidth)  // Fixed column width
+                    .padding(padding)
+            )
+        }
+    }
+}
 
 /**
  * Professional markdown renderer using multiplatform-markdown-renderer
  * Supports full CommonMark spec with proper parsing and rendering
  * With smooth fade-in animation for streaming text
- *
- * Note: Table text wrapping is limited by the markdown library's internal implementation.
- * We've configured wider columns (120dp) and appropriate max width to minimize truncation.
  */
 @Composable
 fun MarkdownText(
@@ -106,13 +195,25 @@ fun MarkdownText(
     val bulletHandler = BulletHandler { _, _, _ -> "• " }  // Bullet with space
     val orderedHandler = BulletHandler { _, _, index -> "${index + 1}. " }  // Numbers with period and space
 
+    // Custom table renderer with text wrapping
+    val customComponents = markdownComponents(
+        table = { model ->
+            WrappedMarkdownTable(
+                content = model.content,
+                node = model.node,
+                style = model.typography.text
+            )
+        }
+    )
+
     // During streaming, render directly without animation to prevent flickering
     // Only animate once when the message is complete
     if (isStreaming) {
         // Direct rendering - no animation during streaming
         CompositionLocalProvider(
             LocalBulletListHandler provides bulletHandler,
-            LocalOrderedListHandler provides orderedHandler
+            LocalOrderedListHandler provides orderedHandler,
+            LocalMarkdownComponents provides customComponents
         ) {
             Markdown(
                 content = processedText,
@@ -141,7 +242,8 @@ fun MarkdownText(
         ) { animatedText ->
             CompositionLocalProvider(
                 LocalBulletListHandler provides bulletHandler,
-                LocalOrderedListHandler provides orderedHandler
+                LocalOrderedListHandler provides orderedHandler,
+                LocalMarkdownComponents provides customComponents
             ) {
                 Markdown(
                     content = animatedText,
