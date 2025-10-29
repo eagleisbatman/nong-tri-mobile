@@ -2,8 +2,10 @@ appId: com.nongtri.app
 name: Auto-Scroll Test - Verify scroll behavior
 ---
 # Test auto-scroll functionality
+# Video recording is automatic when using: maestro test --format html
 
 - launchApp
+- takeScreenshot: "01_app_launched"
 
 # Send multiple messages to create scrollable content
 - tapOn: "Type your message..."
@@ -11,50 +13,58 @@ name: Auto-Scroll Test - Verify scroll behavior
 - tapOn:
     id: ".*send.*|.*Send.*"
 - wait: 2000
+- takeScreenshot: "02_first_message_sent"
 
 - tapOn: "Type your message..."
 - inputText: "Tell me about farming"
 - tapOn:
     id: ".*send.*|.*Send.*"
 - wait: 3000
+- takeScreenshot: "03_second_message_sent"
 
 - tapOn: "Type your message..."
 - inputText: "What crops grow in winter?"
 - tapOn:
     id: ".*send.*|.*Send.*"
 - wait: 3000
+- takeScreenshot: "04_third_message_sent"
 
 # Scroll up to read earlier messages
 - scroll:
     direction: UP
     duration: 2000
+- takeScreenshot: "05_scrolled_up"
 
 # Verify FAB (scroll to bottom) button appears
 - assertVisible:
     id: ".*scroll.*bottom.*|.*fab.*"
+- takeScreenshot: "06_fab_visible"
 
 # Send a new message while scrolled up
 - tapOn: "Type your message..."
 - inputText: "What about summer crops?"
 - tapOn:
     id: ".*send.*|.*Send.*"
+- takeScreenshot: "07_message_sent_while_scrolled"
 
 # Should auto-scroll to bottom for user's message
 - wait: 1000
 - assertNotVisible:
     id: ".*scroll.*bottom.*|.*fab.*"  # FAB should disappear when at bottom
+- takeScreenshot: "08_auto_scrolled_to_bottom"
 
 # Test FAB button functionality
 - scroll:
     direction: UP
     duration: 2000
+- takeScreenshot: "09_scrolled_up_again"
 
 - tapOn:
     id: ".*scroll.*bottom.*|.*fab.*"
+- takeScreenshot: "10_fab_clicked"
 
 # Should animate scroll to bottom
 - wait: 1000
 - assertNotVisible:
     id: ".*scroll.*bottom.*|.*fab.*"
-
-- takeScreenshot: "auto_scroll_test"
+- takeScreenshot: "11_scrolled_to_bottom"

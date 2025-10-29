@@ -2,39 +2,51 @@ appId: com.nongtri.app
 name: Agricultural Query - Test farming questions
 ---
 # Test agricultural queries with tool usage
+# Video recording is automatic when using: maestro test --format html
 
 - launchApp
+- takeScreenshot: "01_app_launched"
 
 # Wait for welcome screen
 - assertVisible:
     text: "Nông Trí AI"
+- takeScreenshot: "02_home_screen"
 
 # Ask an agricultural question
 - tapOn: "Type your message..."
 - inputText: "How do I grow rice?"
+- takeScreenshot: "03_agricultural_question_typed"
+
 - tapOn:
     id: ".*send.*|.*Send.*"
+- takeScreenshot: "04_question_sent"
 
 # Wait for response with agricultural content
 - waitForAnimationToEnd
+- wait: 3000  # Give time for AI to stream full response
 - extendedWaitUntil:
     visible:
       text: ".*rice.*|.*Rice.*|.*paddy.*|.*water.*"
     timeout: 10000
+- takeScreenshot: "05_agricultural_response"
 
 # Check for follow-up questions (agricultural queries should have them)
 - assertVisible:
     text: ".*moon phase.*|.*weather.*|.*pest.*"
+- takeScreenshot: "06_follow_up_questions_visible"
 
 # Test clicking a follow-up question
 - tapOn:
     text: ".*weather.*"
     index: 0  # Take first match
+- takeScreenshot: "07_follow_up_clicked"
 
 # Verify auto-scroll when follow-up is clicked
 - waitForAnimationToEnd
+- wait: 3000  # Give time for streaming
 - assertVisible:
     text: ".*forecast.*|.*temperature.*|.*rain.*"
+- takeScreenshot: "08_follow_up_response"
 
-# Take screenshot
-- takeScreenshot: "agricultural_query"
+# Take final screenshot
+- takeScreenshot: "09_conversation_complete"

@@ -2,34 +2,46 @@ appId: com.nongtri.app
 name: Basic Chat Flow - Test messaging and streaming
 ---
 # Test basic chat functionality with streaming
+# Video recording is automatic when using: maestro test --format html
 
 - launchApp
+- takeScreenshot: "01_app_launched"
 
 # Wait for app to fully load
 - assertVisible:
     text: "Nông Trí AI"
+- takeScreenshot: "02_home_screen"
 
 # Test sending a simple greeting
 - tapOn: "Type your message..."
 - inputText: "Hello"
+- takeScreenshot: "03_message_typed"
+
 - tapOn:
     id: ".*send.*|.*Send.*"
+- takeScreenshot: "04_message_sent"
 
 # Wait for AI response to start streaming
 - waitForAnimationToEnd
+- wait: 2000  # Give time for streaming to complete
 - assertVisible:
     text: ".*Nông Trí.*"  # AI should introduce itself
+- takeScreenshot: "05_ai_response_received"
 
 # Test auto-scroll behavior - send another message
 - tapOn: "Type your message..."
 - inputText: "What's the weather today?"
+- takeScreenshot: "06_second_message_typed"
+
 - tapOn:
     id: ".*send.*|.*Send.*"
 
 # Verify streaming and auto-scroll
 - waitForAnimationToEnd
+- wait: 3000  # Give time for streaming to complete
 - assertVisible:
     text: ".*weather.*|.*Weather.*"
+- takeScreenshot: "07_weather_response"
 
 # Test follow-up questions if they appear
 - extendedWaitUntil:
@@ -37,5 +49,5 @@ name: Basic Chat Flow - Test messaging and streaming
       text: ".*7-day.*|.*forecast.*"
     timeout: 5000
 
-# Take screenshot for review
-- takeScreenshot: "chat_conversation"
+# Take final screenshot for review
+- takeScreenshot: "08_conversation_complete"

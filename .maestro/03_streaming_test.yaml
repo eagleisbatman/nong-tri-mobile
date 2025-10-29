@@ -2,24 +2,31 @@ appId: com.nongtri.app
 name: Streaming Test - Verify smooth content streaming
 ---
 # Test streaming behavior and performance
+# Video recording is automatic when using: maestro test --format html
 
 - launchApp
+- takeScreenshot: "01_app_launched"
 
 # Wait for app to load
 - assertVisible:
     text: "Nông Trí AI"
+- takeScreenshot: "02_home_screen"
 
 # Send a query that requires detailed response
 - tapOn: "Type your message..."
 - inputText: "What are the best practices for growing tomatoes?"
+- takeScreenshot: "03_detailed_query_typed"
+
 - tapOn:
     id: ".*send.*|.*Send.*"
+- takeScreenshot: "04_query_sent"
 
 # Observe typing indicator (three dots)
 - extendedWaitUntil:
     visible:
       id: ".*typing.*|.*loading.*"
     timeout: 2000
+- takeScreenshot: "05_typing_indicator"
 
 # Wait for content to start streaming
 - wait: 500
@@ -27,6 +34,11 @@ name: Streaming Test - Verify smooth content streaming
 # Verify content appears gradually (not all at once)
 - assertVisible:
     text: ".*tomato.*|.*Tomato.*"
+- takeScreenshot: "06_streaming_started"
+
+# Capture mid-stream screenshot
+- wait: 1000
+- takeScreenshot: "07_streaming_in_progress"
 
 # Wait for full response
 - waitForAnimationToEnd
@@ -35,10 +47,12 @@ name: Streaming Test - Verify smooth content streaming
 # Verify response is complete (no more typing indicator)
 - assertNotVisible:
     id: ".*typing.*|.*loading.*"
+- takeScreenshot: "08_streaming_complete"
 
 # Check for proper markdown formatting (bullet points or tables)
 - assertVisible:
     text: ".*•.*|.*-.*|.*\\|.*"  # Bullets or table
+- takeScreenshot: "09_markdown_formatted"
 
-# Take screenshot of formatted response
-- takeScreenshot: "streaming_complete"
+# Take final screenshot of formatted response
+- takeScreenshot: "10_final_response"

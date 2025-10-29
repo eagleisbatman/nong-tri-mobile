@@ -1,5 +1,48 @@
 # Maestro Testing Guide for Nông Trí App
 
+## 🚀 Quick Start
+
+### 1. Install Maestro (if not already installed)
+```bash
+curl -Ls "https://get.maestro.mobile.dev" | bash
+```
+
+### 2. Run Tests with Video Recording & HTML Reports
+
+```bash
+cd .maestro
+
+# Run all tests with video recording
+./run_tests.sh all
+
+# Run specific test
+./run_tests.sh 01           # Basic chat flow
+./run_tests.sh agricultural  # Agricultural queries
+./run_tests.sh streaming     # Streaming behavior
+./run_tests.sh autoscroll    # Auto-scroll functionality
+./run_tests.sh language      # Vietnamese language
+
+# Run smoke tests
+./run_tests.sh smoke
+
+# View help
+./run_tests.sh help
+```
+
+### 3. View Reports
+
+Reports are automatically generated in `.maestro/reports/` with:
+- 🎥 **Full video recording** of the test execution
+- 📸 **Screenshots** at each critical step
+- ✅ **Pass/fail status** for each assertion
+- ⏱️ **Timing information** for performance analysis
+- 📊 **Interactive timeline** showing test progression
+
+```bash
+# Open the latest report in your browser
+open reports/*.html
+```
+
 ## Installation
 
 ### 1. Install Maestro (if not already installed)
@@ -7,19 +50,38 @@
 curl -Ls "https://get.maestro.mobile.dev" | bash
 ```
 
-### 2. Install Maestro Studio Community Edition
+### 2. Install Maestro Studio Community Edition (Optional)
 Download from: https://maestro.mobile.dev/downloads
 
 ## Running Tests
 
-### Using Maestro CLI
+### Using Test Runner Script (Recommended)
+
+The `run_tests.sh` script automatically generates HTML reports with video:
 
 ```bash
 # Run all tests
-maestro test .maestro/
+./run_tests.sh all
 
-# Run a specific test
-maestro test .maestro/01_basic_chat_flow.yaml
+# Run individual tests
+./run_tests.sh basic
+./run_tests.sh agricultural
+./run_tests.sh streaming
+./run_tests.sh autoscroll
+./run_tests.sh language
+
+# Run smoke tests
+./run_tests.sh smoke
+```
+
+### Using Maestro CLI Directly
+
+```bash
+# Run all tests with HTML report
+maestro test --format html --output report.html .maestro/
+
+# Run a specific test with video
+maestro test --format html --output basic_chat.html .maestro/01_basic_chat_flow.yaml
 
 # Run smoke tests only
 maestro test --tags=smoke .maestro/

@@ -2,44 +2,58 @@ appId: com.nongtri.app
 name: Language Test - Test Vietnamese language
 ---
 # Test language switching and Vietnamese responses
+# Video recording is automatic when using: maestro test --format html
 
 - launchApp
+- takeScreenshot: "01_app_launched"
 
 # Open menu
 - tapOn:
     id: ".*menu.*|.*more.*"
+- takeScreenshot: "02_menu_opened"
 
 # Switch to Vietnamese
 - tapOn:
     text: ".*Tiếng Việt.*|.*🇻🇳.*"
+- takeScreenshot: "03_language_switched"
 
 # Close menu if still open
 - back
+- takeScreenshot: "04_back_to_chat"
 
 # Send Vietnamese greeting
 - tapOn: "Type your message..."
 - inputText: "Xin chào"
+- takeScreenshot: "05_vietnamese_greeting_typed"
+
 - tapOn:
     id: ".*send.*|.*Send.*"
+- takeScreenshot: "06_greeting_sent"
 
 # Verify Vietnamese response
 - waitForAnimationToEnd
+- wait: 2000
 - assertVisible:
     text: ".*chào.*|.*Nông Trí.*"
+- takeScreenshot: "07_vietnamese_response"
 
 # Ask agricultural question in Vietnamese
 - tapOn: "Type your message..."
 - inputText: "Cách trồng lúa như thế nào?"
+- takeScreenshot: "08_vietnamese_question_typed"
+
 - tapOn:
     id: ".*send.*|.*Send.*"
+- takeScreenshot: "09_question_sent"
 
 # Verify Vietnamese agricultural response
 - waitForAnimationToEnd
+- wait: 3000
 - assertVisible:
     text: ".*lúa.*|.*nước.*|.*giống.*"
+- takeScreenshot: "10_vietnamese_agricultural_response"
 
 # Check for Vietnamese follow-up questions
 - assertVisible:
     text: ".*thời tiết.*|.*sâu bệnh.*"
-
-- takeScreenshot: "vietnamese_language"
+- takeScreenshot: "11_vietnamese_follow_ups"
