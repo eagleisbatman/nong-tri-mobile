@@ -37,11 +37,13 @@ import com.mikepenz.markdown.m3.markdownColor
 import com.mikepenz.markdown.m3.markdownTypography
 import com.mikepenz.markdown.model.markdownDimens
 import com.mikepenz.markdown.model.markdownPadding
-import org.intellij.markdown.MarkdownElementTypes
-import org.intellij.markdown.MarkdownTokenTypes
+import com.mikepenz.markdown.compose.elements.material.MarkdownBasicText
+import com.mikepenz.markdown.utils.buildMarkdownAnnotatedString
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.ast.findChildOfType
-import org.intellij.markdown.ast.getTextInNode
+import org.intellij.markdown.flavours.gfm.GFMElementTypes.HEADER
+import org.intellij.markdown.flavours.gfm.GFMElementTypes.ROW
+import org.intellij.markdown.flavours.gfm.GFMTokenTypes.CELL
 
 /**
  * Custom table renderer that wraps text within fixed-width columns
@@ -55,7 +57,7 @@ private fun WrappedMarkdownTable(content: String, node: ASTNode, style: TextStyl
     val padding = dimens.tableCellPadding
 
     val headers = remember {
-        node.children.firstOrNull { it.type.toString() == "HEADER" }?.children?.count { it.type.toString() == "TABLE_CELL" } ?: 0
+        node.children.firstOrNull { it.type == HEADER }?.children?.count { it.type == CELL } ?: 0
     }
     val tableWidth = columnWidth * headers
 
@@ -67,22 +69,22 @@ private fun WrappedMarkdownTable(content: String, node: ASTNode, style: TextStyl
     ) {
         Column {
             node.children.forEach { child ->
-                when (child.type.toString()) {
-                    "HEADER" -> TableRow(
+                when {
+                    child.type == HEADER -> TableRow(
                         content = content,
                         node = child,
                         style = style.copy(fontWeight = FontWeight.Bold),
                         columnWidth = columnWidth,
                         padding = padding
                     )
-                    "TABLE_ROW" -> TableRow(
+                    child.type == ROW -> TableRow(
                         content = content,
                         node = child,
                         style = style,
                         columnWidth = columnWidth,
                         padding = padding
                     )
-                    "TABLE_SEPARATOR" -> HorizontalDivider(
+                    child.type.toString() == "TABLE_SEPARATOR" -> HorizontalDivider(
                         modifier = Modifier.padding(vertical = 4.dp),
                         thickness = dimens.dividerThickness,
                         color = colors.dividerColor
@@ -107,18 +109,15 @@ private fun TableRow(
     val colors = LocalMarkdownColors.current
 
     Row(verticalAlignment = Alignment.Top) {
-        node.children.filter { it.type.toString() == "TABLE_CELL" }.forEach { cell ->
-            // Extract plain text from cell
-            val cellText = cell.getTextInNode(content).toString().trim()
-
-            Text(
-                text = cellText,
+        node.children.filter { it.type == CELL }.forEach { cell ->
+            MarkdownBasicText(
+                text = content.buildMarkdownAnnotatedString(cell, style),
                 style = style,
-                color = colors.text,
+                color = colors.tableText,
                 maxLines = Int.MAX_VALUE,  // Allow wrapping instead of truncating
                 overflow = TextOverflow.Visible,
                 modifier = Modifier
-                    .requiredWidth(columnWidth)  // Fixed column width
+                    .width(columnWidth)  // Fixed column width
                     .padding(padding)
             )
         }
