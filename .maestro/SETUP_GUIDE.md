@@ -120,45 +120,30 @@ maestro mcp
 
 ### 3. Configure MCP in Claude Code
 
-Add to your Claude Code config (`~/Library/Application Support/Claude/claude_desktop_config.json`):
+#### For Claude Code CLI (Recommended)
 
-```json
-{
-  "mcpServers": {
-    "maestro": {
-      "command": "maestro",
-      "args": [
-        "mcp"
-      ]
-    }
-  }
-}
+Use the built-in MCP configuration command:
+
+```bash
+# Add Maestro MCP server with working directory
+claude mcp add --transport stdio maestro -- \
+  /Users/eagleisbatman/.maestro/bin/maestro mcp \
+  --working-dir=/Users/eagleisbatman/nong_tri_workspace/mobile
+
+# Or if maestro is in your PATH:
+claude mcp add --transport stdio maestro -- \
+  maestro mcp --working-dir=/Users/eagleisbatman/nong_tri_workspace/mobile
 ```
 
-**If `maestro` is not in your PATH**, use the full path:
+#### For Claude Desktop
+
+Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop_config.json`):
 
 ```json
 {
   "mcpServers": {
     "maestro": {
       "command": "/Users/eagleisbatman/.maestro/bin/maestro",
-      "args": [
-        "mcp"
-      ]
-    }
-  }
-}
-```
-
-### 4. Optional: Set Working Directory
-
-If you want Maestro to work from a specific directory:
-
-```json
-{
-  "mcpServers": {
-    "maestro": {
-      "command": "maestro",
       "args": [
         "mcp",
         "--working-dir=/Users/eagleisbatman/nong_tri_workspace/mobile"
@@ -168,18 +153,28 @@ If you want Maestro to work from a specific directory:
 }
 ```
 
-### 5. Restart Claude Desktop
+Then restart Claude Desktop.
 
-The Maestro MCP server will now be available in Claude Code!
+### 4. Verify MCP Connection
 
-### 6. Verify MCP Connection
+#### Claude Code CLI
 
-In Claude Code, type:
+```bash
+# List configured MCP servers
+claude mcp list
+
+# You should see:
+# maestro: ... - ✓ Connected
+```
+
+Or in the CLI session, type:
 ```
 /mcp
 ```
 
-You should see `maestro` listed as "connected".
+#### Claude Desktop
+
+Type `/mcp` in Claude Desktop chat to verify the connection.
 
 ---
 
