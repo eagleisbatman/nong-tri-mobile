@@ -81,6 +81,8 @@ fun MarkdownText(
 
     // Custom dimensions for table formatting and dividers
     val customDimens = markdownDimens(
+        tableMaxWidth = 340.dp,      // Constrain total table width for mobile viewport
+        tableCellWidth = 110.dp,     // Smaller fixed column width to prevent blow-out
         tableCellPadding = 14.dp,    // More generous padding for better readability
         tableCornerSize = 8.dp,       // More rounded corners for modern look
         dividerThickness = 2.dp      // More visible horizontal rules on mobile
