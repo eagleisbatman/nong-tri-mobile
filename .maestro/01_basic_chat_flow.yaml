@@ -35,9 +35,9 @@ name: Basic Chat Flow - Test messaging and streaming
 - inputText: "Tell me about farming"
 - takeScreenshot: "07_second_message_typed"
 
-# Send second message using test tag
+# Send second message - use coordinate as fallback since button may not have test tag after re-render
 - tapOn:
-    id: "send_button"
+    point: "95%,95%"
 - takeScreenshot: "08_second_message_sent"
 
 # Wait for second response
