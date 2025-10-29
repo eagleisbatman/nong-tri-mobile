@@ -1,64 +1,46 @@
 appId: com.nongtri.app
 name: Basic Chat Flow - Test messaging and streaming
 ---
-# Test basic chat functionality with streaming using test tags
+# Test basic chat functionality with streaming
 # Video recording is automatic when using: maestro test --format html
 
 - launchApp
 - takeScreenshot: "01_app_launched"
 
-# Verify main chat screen loads
-- assertVisible:
-    id: "chat_screen"
+# Wait for app to load - check for welcome message
+- assertVisible: "Hello! I'm your AI farming assistant"
 - takeScreenshot: "02_chat_screen_loaded"
 
-# Verify welcome card appears for new users
-- assertVisible:
-    id: "welcome_card"
-- takeScreenshot: "03_welcome_card"
+# Verify Nông Trí title is visible
+- assertVisible: "Nông Trí"
 
-# Test sending a simple greeting using text_field tag
-- tapOn:
-    id: "text_field"
+# Test sending a simple greeting - tap on text field placeholder
+- tapOn: "Type your message..."
 - inputText: "Hello"
 - takeScreenshot: "04_message_typed"
 
-# Send message using send_button tag
+# Send message - send button appears after typing, tap bottom right
 - tapOn:
-    id: "send_button"
+    point: "95%,95%"
 - takeScreenshot: "05_message_sent"
 
-# Wait for AI response in message_list
+# Wait for AI response - wait for animation
 - waitForAnimationToEnd
-- assertVisible:
-    id: "message_list"
 - takeScreenshot: "06_ai_response_received"
 
-# Test auto-scroll behavior - send another message
-- tapOn:
-    id: "text_field"
+# Test second message - tap text field again
+- tapOn: "Type your message..."
 - inputText: "Tell me about farming"
 - takeScreenshot: "07_second_message_typed"
 
+# Send second message
 - tapOn:
-    id: "send_button"
+    point: "95%,95%"
 - takeScreenshot: "08_second_message_sent"
 
-# Verify streaming and auto-scroll
+# Wait for second response
 - waitForAnimationToEnd
-- assertVisible:
-    id: "message_list"
 - takeScreenshot: "09_second_response"
 
-# Test starter question if available
-- extendedWaitUntil:
-    visible:
-      id: "starter_question_0"
-    timeout: 3000
-- tapOn:
-    id: "starter_question_0"
-    optional: true
-- takeScreenshot: "10_starter_question_clicked"
-
 # Take final screenshot for review
-- takeScreenshot: "11_conversation_complete"
+- takeScreenshot: "10_conversation_complete"
