@@ -17,6 +17,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -37,7 +38,6 @@ import com.mikepenz.markdown.m3.markdownColor
 import com.mikepenz.markdown.m3.markdownTypography
 import com.mikepenz.markdown.model.markdownDimens
 import com.mikepenz.markdown.model.markdownPadding
-import com.mikepenz.markdown.compose.elements.material.MarkdownBasicText
 import com.mikepenz.markdown.utils.buildMarkdownAnnotatedString
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.ast.findChildOfType
@@ -110,18 +110,23 @@ private fun TableRow(
     val colors = LocalMarkdownColors.current
 
     Row(verticalAlignment = Alignment.Top) {
-        node.children.filter { it.type == CELL }.forEach { cell ->
-            MarkdownBasicText(
-                text = content.buildMarkdownAnnotatedString(cell, style),
-                style = style,
-                color = colors.tableText,
-                maxLines = Int.MAX_VALUE,  // Allow wrapping instead of truncating
-                overflow = TextOverflow.Visible,
-                modifier = Modifier
-                    .width(columnWidth)  // Fixed column width
-                    .padding(padding)
-            )
-        }
+        node.children
+            .filter { it.type == CELL }
+            .forEach { cell ->
+                val annotated: AnnotatedString = content.buildMarkdownAnnotatedString(cell, style)
+
+                Text(
+                    text = annotated,
+                    style = style,
+                    color = colors.tableText,
+                    maxLines = Int.MAX_VALUE,
+                    softWrap = true,
+                    overflow = TextOverflow.Visible,
+                    modifier = Modifier
+                        .width(columnWidth)
+                        .padding(padding)
+                )
+            }
     }
 }
 
