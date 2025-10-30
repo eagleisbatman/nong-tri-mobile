@@ -44,6 +44,7 @@ import org.intellij.markdown.ast.findChildOfType
 import org.intellij.markdown.flavours.gfm.GFMElementTypes.HEADER
 import org.intellij.markdown.flavours.gfm.GFMElementTypes.ROW
 import org.intellij.markdown.flavours.gfm.GFMTokenTypes.CELL
+import org.intellij.markdown.flavours.gfm.GFMTokenTypes.TABLE_SEPARATOR
 
 /**
  * Custom table renderer that wraps text within fixed-width columns
@@ -63,28 +64,28 @@ private fun WrappedMarkdownTable(content: String, node: ASTNode, style: TextStyl
 
     Box(
         modifier = Modifier
-            .background(colors.codeBackground, RoundedCornerShape(dimens.tableCornerSize))
+            .background(colors.tableBackground, RoundedCornerShape(dimens.tableCornerSize))
             .horizontalScroll(rememberScrollState())
             .requiredWidth(tableWidth)
     ) {
         Column {
             node.children.forEach { child ->
-                when {
-                    child.type == HEADER -> TableRow(
+                when (child.type) {
+                    HEADER -> TableRow(
                         content = content,
                         node = child,
                         style = style.copy(fontWeight = FontWeight.Bold),
                         columnWidth = columnWidth,
                         padding = padding
                     )
-                    child.type == ROW -> TableRow(
+                    ROW -> TableRow(
                         content = content,
                         node = child,
                         style = style,
                         columnWidth = columnWidth,
                         padding = padding
                     )
-                    child.type.toString() == "TABLE_SEPARATOR" -> HorizontalDivider(
+                    TABLE_SEPARATOR -> HorizontalDivider(
                         modifier = Modifier.padding(vertical = 4.dp),
                         thickness = dimens.dividerThickness,
                         color = colors.dividerColor
@@ -183,8 +184,8 @@ fun MarkdownText(
 
     // Custom dimensions for table formatting and dividers
     val customDimens = markdownDimens(
-        tableMaxWidth = 400.dp,      // Allow wider table for horizontal scroll
-        tableCellWidth = 130.dp,     // Wider columns to reduce truncation
+        tableMaxWidth = 450.dp,      // Allow wider table for horizontal scroll
+        tableCellWidth = 140.dp,     // Wide columns that force horizontal scroll on mobile
         tableCellPadding = 12.dp,    // Generous padding for readability
         tableCornerSize = 8.dp,       // Rounded corners for modern look
         dividerThickness = 2.dp      // Visible horizontal rules on mobile
