@@ -79,10 +79,6 @@ fun ChatScreen(
     // Image selection state (critical state survives rotation to handle camera/gallery results)
     var showImageSourceSelector by remember { mutableStateOf(false) }
     var permissionSheetOpenedFromImageSelector by remember { mutableStateOf(false) }
-    var showImagePreviewDialog by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
-    var selectedImageUri by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<String?>(null) }  // Display URI
-    // Note: selectedImageBase64 cannot use rememberSaveable (too large for savedInstanceState)
-    var selectedImageBase64 by remember { mutableStateOf<String?>(null) }  // Base64 data for upload
     var selectedImageSource by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf("unknown") }  // "camera" or "gallery" for analytics
     var isImageProcessing by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }  // Prevent multiple simultaneous operations
     var showFullscreenImage by remember { mutableStateOf<String?>(null) }  // Image URL to show fullscreen
@@ -531,7 +527,7 @@ fun ChatScreen(
                             // Image thumbnail
                             coil3.compose.AsyncImage(
                                 model = uiState.attachedImageUri!!,
-                                contentDescription = "Attached image",
+                                contentDescription = strings.cdSelectedPlantImage,
                                 modifier = Modifier
                                     .size(80.dp)
                                     .clip(RoundedCornerShape(8.dp)),
@@ -541,8 +537,14 @@ fun ChatScreen(
                             Spacer(modifier = Modifier.width(8.dp))
 
                             // Remove button
-                            IconButton(onClick = { viewModel.removeAttachedImage() }) {
-                                Icon(Icons.Default.Close, contentDescription = "Remove image")
+                            IconButton(onClick = {
+                                viewModel.removeAttachedImage()
+                                selectedImageSource = "unknown"
+                                if (viewModel.uiState.value.currentMessage == strings.defaultPlantQuestion) {
+                                    viewModel.updateMessage("")
+                                }
+                            }) {
+                                Icon(Icons.Default.Close, contentDescription = strings.close)
                             }
                         }
 
@@ -559,46 +561,83 @@ fun ChatScreen(
                                 // Light haptic feedback - message sent
                                 hapticFeedback.tick()
 
-                                // Check if this is a voice message with pending metadata
-                                if (pendingVoiceUrl != null) {
-                                    println("[ChatScreen] Sending voice message with transcription: ${uiState.currentMessage}")
+                                val hasAttachedImage = uiState.attachedImageBase64 != null
 
-                                    // Add user's voice message to UI first (optimistic update)
-                                    viewModel.addUserVoiceMessage(
-                                        transcription = uiState.currentMessage,
-                                        voiceAudioUrl = pendingVoiceUrl,
-                                        durationMs = pendingVoiceDuration ?: 0L
-                                    )
+                                when {
+                                    pendingVoiceUrl != null -> {
+                                        println("[ChatScreen] Sending voice message with transcription: ${uiState.currentMessage}")
 
-                                    // Then trigger AI response
-                                    viewModel.sendVoiceMessage(
-                                        transcription = uiState.currentMessage,
-                                        voiceAudioUrl = pendingVoiceUrl,
-                                        durationMs = pendingVoiceDuration ?: 0L
-                                    )
-
-                                    // Clear pending voice metadata and input field
-                                    pendingVoiceUrl = null
-                                    pendingVoiceDuration = null
-                                } else {
-                                    // Regular text message
-                                    viewModel.sendMessage(uiState.currentMessage)
-                                }
-
-                                // Immediately scroll to show the new message using fresh state
-                                coroutineScope.launch {
-                                    // Wait for the message list to actually update
-                                    val newSize = snapshotFlow { viewModel.uiState.value.messages.size }
-                                        .drop(1)  // Skip the current value, wait for the change
-                                        .first()
-
-                                    // Now scroll to the last item with the fresh state
-                                    val lastIndex = viewModel.uiState.value.messages.lastIndex
-                                    if (lastIndex >= 0) {
-                                        listState.animateScrollToItem(
-                                            index = lastIndex,
-                                            scrollOffset = 0
+                                        viewModel.addUserVoiceMessage(
+                                            transcription = uiState.currentMessage,
+                                            voiceAudioUrl = pendingVoiceUrl,
+                                            durationMs = pendingVoiceDuration ?: 0L
                                         )
+
+                                        viewModel.sendVoiceMessage(
+                                            transcription = uiState.currentMessage,
+                                            voiceAudioUrl = pendingVoiceUrl,
+                                            durationMs = pendingVoiceDuration ?: 0L
+                                        )
+
+                                        pendingVoiceUrl = null
+                                        pendingVoiceDuration = null
+
+                                        coroutineScope.launch {
+                                            snapshotFlow { viewModel.uiState.value.messages.size }
+                                                .drop(1)
+                                                .first()
+
+                                            val lastIndex = viewModel.uiState.value.messages.lastIndex
+                                            if (lastIndex >= 0) {
+                                                listState.animateScrollToItem(lastIndex)
+                                            }
+                                        }
+                                    }
+                                    hasAttachedImage -> {
+                                        val preview = uiState.attachedImageUri ?: uiState.attachedImageBase64!!
+                                        val question = uiState.currentMessage.ifBlank { strings.defaultPlantQuestion }
+
+                                        println("[ChatScreen] Sending attached image for diagnosis")
+
+                                        currentOptimisticMessageId = viewModel.showOptimisticImageMessage(
+                                            imageData = preview,
+                                            question = question
+                                        )
+
+                                        viewModel.sendImageDiagnosis(
+                                            imageData = uiState.attachedImageBase64!!,
+                                            question = question,
+                                            imageSource = selectedImageSource
+                                        )
+
+                                        viewModel.removeAttachedImage()
+                                        viewModel.updateMessage("")
+                                        selectedImageSource = "unknown"
+
+                                        coroutineScope.launch {
+                                            snapshotFlow { viewModel.uiState.value.messages.size }
+                                                .drop(1)
+                                                .first()
+
+                                            val lastIndex = viewModel.uiState.value.messages.lastIndex
+                                            if (lastIndex >= 0) {
+                                                listState.animateScrollToItem(lastIndex)
+                                            }
+                                        }
+                                    }
+                                    else -> {
+                                        viewModel.sendMessage(uiState.currentMessage)
+
+                                        coroutineScope.launch {
+                                            snapshotFlow { viewModel.uiState.value.messages.size }
+                                                .drop(1)
+                                                .first()
+
+                                            val lastIndex = viewModel.uiState.value.messages.lastIndex
+                                            if (lastIndex >= 0) {
+                                                listState.animateScrollToItem(lastIndex)
+                                            }
+                                        }
                                     }
                                 }
                             },
@@ -1037,15 +1076,28 @@ fun ChatScreen(
                             imageHeight = result.height
                         )
 
-                        // Show preview dialog with async diagnosis flow
-                        selectedImageUri = result.uri
-                        selectedImageBase64 = result.base64Data
+                        // Attach image inline with chat composer
                         selectedImageSource = "camera"
-                        showImagePreviewDialog = true
+                        viewModel.attachImage(
+                            uri = result.uri,
+                            base64Data = result.base64Data!!
+                        )
+
+                        // Auto-populate default question if input is empty
+                        if (viewModel.uiState.value.currentMessage.isBlank()) {
+                            viewModel.updateMessage(strings.defaultPlantQuestion)
+                        }
+
+                        // Track preview displayed analytics (mirrors old dialog event)
+                        com.nongtri.app.analytics.Events.logImagePreviewDisplayed(
+                            fileSizeKb = (result.sizeBytes / 1024).toInt(),
+                            imageWidth = result.width,
+                            imageHeight = result.height
+                        )
                     } else {
                         println("[ChatScreen] Camera capture cancelled or failed: base64Data=${result?.base64Data != null}")
                         // Show specific error message if available (farmer-friendly)
-                        val errorMessage = result?.error ?: "Failed to process image. Please try again."
+                        val errorMessage = result?.error ?: strings.errorFailedToProcessImage
                         coroutineScope.launch {
                             snackbarHostState.showSnackbar(
                                 message = errorMessage,
@@ -1085,16 +1137,29 @@ fun ChatScreen(
                             imageHeight = result.height
                         )
 
-                        // Show preview dialog with async diagnosis flow
-                        selectedImageUri = result.uri
-                        selectedImageBase64 = result.base64Data
+                        // Attach image inline with chat composer
                         selectedImageSource = "gallery"
-                        showImagePreviewDialog = true
+                        viewModel.attachImage(
+                            uri = result.uri,
+                            base64Data = result.base64Data!!
+                        )
+
+                        // Auto-populate default question if input is empty
+                        if (viewModel.uiState.value.currentMessage.isBlank()) {
+                            viewModel.updateMessage(strings.defaultPlantQuestion)
+                        }
+
+                        // Mirror legacy analytics event for preview display
+                        com.nongtri.app.analytics.Events.logImagePreviewDisplayed(
+                            fileSizeKb = (result.sizeBytes / 1024).toInt(),
+                            imageWidth = result.width,
+                            imageHeight = result.height
+                        )
                     } else {
                         println("[ChatScreen] Gallery selection cancelled or failed: base64Data=${result?.base64Data != null}")
                         if (result != null && result.base64Data == null) {
                             // Image was selected but failed to process - show specific error
-                            val errorMessage = result.error ?: "Failed to process image. Please try again."
+                            val errorMessage = result.error ?: strings.errorFailedToProcessImage
                             coroutineScope.launch {
                                 snackbarHostState.showSnackbar(
                                     message = errorMessage,
@@ -1109,57 +1174,6 @@ fun ChatScreen(
             },
             onDismiss = {
                 showImageSourceSelector = false
-            }
-        )
-    }
-
-    // Image Preview Dialog
-    if (showImagePreviewDialog && selectedImageUri != null && selectedImageBase64 != null) {
-        ImagePreviewDialog(
-            language = language,
-            imageUri = selectedImageUri!!,
-            onDismiss = {
-                showImagePreviewDialog = false
-                selectedImageUri = null
-                selectedImageBase64 = null
-            },
-            onConfirm = { question ->
-                // Validate that we have the base64 data
-                val base64Data = selectedImageBase64
-                if (base64Data == null) {
-                    println("[ChatScreen] Error: base64Data is null, cannot send image")
-                    coroutineScope.launch {
-                        snackbarHostState.showSnackbar(
-                            message = "Failed to process image. Please try again.",
-                            duration = SnackbarDuration.Short
-                        )
-                    }
-                    showImagePreviewDialog = false
-                    selectedImageUri = null
-                    selectedImageBase64 = null
-                    return@ImagePreviewDialog
-                }
-
-                println("[ChatScreen] Sending image for diagnosis: $question")
-
-                // Show optimistic user message with image immediately
-                viewModel.showOptimisticImageMessage(
-                    imageData = selectedImageUri!!,  // Use URI for local preview
-                    question = question
-                )
-
-                // Send image to backend for diagnosis
-                viewModel.sendImageDiagnosis(
-                    imageData = base64Data,  // Use base64 for upload
-                    question = question,
-                    imageSource = selectedImageSource
-                )
-
-                // Close dialog and clear state
-                showImagePreviewDialog = false
-                selectedImageUri = null
-                selectedImageBase64 = null
-                isImageProcessing = false  // Reset after upload starts
             }
         )
     }
@@ -1182,4 +1196,3 @@ fun ChatScreen(
         )
     }
 }
-

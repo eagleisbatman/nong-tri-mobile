@@ -563,37 +563,24 @@ class ChatViewModel(
     }
 
     fun sendMessage(message: String) {
-        if (message.isBlank() && _uiState.value.attachedImageBase64 == null) return
-
-        // Get attached image before clearing
         val imageData = _uiState.value.attachedImageBase64
-        val hasImage = imageData != null
-
-        // Use default question if image attached but no text
-        val actualMessage = if (hasImage && message.isBlank()) {
-            "What's wrong with my plant?"
-        } else {
-            message
+        if (imageData != null) {
+            // Image attachments are handled via sendImageDiagnosis; avoid double-send
+            println("[ChatViewModel] sendMessage ignored because image attachment is pending")
+            return
         }
 
-        // Clear input field and attached image
-        _uiState.update { it.copy(currentMessage = "", attachedImageUri = null, attachedImageBase64 = null) }
+        if (message.isBlank()) return
+
+        val strings = LocalizationProvider.getStrings(userPreferences.language.value)
+        val actualMessage = message.ifBlank { strings.defaultPlantQuestion }
+
+        // Clear input field
+        _uiState.update { it.copy(currentMessage = "") }
 
         // Track analytics: message sent
         sessionMessageCount++
         userPreferences.incrementMessageCount()
-
-        // Track image analytics if present
-        if (hasImage) {
-            sessionImageCount++
-            userPreferences.incrementImageMessageCount()
-            userPreferences.setHasUsedImageDiagnosis(true)
-            Events.logImageDiagnosisRequested(
-                imageSource = "gallery",
-                hasLocation = locationRepository.hasLocation(),
-                locationType = locationRepository.getLocationType()
-            )
-        }
 
         // Log message sent event
         Events.logChatMessageSent(
@@ -623,9 +610,9 @@ class ChatViewModel(
             role = MessageRole.USER,
             content = actualMessage.trim(),
             timestamp = Clock.System.now(),
-            messageType = if (hasImage) "image" else "text",
-            imageUrl = if (hasImage) imageData else null  // Show preview in chat
-        )
+                messageType = "text",
+                imageUrl = null
+            )
 
         _uiState.update { state ->
             state.copy(

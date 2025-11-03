@@ -58,7 +58,7 @@ fun ImageMessageBubble(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = formatTimestamp(message.timestamp),
+                    text = formatTimestamp(message.timestamp, strings),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -187,14 +187,14 @@ fun ImageMessageBubble(
  * Format timestamp for message display
  * Note: This is a simplified version - ideally should be passed strings parameter
  */
-private fun formatTimestamp(timestamp: kotlinx.datetime.Instant): String {
+private fun formatTimestamp(timestamp: kotlinx.datetime.Instant, strings: com.nongtri.app.l10n.Strings): String {
     val now = kotlinx.datetime.Clock.System.now()
     val duration = now - timestamp
 
     return when {
-        duration.inWholeMinutes < 1 -> "Just now"  // TODO: Use strings.justNow
-        duration.inWholeMinutes < 60 -> "${duration.inWholeMinutes}m ago"  // TODO: Use strings.minutesAgo
-        duration.inWholeHours < 24 -> "${duration.inWholeHours}h ago"  // TODO: Use strings.hoursAgo
+        duration.inWholeMinutes < 1 -> strings.justNow
+        duration.inWholeMinutes < 60 -> "${duration.inWholeMinutes}${strings.minutesAgo}"
+        duration.inWholeHours < 24 -> "${duration.inWholeHours}${strings.hoursAgo}"
         else -> {
             // Format as date
             val local = timestamp.toString()
