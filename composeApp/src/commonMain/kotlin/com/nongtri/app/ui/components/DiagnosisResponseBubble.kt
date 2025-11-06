@@ -33,7 +33,7 @@ import kotlinx.datetime.toLocalDateTime
 fun DiagnosisResponseBubble(
     message: ChatMessage,
     strings: com.nongtri.app.l10n.Strings,
-    onTtsClick: (() -> Unit)? = null,
+    onAudioUrlCached: (String, String) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier
 ) {
     // ROUND 6: Track diagnosis result read when displayed
@@ -142,6 +142,8 @@ fun DiagnosisResponseBubble(
                             strings = strings,
                             isGenericResponse = false,
                             cachedAudioUrl = message.audioUrl,
+                            conversationId = message.conversationId,
+                            messageId = message.id,
                             onCopy = { },
                             onShare = { },
                             onListen = { },
@@ -152,6 +154,7 @@ fun DiagnosisResponseBubble(
                                     jobId = message.diagnosisPendingJobId ?: message.id,
                                     adviceLength = message.content.length
                                 )
+                                onAudioUrlCached(message.id, audioUrl)
                             }
                         )
                     }

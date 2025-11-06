@@ -19,6 +19,7 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import java.io.File
+import java.io.FileOutputStream
 import java.util.concurrent.TimeUnit
 
 actual class TextToSpeechManager(
@@ -63,7 +64,9 @@ actual class TextToSpeechManager(
         language: String,
         voice: String,
         tone: String,
-        cachedAudioUrl: String?
+        cachedAudioUrl: String?,
+        conversationId: Int?,
+        messageId: String?
     ): String? = withContext(Dispatchers.IO) {
         // Prevent multiple simultaneous TTS requests
         if (isProcessing) {
@@ -90,11 +93,18 @@ actual class TextToSpeechManager(
             if (cachedAudioUrl != null) {
                 Log.d(TAG, "TTS: Using cached audio URL: $cachedAudioUrl")
                 audioUrl = cachedAudioUrl
-                audioFile = downloadAudio(audioUrl)
+
+                val cachedFile = messageId?.let { File(cacheDir, "tts_${it}.mp3") }
+                audioFile = if (cachedFile?.exists() == true) {
+                    Log.d(TAG, "TTS: Found existing cached file ${cachedFile.absolutePath}")
+                    cachedFile
+                } else {
+                    downloadAudio(audioUrl, messageId)
+                }
             } else {
                 // Request TTS audio from backend
                 Log.d(TAG, "TTS: Requesting audio from backend")
-                val result = requestTTS(text, language, voice, tone)
+                val result = requestTTS(text, language, voice, tone, conversationId, messageId)
                 audioUrl = result.first
                 audioFile = result.second
             }
@@ -218,7 +228,9 @@ actual class TextToSpeechManager(
         text: String,
         language: String,
         voice: String,
-        tone: String
+        tone: String,
+        conversationId: Int?,
+        messageId: String?
     ): Pair<String, File> = withContext(Dispatchers.IO) {
         // Create request body
         val json = JSONObject().apply {
@@ -226,6 +238,8 @@ actual class TextToSpeechManager(
             put("language", language)
             put("voice", voice)
             put("tone", tone)
+            conversationId?.let { put("conversationId", it) }
+            messageId?.let { put("messageId", it) }
         }
 
         val requestBody = json.toString()
@@ -238,7 +252,7 @@ actual class TextToSpeechManager(
 
         // Execute request to get audio URL from backend
         Log.d(TAG, "TTS: Sending request to ${BuildConfig.API_URL}/api/tts")
-        val audioUrl = client.newCall(request).execute().use { response ->
+        val (chunkUrls, primaryUrl) = client.newCall(request).execute().use { response ->
             Log.d(TAG, "TTS: Backend response code: ${response.code}")
 
             if (!response.isSuccessful) {
@@ -250,27 +264,52 @@ actual class TextToSpeechManager(
 
             Log.d(TAG, "TTS: Response body: $responseBody")
 
-            // Parse JSON response to get audio URL from MinIO
-            val responseJson = JSONObject(responseBody)
-
-            if (!responseJson.getBoolean("success")) {
-                val error = responseJson.optString("error", "Unknown error")
+            val json = JSONObject(responseBody)
+            if (!json.getBoolean("success")) {
+                val error = json.optString("error", "Unknown error")
                 Log.e(TAG, "TTS: Generation failed - $error")
                 throw Exception("TTS generation failed: $error")
             }
 
-            val url = responseJson.getString("audioUrl")
-            Log.d(TAG, "TTS: Got audio URL: $url")
-            url
+            val primary = json.getString("audioUrl")
+            val array = json.optJSONArray("audioUrls")
+            val urls = mutableListOf<String>()
+            if (array != null) {
+                for (i in 0 until array.length()) {
+                    urls += array.getString(i)
+                }
+            }
+            if (urls.isEmpty()) {
+                urls += primary
+            }
+
+            urls to primary
         }
 
-        // Download audio file and return both URL and File
-        val audioFile = downloadAudio(audioUrl)
-        Pair(audioUrl, audioFile)
+        val targetName = messageId ?: System.currentTimeMillis().toString()
+        val combinedFile = File(cacheDir, "tts_${targetName}.mp3")
+
+        FileOutputStream(combinedFile, false).use { output ->
+            chunkUrls.forEachIndexed { index, url ->
+                Log.d(TAG, "TTS: Downloading chunk ${index + 1}/${chunkUrls.size}: $url")
+                val bytes = fetchAudioBytes(url)
+                output.write(bytes)
+            }
+        }
+
+        Pair(primaryUrl, combinedFile)
     }
 
-    private suspend fun downloadAudio(audioUrl: String): File = withContext(Dispatchers.IO) {
-        // Download audio file from MinIO URL
+    private suspend fun downloadAudio(audioUrl: String, messageId: String? = null): File = withContext(Dispatchers.IO) {
+        val bytes = fetchAudioBytes(audioUrl)
+        val targetName = messageId?.let { "tts_${it}.mp3" } ?: "current_tts.mp3"
+        val audioFile = File(cacheDir, targetName)
+        audioFile.writeBytes(bytes)
+        Log.d(TAG, "TTS: Saved to ${audioFile.absolutePath}")
+        audioFile
+    }
+
+    private fun fetchAudioBytes(audioUrl: String): ByteArray {
         Log.d(TAG, "TTS: Downloading from MinIO: $audioUrl")
         val audioRequest = Request.Builder()
             .url(audioUrl)
@@ -284,16 +323,8 @@ actual class TextToSpeechManager(
                 throw Exception("Failed to download audio: ${audioResponse.code} - ${audioResponse.message}")
             }
 
-            val audioBytes = audioResponse.body?.bytes()
+            return audioResponse.body?.bytes()
                 ?: throw Exception("Empty audio response")
-
-            Log.d(TAG, "TTS: Downloaded ${audioBytes.size} bytes")
-
-            val audioFile = File(cacheDir, "current_tts.mp3")
-            audioFile.writeBytes(audioBytes)
-
-            Log.d(TAG, "TTS: Saved to ${audioFile.absolutePath}")
-            audioFile
         }
     }
 

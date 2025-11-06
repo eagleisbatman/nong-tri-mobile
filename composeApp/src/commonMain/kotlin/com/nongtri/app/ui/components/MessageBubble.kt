@@ -179,6 +179,8 @@ fun MessageBubble(
                                 strings = strings,
                                 isGenericResponse = message.isGenericResponse,
                                 cachedAudioUrl = message.audioUrl,
+                                conversationId = message.conversationId,
+                                messageId = message.id,
                                 onCopy = { },
                                 onShare = { },
                                 onListen = { },

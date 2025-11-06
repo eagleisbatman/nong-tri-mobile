@@ -596,7 +596,7 @@ class ChatViewModel(
 
             // Track first message sent event with detailed metrics
             Events.logChatFirstMessageSent(
-                messageType = if (hasImage) "image" else "text",
+                messageType = "text",
                 timeSinceAppOpenMs = 0L, // TODO: Need MainActivity app start time tracking
                 timeSinceChatViewMs = 0L, // TODO: Need ChatScreen first view time tracking
                 messageLength = actualMessage.trim().length,
@@ -610,9 +610,9 @@ class ChatViewModel(
             role = MessageRole.USER,
             content = actualMessage.trim(),
             timestamp = Clock.System.now(),
-                messageType = "text",
-                imageUrl = null
-            )
+            messageType = "text",
+            imageUrl = null
+        )
 
         _uiState.update { state ->
             state.copy(

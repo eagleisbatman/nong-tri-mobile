@@ -26,6 +26,8 @@ fun MessageActionButtons(
     strings: com.nongtri.app.l10n.Strings,
     isGenericResponse: Boolean = false,  // true = greeting/casual, false = agricultural advice
     cachedAudioUrl: String? = null,  // Cached TTS audio URL
+    conversationId: Int? = null,
+    messageId: String,
     onCopy: () -> Unit,
     onShare: () -> Unit,
     onListen: () -> Unit,
@@ -151,7 +153,9 @@ fun MessageActionButtons(
                                 language = language.code,
                                 voice = "alloy", // Options: alloy, echo, fable, onyx, nova, shimmer
                                 tone = "friendly", // friendly, professional, empathetic, excited, calm, neutral
-                                cachedAudioUrl = cachedAudioUrl  // Use cached if available
+                                cachedAudioUrl = cachedAudioUrl,  // Use cached if available
+                                conversationId = conversationId,
+                                messageId = messageId
                             )
                             // Cache the audio URL for future use
                             audioUrl?.let { onAudioUrlCached(it) }

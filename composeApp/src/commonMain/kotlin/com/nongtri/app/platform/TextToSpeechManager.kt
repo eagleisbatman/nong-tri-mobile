@@ -36,7 +36,9 @@ expect class TextToSpeechManager {
         language: String = "en",
         voice: String = "alloy",
         tone: String = "friendly",
-        cachedAudioUrl: String? = null
+        cachedAudioUrl: String? = null,
+        conversationId: Int? = null,
+        messageId: String? = null
     ): String?
 
     /**
