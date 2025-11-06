@@ -18,6 +18,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.debounce
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
@@ -42,7 +43,6 @@ fun ChatScreen(
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val streamingContent by viewModel.streamingContent.collectAsState()
     val strings = LocalizationProvider.getStrings(language)
     val isLightTheme = !isSystemInDarkTheme()
 
@@ -216,21 +216,31 @@ fun ChatScreen(
         }
     }
 
-    // Auto-scroll during streaming - monitor both streaming content and list state
-    LaunchedEffect(streamingContent) {
-        if (!streamingContent.isNullOrEmpty()) {
-            // Wait a tiny bit for layout to update
+    // Auto-scroll during streaming - monitor last assistant message content length
+    // Use LaunchedEffect with content length as key to trigger on every content update
+    val lastMessage = uiState.messages.lastOrNull()
+    val lastMessageContentLength = lastMessage?.content?.length ?: 0
+    
+    LaunchedEffect(lastMessage?.id, lastMessageContentLength) {
+        // Re-read the message to get fresh state
+        val currentLastMessage = uiState.messages.lastOrNull()
+        val isStreaming = currentLastMessage?.role == com.nongtri.app.data.model.MessageRole.ASSISTANT && 
+                          currentLastMessage.isLoading == true
+        
+        // Only auto-scroll if streaming is active
+        if (isStreaming && lastMessageContentLength > 0) {
+            // Small delay to let layout update after content change
             kotlinx.coroutines.delay(50)
-
+            
             val totalItems = listState.layoutInfo.totalItemsCount
             val lastIndex = totalItems - 1
-
+            
             if (lastIndex >= 0) {
                 try {
-                    // Force scroll to bottom during streaming
+                    // Use instant scroll for streaming (smoother during rapid updates)
                     listState.scrollToItem(lastIndex)
                 } catch (e: Exception) {
-                    // Ignore
+                    // Ignore if fails (might be during layout)
                 }
             }
         }
@@ -849,19 +859,11 @@ fun ChatScreen(
                         }
                         message.diagnosisData != null && message.role == com.nongtri.app.data.model.MessageRole.ASSISTANT -> {
                             // AI diagnosis response
-                            val ttsManager = com.nongtri.app.platform.LocalTextToSpeechManager.current
-
                             DiagnosisResponseBubble(
                                 message = message,
                                 strings = strings,
-                                onTtsClick = {
-                                    // Play TTS for diagnosis advice
-                                    coroutineScope.launch {
-                                        ttsManager.speak(
-                                            text = message.content,
-                                            language = if (language == Language.VIETNAMESE) "vi" else "en"
-                                        )
-                                    }
+                                onAudioUrlCached = { messageId, audioUrl ->
+                                    viewModel.updateMessageAudioUrl(messageId, audioUrl)
                                 }
                             )
                         }
