@@ -25,8 +25,26 @@ class ApiClient private constructor() {
             })
         }
         install(Logging) {
-            logger = Logger.DEFAULT
-            level = LogLevel.INFO
+            logger = object : Logger {
+                override fun log(message: String) {
+                    // Redact sensitive data (base64 images/audio) in logs
+                    val redacted = if (message.contains("base64") || message.contains("data:image") || message.contains("data:audio")) {
+                        message.replace(Regex("(data:(image|audio)/[^;]+;base64,)[A-Za-z0-9+/=]{20,}"), "$1[REDACTED]")
+                            .replace(Regex("\"imageData\":\"[^\"]+\""), "\"imageData\":\"[REDACTED]\"")
+                            .replace(Regex("\"audio\":\"[^\"]+\""), "\"audio\":\"[REDACTED]\"")
+                    } else {
+                        message
+                    }
+                    // Only log in debug builds (release builds skip logging)
+                    // For production, set level to NONE or remove this logger entirely
+                    if (BuildConfig.VERSION_NAME.contains("debug", ignoreCase = true) || 
+                        System.getProperty("debug") == "true") {
+                        println("[ApiClient] $redacted")
+                    }
+                }
+            }
+            // Set to NONE in release builds to disable all logging
+            level = LogLevel.NONE  // Change to LogLevel.INFO for debugging
         }
         install(HttpTimeout) {
             requestTimeoutMillis = 60000  // 60 seconds for AI responses

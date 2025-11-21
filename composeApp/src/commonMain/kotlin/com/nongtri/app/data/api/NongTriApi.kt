@@ -44,8 +44,25 @@ class NongTriApi(
             })
         }
         install(Logging) {
-            logger = Logger.DEFAULT
-            level = LogLevel.INFO
+            logger = object : Logger {
+                override fun log(message: String) {
+                    // Redact sensitive data (base64 images/audio) in logs
+                    val redacted = if (message.contains("base64") || message.contains("data:image") || message.contains("data:audio")) {
+                        message.replace(Regex("(data:(image|audio)/[^;]+;base64,)[A-Za-z0-9+/=]{20,}"), "$1[REDACTED]")
+                            .replace(Regex("\"imageData\":\"[^\"]+\""), "\"imageData\":\"[REDACTED]\"")
+                            .replace(Regex("\"audio\":\"[^\"]+\""), "\"audio\":\"[REDACTED]\"")
+                    } else {
+                        message
+                    }
+                    // Only log in debug builds (release builds skip logging)
+                    if (BuildConfig.VERSION_NAME.contains("debug", ignoreCase = true) || 
+                        System.getProperty("debug") == "true") {
+                        println("[NongTriApi] $redacted")
+                    }
+                }
+            }
+            // Set to NONE in release builds to disable all logging
+            level = LogLevel.NONE  // Change to LogLevel.INFO for debugging
         }
         install(HttpTimeout) {
             requestTimeoutMillis = 180000  // 3 minutes for AI responses (MCP servers can be slow)

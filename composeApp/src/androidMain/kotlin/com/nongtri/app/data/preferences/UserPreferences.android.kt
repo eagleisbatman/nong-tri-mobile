@@ -313,7 +313,7 @@ actual class UserPreferences private constructor(context: Context) {
         return deviceInfoProvider.getDeviceInfo()
     }
 
-    // Pending diagnosis job ID (for notification tap handling)
+    // Pending diagnosis job ID (for notification tap handling - single ID for backward compatibility)
     actual fun setPendingDiagnosisJobId(jobId: String?) {
         prefs.edit().apply {
             if (jobId != null) {
@@ -331,6 +331,66 @@ actual class UserPreferences private constructor(context: Context) {
         val jobId = prefs.getString("pending_diagnosis_job_id", null)
         println("UserPreferences: Retrieved pending diagnosis job ID: $jobId")
         return jobId
+    }
+    
+    // Multiple pending diagnosis jobs (for concurrent diagnoses)
+    actual fun addPendingDiagnosisJobId(jobId: String) {
+        val currentIds = getPendingDiagnosisJobIds().toMutableSet()
+        currentIds.add(jobId)
+        savePendingDiagnosisJobIds(currentIds)
+        println("UserPreferences: Added pending diagnosis job ID: $jobId (total: ${currentIds.size})")
+    }
+    
+    actual fun removePendingDiagnosisJobId(jobId: String) {
+        val currentIds = getPendingDiagnosisJobIds().toMutableSet()
+        currentIds.remove(jobId)
+        savePendingDiagnosisJobIds(currentIds)
+        println("UserPreferences: Removed pending diagnosis job ID: $jobId (remaining: ${currentIds.size})")
+    }
+    
+    actual fun getPendingDiagnosisJobIds(): Set<String> {
+        val idsString = prefs.getString("pending_diagnosis_job_ids", null)
+        return if (idsString.isNullOrBlank()) {
+            emptySet()
+        } else {
+            try {
+                // Try parsing as JSON array first (new format)
+                if (idsString.startsWith("[") && idsString.endsWith("]")) {
+                    val jsonArray = org.json.JSONArray(idsString)
+                    val ids = mutableSetOf<String>()
+                    for (i in 0 until jsonArray.length()) {
+                        ids.add(jsonArray.getString(i))
+                    }
+                    return ids
+                } else {
+                    // Fallback to comma-separated format (legacy)
+                    idsString.split(",").filter { it.isNotBlank() }.toSet()
+                }
+            } catch (e: Exception) {
+                // If JSON parsing fails, try comma-separated format
+                idsString.split(",").filter { it.isNotBlank() }.toSet()
+            }
+        }
+    }
+    
+    private fun savePendingDiagnosisJobIds(ids: Set<String>) {
+        prefs.edit().apply {
+            if (ids.isEmpty()) {
+                remove("pending_diagnosis_job_ids")
+            } else {
+                // Store as JSON array for better structure and future extensibility
+                // Format: ["jobId1","jobId2","jobId3"] - allows for metadata/ordering later
+                val jsonArray = ids.joinToString(",", prefix = "[", postfix = "]") { "\"$it\"" }
+                putString("pending_diagnosis_job_ids", jsonArray)
+            }
+            apply()
+        }
+        // Also update single ID for backward compatibility (most recent)
+        if (ids.isNotEmpty()) {
+            setPendingDiagnosisJobId(ids.maxOrNull())
+        } else {
+            setPendingDiagnosisJobId(null)
+        }
     }
 
     // Analytics tracking methods

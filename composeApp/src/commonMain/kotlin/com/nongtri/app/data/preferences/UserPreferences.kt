@@ -39,6 +39,11 @@ expect class UserPreferences {
     // Pending diagnosis job (for notification tap handling)
     fun setPendingDiagnosisJobId(jobId: String?)
     fun getPendingDiagnosisJobId(): String?
+    
+    // Multiple pending diagnosis jobs (for concurrent diagnoses)
+    fun addPendingDiagnosisJobId(jobId: String)
+    fun removePendingDiagnosisJobId(jobId: String)
+    fun getPendingDiagnosisJobIds(): Set<String>
 
     // Analytics tracking methods
     fun incrementSessionCount()

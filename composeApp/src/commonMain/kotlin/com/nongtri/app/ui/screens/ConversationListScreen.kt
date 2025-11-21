@@ -184,17 +184,17 @@ fun ConversationListScreen(
                         modifier = Modifier.fillMaxSize().testTag(TestTags.CONVERSATION_LIST),
                         contentPadding = PaddingValues(vertical = 8.dp)
                     ) {
-                        items(
+                        itemsIndexed(
                             items = uiState.threads,
-                            key = { it.id }
-                        ) { thread ->
+                            key = { _, thread -> thread.id }
+                        ) { index, thread ->
                             ConversationThreadItem(
                                 thread = thread,
                                 onClick = {
-                                    // ROUND 8: Track conversation item clicked (position unknown in items() block)
+                                    // ROUND 8: Track conversation item clicked with actual position
                                     com.nongtri.app.analytics.Events.logConversationItemClicked(
                                         conversationId = thread.id.toString(),
-                                        position = 0 // Position not available without itemsIndexed
+                                        position = index
                                     )
                                     onThreadSelected(thread.id, thread.title)
                                 },

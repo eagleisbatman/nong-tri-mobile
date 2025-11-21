@@ -35,7 +35,7 @@ data class ChatUiState(
     val currentThreadTitle: String? = null,
     val attachedImageUri: String? = null,  // Display URI for preview
     val attachedImageBase64: String? = null,  // Base64 data for upload
-    val isDiagnosisInProgress: Boolean = false  // True when diagnosis is being processed
+    val isDiagnosisInProgress: Boolean = false  // Computed from activeDiagnosisJobIds (true when any diagnosis is being processed)
 )
 
 @OptIn(ExperimentalUuidApi::class)
@@ -65,6 +65,14 @@ class ChatViewModel(
     private var isFirstChunk = true  // Track first chunk for haptic feedback
     private var flushJob: kotlinx.coroutines.Job? = null  // Coroutine for throttled flushing
 
+    // Track active diagnosis job IDs (supports concurrent diagnoses)
+    // Persisted set lives in UserPreferences; this in-memory set drives UI state
+    private val activeDiagnosisJobIds = mutableSetOf<String>()
+
+    // Track active diagnosis job IDs in memory (for concurrent jobs)
+    // Most recent job ID is persisted to UserPreferences for app restart recovery
+    private val activeDiagnosisJobIds = mutableSetOf<String>()
+
     // APPROACH 1: Channel for streaming updates - no list recomposition
     data class StreamingChunk(val messageId: String, val chunk: String)
     private val _streamingChannel = Channel<StreamingChunk>(Channel.UNLIMITED)
@@ -79,6 +87,13 @@ class ChatViewModel(
     fun getSessionVoiceMessageCount() = sessionVoiceMessageCount
     fun getSessionImageCount() = sessionImageCount
 
+    /** Synchronize UI flag with active diagnosis jobs */
+    private fun refreshDiagnosisState() {
+        _uiState.update { state ->
+            state.copy(isDiagnosisInProgress = activeDiagnosisJobIds.isNotEmpty())
+        }
+    }
+
     /**
      * Flush buffered chunks to UI
      * Reduces layout reflows by batching small chunks
@@ -89,7 +104,10 @@ class ChatViewModel(
         val content = chunkBuffer.toString()
         val messageId = currentStreamingMessageId ?: return
 
-        println("[ChatViewModel] Flushing chunk buffer: ${content.length} chars")
+        // Debug logging only (no sensitive content)
+        if (System.getProperty("debug") == "true") {
+            println("[ChatViewModel] Flushing chunk buffer: ${content.length} chars")
+        }
 
         // Update ONLY the specific message in the list
         // LazyColumn with proper keys will only recompose this one item
@@ -316,13 +334,21 @@ class ChatViewModel(
      * Reads from UserPreferences (persists across process death)
      */
     private fun checkPendingDiagnosis() {
-        val jobId = userPreferences.getPendingDiagnosisJobId() ?: return
+        // Check all persisted job IDs (support multiple concurrent diagnoses)
+        val persistedJobIds = userPreferences.getPendingDiagnosisJobIds()
+        if (persistedJobIds.isEmpty()) return
 
-        println("[ChatViewModel] Fetching pending diagnosis: $jobId")
+        println("[ChatViewModel] Found ${persistedJobIds.size} pending diagnosis job(s) to check")
+        
+        // Check each persisted job ID
+        persistedJobIds.forEach { jobId ->
+            // Add to active jobs set (recovered from preferences)
+            activeDiagnosisJobIds.add(jobId)
+            refreshDiagnosisState()
 
-        viewModelScope.launch {
-            try {
-                api.getDiagnosisResult(jobId).fold(
+            viewModelScope.launch {
+                try {
+                    api.getDiagnosisResult(jobId).fold(
                     onSuccess = { response ->
                         when (response.status) {
                             "completed" -> {
@@ -362,12 +388,17 @@ class ChatViewModel(
                                         language = diagnosis.responseLanguage ?: "vi"
                                     )
 
+                                    // Remove from active jobs and persisted set
+                                    activeDiagnosisJobIds.remove(jobId)
+                                    userPreferences.removePendingDiagnosisJobId(jobId)
+
                                     _uiState.update { state ->
                                         state.copy(
                                             messages = state.messages + diagnosisMessage,
-                                            isDiagnosisInProgress = false  // Re-enable input
+                                            isDiagnosisInProgress = activeDiagnosisJobIds.isNotEmpty()  // True if any other jobs are still active
                                         )
                                     }
+                                    refreshDiagnosisState()
 
                                     // ROUND 4: Track diagnosis result viewed event
                                     Events.logDiagnosisResultViewed(
@@ -378,21 +409,24 @@ class ChatViewModel(
                             }
                             "pending", "processing" -> {
                                 println("[ChatViewModel] Diagnosis still processing: ${response.status}")
-                                // Keep the pending card visible and disable input
-                                _uiState.update { state ->
-                                    state.copy(isDiagnosisInProgress = true)
-                                }
+                                // Keep the pending card visible - isDiagnosisInProgress computed from activeDiagnosisJobIds
+                                // No need to update it here as the job is already tracked in activeDiagnosisJobIds
                             }
                             "failed" -> {
                                 println("[ChatViewModel] Diagnosis failed: ${response.error}")
+                                // Remove from active jobs and persisted set
+                                activeDiagnosisJobIds.remove(jobId)
+                                userPreferences.removePendingDiagnosisJobId(jobId)
+                                
                                 // Show error message
                                 val strings = LocalizationProvider.getStrings(userPreferences.language.value)
                                 _uiState.update { state ->
                                     state.copy(
                                         error = "${strings.errorDiagnosisFailed}: ${response.error}",
-                                        isDiagnosisInProgress = false  // Re-enable input
+                                        isDiagnosisInProgress = activeDiagnosisJobIds.isNotEmpty()  // True if any other jobs are still active
                                     )
                                 }
+                                refreshDiagnosisState()
                             }
                             else -> {
                                 println("[ChatViewModel] Unknown diagnosis status: ${response.status}")
@@ -413,9 +447,12 @@ class ChatViewModel(
                 _uiState.update { state ->
                     state.copy(error = "${strings.errorFetchingDiagnosis}: ${e.message}")
                 }
-            } finally {
-                // Clear the pending job ID after handling
-                userPreferences.setPendingDiagnosisJobId(null)
+                } finally {
+                    // Remove from active jobs and persisted set
+                    activeDiagnosisJobIds.remove(jobId)
+                    userPreferences.removePendingDiagnosisJobId(jobId)
+                    refreshDiagnosisState()
+                }
             }
         }
     }
@@ -427,6 +464,9 @@ class ChatViewModel(
      */
     private fun startPollingForDiagnosis(jobId: String) {
         println("[ChatViewModel] Starting diagnosis polling for jobId: $jobId")
+        
+        // Ensure job ID is tracked in active set
+        activeDiagnosisJobIds.add(jobId)
 
         viewModelScope.launch {
             var pollCount = 0
@@ -477,18 +517,19 @@ class ChatViewModel(
                                             language = diagnosis.responseLanguage ?: "vi"
                                         )
 
+                                        // Remove from active jobs and persisted set
+                                        activeDiagnosisJobIds.remove(jobId)
+                                        userPreferences.removePendingDiagnosisJobId(jobId)
+
                                         _uiState.update { state ->
                                             state.copy(
                                                 messages = state.messages + diagnosisMessage,
-                                                isDiagnosisInProgress = false  // Re-enable input
+                                                isDiagnosisInProgress = activeDiagnosisJobIds.isNotEmpty()  // True if any other jobs are still active
                                             )
                                         }
 
                                         // Haptic feedback - diagnosis ready
                                         hapticFeedback?.success()
-
-                                        // Clear pending job ID
-                                        userPreferences.setPendingDiagnosisJobId(null)
 
                                         // Track result viewed
                                         Events.logDiagnosisResultViewed(
@@ -518,8 +559,16 @@ class ChatViewModel(
                                     // Haptic feedback - error
                                     hapticFeedback?.error()
 
-                                    // Clear pending job ID
-                                    userPreferences.setPendingDiagnosisJobId(null)
+                                    // Remove from active jobs and persisted set
+                                    activeDiagnosisJobIds.remove(jobId)
+                                    userPreferences.removePendingDiagnosisJobId(jobId)
+
+                                    // Update isDiagnosisInProgress based on remaining active jobs
+                                    _uiState.update { state ->
+                                        state.copy(
+                                            isDiagnosisInProgress = activeDiagnosisJobIds.isNotEmpty()
+                                        )
+                                    }
 
                                     // Stop polling - job failed
                                     return@launch
@@ -541,11 +590,28 @@ class ChatViewModel(
                 }
             }
 
-            // Max retries reached
+            // Max retries reached - clear diagnosis state and remove pending card
             println("[ChatViewModel] ⚠ Max polling retries reached for jobId: $jobId")
             val strings = LocalizationProvider.getStrings(userPreferences.language.value)
             _uiState.update { state ->
-                state.copy(error = "Diagnosis is taking longer than expected. You'll receive a notification when ready.")
+                state.copy(
+                    messages = state.messages.filter { msg ->
+                        !(msg.messageType == "diagnosis_pending" &&
+                          msg.diagnosisPendingJobId == jobId)
+                    },
+                    error = "Diagnosis is taking longer than expected. You'll receive a notification when ready.",
+                    isDiagnosisInProgress = false  // Clear diagnosis state so user can continue chatting
+                )
+            }
+            // Remove from active jobs and persisted set
+            activeDiagnosisJobIds.remove(jobId)
+            userPreferences.removePendingDiagnosisJobId(jobId)
+            
+            // Update isDiagnosisInProgress based on remaining active jobs
+            _uiState.update { state ->
+                state.copy(
+                    isDiagnosisInProgress = activeDiagnosisJobIds.isNotEmpty()
+                )
             }
         }
     }
@@ -652,7 +718,10 @@ class ChatViewModel(
                 language = userPreferences.language.value.code,  // Pass current language to backend
                 imageData = imageData,  // Pass image if attached
                 onChunk = { chunk ->
-                    println("[ChatViewModel] onChunk received: '${chunk.take(50)}' (${chunk.length} chars)")
+                    // Removed sensitive content logging - only log chunk length in debug mode
+                    if (System.getProperty("debug") == "true") {
+                        println("[ChatViewModel] onChunk received: ${chunk.length} chars")
+                    }
 
                     // Haptic feedback - AI response started (first chunk only)
                     if (isFirstChunk) {
@@ -1004,6 +1073,24 @@ class ChatViewModel(
                 language = userPreferences.language.value.code,  // Pass current language to backend
                 messageType = "voice",  // CRITICAL: Mark as voice to prevent duplicate message creation
                 onChunk = { chunk ->
+                    // Start flush loop on first chunk (same as text messages)
+                    if (isFirstChunk) {
+                        hapticFeedback?.gentleTick()
+                        isFirstChunk = false
+                        // Debug logging only (remove sensitive content)
+                        if (System.getProperty("debug") == "true") {
+                            println("[ChatViewModel] First voice reply chunk - starting flush loop")
+                        }
+
+                        // Start the flush coroutine for throttled updates
+                        flushJob = viewModelScope.launch {
+                            while (currentStreamingMessageId != null) {
+                                delay(30) // 30ms = ~33 updates/second
+                                flushChunkBuffer()
+                            }
+                        }
+                    }
+
                     // Buffer chunks for throttled flushing (same as text messages)
                     chunkBuffer.append(chunk)
                 },
@@ -1255,8 +1342,15 @@ class ChatViewModel(
                 fileSizeKb = (estimatedSizeBytes / 1024).toInt()
             )
 
+            // Remove optimistic image message and clear attachment
             _uiState.update { state ->
                 state.copy(
+                    messages = state.messages.filter { msg ->
+                        !(msg.messageType == "image" && msg.isLoading && msg.role == MessageRole.USER)
+                    },
+                    attachedImageUri = null,
+                    attachedImageBase64 = null,
+                    currentMessage = "",  // Clear default question
                     error = validationResult.reason,
                     isLoading = false
                 )
@@ -1335,12 +1429,16 @@ class ChatViewModel(
                     // Haptic feedback - upload success
                     hapticFeedback?.success()
 
-                    // CRITICAL: Save job ID to UserPreferences for crash recovery
-                    // If app crashes after upload, we can still fetch diagnosis on restart
+                    // CRITICAL: Track job ID for recovery and concurrent job management
+                    // - Add to active jobs set (in-memory tracking for concurrent jobs)
+                    // - Persist to UserPreferences (supports multiple concurrent jobs)
+                    // When jobs complete, they remove themselves from persisted set
                     response.jobId?.let { jobId ->
-                        userPreferences.setPendingDiagnosisJobId(jobId)
-                        println("[ImageDiagnosis] Job ID saved to preferences: $jobId")
+                        activeDiagnosisJobIds.add(jobId)
+                        userPreferences.addPendingDiagnosisJobId(jobId)  // Persist to set of job IDs
+                        println("[ImageDiagnosis] Job ID tracked (active: ${activeDiagnosisJobIds.size}, persisted: ${userPreferences.getPendingDiagnosisJobIds().size}): $jobId")
                     }
+                    refreshDiagnosisState()
 
                     // Clear loading state on user's image message
                     _uiState.update { state ->
@@ -1375,7 +1473,7 @@ class ChatViewModel(
                     _uiState.update { state ->
                         state.copy(
                             messages = state.messages + pendingMessage,
-                            isDiagnosisInProgress = true  // Disable input while diagnosis is processing
+                            isDiagnosisInProgress = activeDiagnosisJobIds.isNotEmpty()  // True if any jobs are active
                         )
                     }
 
