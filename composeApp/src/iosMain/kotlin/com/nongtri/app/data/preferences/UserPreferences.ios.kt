@@ -215,6 +215,15 @@ actual class UserPreferences private constructor() {
         }
     }
 
+    // Language selection timestamp (used for time-to-chat metrics)
+    actual fun setLanguageSelectionTimestamp(timestampMs: Long) {
+        userDefaults.setDouble(timestampMs.toDouble(), forKey = "${prefsKeyPrefix}language_selection_timestamp")
+    }
+
+    actual fun getLanguageSelectionTimestamp(): Long {
+        return userDefaults.doubleForKey("${prefsKeyPrefix}language_selection_timestamp").toLong()
+    }
+
     // Analytics tracking methods
     actual fun incrementSessionCount() {
         _sessionCount.value += 1
@@ -305,4 +314,3 @@ actual class UserPreferences private constructor() {
         }
     }
 }
-

@@ -442,6 +442,15 @@ actual class UserPreferences private constructor(context: Context) {
         println("UserPreferences: Set has used TTS to $used")
     }
 
+    // Language selection timestamp (used for time-to-chat metrics)
+    actual fun setLanguageSelectionTimestamp(timestampMs: Long) {
+        prefs.edit().putLong("language_selection_timestamp", timestampMs).apply()
+    }
+
+    actual fun getLanguageSelectionTimestamp(): Long {
+        return prefs.getLong("language_selection_timestamp", 0L)
+    }
+
     actual fun getInstallDate(): String {
         return prefs.getString("install_date", "") ?: ""
     }

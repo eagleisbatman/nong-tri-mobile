@@ -17,7 +17,7 @@ package com.nongtri.app.analytics
  */
 expect object AnalyticsService {
     /**
-     * Initialize Firebase Analytics
+     * Initialize analytics providers (Firebase, PostHog, etc.)
      * Call this in MainActivity.onCreate()
      */
     fun initialize()

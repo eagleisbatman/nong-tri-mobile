@@ -96,6 +96,7 @@ fun App() {
                     onLanguageChange = { language ->
                         println("[App] Language changed to: $language")
                         userPreferences.setLanguage(language)
+                        userPreferences.setLanguageSelectionTimestamp(System.currentTimeMillis())
                         // CRITICAL: Clear conversation when language changes
                         // Don't create new thread yet - wait until user sends first message
                         // This prevents empty conversations from accumulating

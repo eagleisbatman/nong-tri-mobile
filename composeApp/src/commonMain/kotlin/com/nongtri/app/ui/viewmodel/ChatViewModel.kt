@@ -35,7 +35,8 @@ data class ChatUiState(
     val currentThreadTitle: String? = null,
     val attachedImageUri: String? = null,  // Display URI for preview
     val attachedImageBase64: String? = null,  // Base64 data for upload
-    val isDiagnosisInProgress: Boolean = false  // Computed from activeDiagnosisJobIds (true when any diagnosis is being processed)
+    val isDiagnosisInProgress: Boolean = false,  // Computed from activeDiagnosisJobIds (true when any diagnosis is being processed)
+    val starterQuestionsCount: Int = 0
 )
 
 @OptIn(ExperimentalUuidApi::class)
@@ -69,9 +70,19 @@ class ChatViewModel(
     // Persisted set lives in UserPreferences; this in-memory set drives UI state
     private val activeDiagnosisJobIds = mutableSetOf<String>()
 
-    // Track active diagnosis job IDs in memory (for concurrent jobs)
-    // Most recent job ID is persisted to UserPreferences for app restart recovery
-    private val activeDiagnosisJobIds = mutableSetOf<String>()
+    // Starter questions & language selection tracking
+    var starterQuestionsCount: Int = 0
+        private set
+
+    fun updateStarterQuestionsCount(count: Int) {
+        starterQuestionsCount = count
+        _uiState.update { it.copy(starterQuestionsCount = count) }
+    }
+
+    fun timeSinceLanguageSelectionMs(): Long {
+        val lastSelection = userPreferences.getLanguageSelectionTimestamp()
+        return if (lastSelection > 0) System.currentTimeMillis() - lastSelection else 0L
+    }
 
     // APPROACH 1: Channel for streaming updates - no list recomposition
     data class StreamingChunk(val messageId: String, val chunk: String)
@@ -1401,7 +1412,7 @@ class ChatViewModel(
         val fileSizeKb = (estimatedSizeBytes / 1024).toInt()
         Events.logDiagnosisUploadStarted(
             fileSizeKb = fileSizeKb,
-            networkType = "unknown" // TODO: Get actual network type
+            networkType = com.nongtri.app.platform.NetworkInfo.getNetworkType()
         )
 
         // Submit diagnosis job (async)

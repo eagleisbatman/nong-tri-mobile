@@ -30,6 +30,7 @@ fun WelcomeCard(
     deviceId: String,
     locationName: String? = null,
     onStarterQuestionClick: (String) -> Unit = {},
+    onStarterQuestionsLoaded: (Int) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var visible by remember { mutableStateOf(false) }
@@ -52,10 +53,12 @@ fun WelcomeCard(
             result.onSuccess { questions ->
                 println("[WelcomeCard] Successfully fetched ${questions.size} starter questions: $questions")
                 starterQuestions = questions
+                onStarterQuestionsLoaded(questions.size)
                 isLoadingQuestions = false
             }.onFailure { error ->
                 println("[WelcomeCard] Failed to fetch starter questions: ${error.message}")
                 error.printStackTrace()
+                onStarterQuestionsLoaded(0)
                 isLoadingQuestions = false
             }
         }

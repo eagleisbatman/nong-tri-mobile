@@ -70,8 +70,8 @@ fun StarterQuestions(
                     onClick = {
                         // ROUND 10: Track starter question clicked
                         com.nongtri.app.analytics.Events.logStarterQuestionClicked(
-                            questionText = question,
-                            questionIndex = index
+                            questionIndex = index,
+                            questionText = question
                         )
                         onQuestionClick(question)
                     },

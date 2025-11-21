@@ -7,43 +7,47 @@ import com.google.firebase.crashlytics.ktx.crashlytics
 import com.google.firebase.ktx.Firebase
 import com.nongtri.app.BuildConfig
 import com.nongtri.app.data.preferences.UserPreferences
+import com.posthog.android.PostHogAndroid
+import com.posthog.android.PostHogAndroidConfig
 
 /**
- * Android implementation of AnalyticsService using Firebase Analytics
+ * Android implementation of AnalyticsService using Firebase Analytics + PostHog
  */
 actual object AnalyticsService {
     private lateinit var analytics: FirebaseAnalytics
     private var isInitialized = false
+    private var posthog: PostHogAndroid? = null
 
-    /**
-     * Initialize Firebase Analytics
-     * Call this once in MainActivity.onCreate()
-     */
     actual fun initialize() {
         if (!isInitialized) {
             analytics = Firebase.analytics
             analytics.setAnalyticsCollectionEnabled(true)
+
+            if (BuildConfig.POSTHOG_API_KEY.isNotBlank() && BuildConfig.POSTHOG_HOST.isNotBlank()) {
+                val config = PostHogAndroidConfig(
+                    apiKey = BuildConfig.POSTHOG_API_KEY,
+                    host = BuildConfig.POSTHOG_HOST
+                )
+                posthog = PostHogAndroid.setup(Firebase.app.applicationContext, config)
+                println("[AnalyticsService] ✅ PostHog initialized")
+            } else {
+                println("[AnalyticsService] ⚠️ PostHog not configured")
+            }
+
             isInitialized = true
             println("[AnalyticsService] ✅ Initialized successfully")
         }
     }
 
-    /**
-     * Log an event with automatic global parameters
-     *
-     * @param eventName The event name (e.g., "chat_message_sent")
-     * @param params Map of parameters
-     */
     actual fun logEvent(eventName: String, params: Map<String, Any>) {
         if (!isInitialized) {
             println("[AnalyticsService] ⚠️ WARNING: Not initialized! Call initialize() first")
-            initialize() // Auto-initialize if forgotten
+            initialize()
         }
 
         try {
             val bundle = Bundle()
 
-            // Add all provided parameters
             params.forEach { (key, value) ->
                 when (value) {
                     is String -> bundle.putString(key, value)
@@ -56,15 +60,11 @@ actual object AnalyticsService {
                 }
             }
 
-            // Add global parameters automatically
             addGlobalParameters(bundle)
-
-            // Log to Firebase Analytics
             analytics.logEvent(eventName, bundle)
+            posthog?.capture(eventName, params.mapValues { it.value })
 
-            // Also log to Crashlytics for debugging (helps correlate crashes with events)
             Firebase.crashlytics.log("Event: $eventName")
-
             println("[AnalyticsService] 📊 Event logged: $eventName (${params.size} params)")
 
         } catch (e: Exception) {
@@ -73,141 +73,104 @@ actual object AnalyticsService {
         }
     }
 
-    /**
-     * Add global parameters to every event
-     */
     private fun addGlobalParameters(bundle: Bundle) {
         try {
             val prefs = UserPreferences.getInstance()
 
-            // App version
             bundle.putString("app_version", BuildConfig.VERSION_NAME)
+            posthog?.register(mapOf("app_version" to BuildConfig.VERSION_NAME))
 
-            // User language
             bundle.putString("user_language", prefs.language.value.code)
+            posthog?.register(mapOf("user_language" to prefs.language.value.code))
 
-            // Location availability - get actual state from LocationRepository
             val locationRepo = com.nongtri.app.data.repository.LocationRepository.getInstance()
             val hasLocation = locationRepo.hasLocation()
             bundle.putBoolean("has_location", hasLocation)
-
-            // Location type (ip, gps, none)
             bundle.putString("location_type", locationRepo.getLocationType())
+            posthog?.register(mapOf(
+                "has_location" to hasLocation,
+                "location_type" to locationRepo.getLocationType()
+            ))
 
-            // Location address components (from cache)
             val cachedLocation = locationRepo.getCachedLocation()
             if (cachedLocation != null) {
-                bundle.putString("location_country", cachedLocation.geoLevel1 ?: cachedLocation.country ?: "Unknown")
-                bundle.putString("location_region", cachedLocation.geoLevel2 ?: cachedLocation.region ?: "Unknown")
-                bundle.putString("location_city", cachedLocation.geoLevel3 ?: cachedLocation.city ?: "Unknown")
+                val country = cachedLocation.geoLevel1 ?: cachedLocation.country ?: "Unknown"
+                val region = cachedLocation.geoLevel2 ?: cachedLocation.region ?: "Unknown"
+                val city = cachedLocation.geoLevel3 ?: cachedLocation.city ?: "Unknown"
+                bundle.putString("location_country", country)
+                bundle.putString("location_region", region)
+                bundle.putString("location_city", city)
+                posthog?.register(mapOf(
+                    "location_country" to country,
+                    "location_region" to region,
+                    "location_city" to city
+                ))
             }
 
-            // Timezone information for debugging and segmentation
             val timeZone = java.util.TimeZone.getDefault()
-            bundle.putString("device_timezone_id", timeZone.id)  // e.g., "Asia/Ho_Chi_Minh"
-            bundle.putInt("timezone_offset_hours", timeZone.rawOffset / (1000 * 60 * 60))  // e.g., 7
-
-            // Platform
+            bundle.putString("device_timezone_id", timeZone.id)
+            bundle.putInt("timezone_offset_hours", timeZone.rawOffset / (1000 * 60 * 60))
             bundle.putString("platform", "android")
+            posthog?.register(mapOf(
+                "platform" to "android",
+                "device_timezone_id" to timeZone.id,
+                "timezone_offset_hours" to timeZone.rawOffset / (1000 * 60 * 60)
+            ))
 
         } catch (e: Exception) {
             println("[AnalyticsService] ⚠️ Error adding global parameters: ${e.message}")
         }
     }
 
-    /**
-     * Set user ID for analytics tracking
-     *
-     * @param userId The device_id (NOT PII)
-     */
     actual fun setUserId(userId: String) {
         if (!isInitialized) initialize()
 
         try {
             analytics.setUserId(userId)
             Firebase.crashlytics.setUserId(userId)
+            posthog?.identify(userId, null, mapOf("user_id" to userId))
             println("[AnalyticsService] 👤 User ID set: $userId")
         } catch (e: Exception) {
             println("[AnalyticsService] ❌ Error setting user ID: ${e.message}")
         }
     }
 
-    /**
-     * Set a user property
-     *
-     * @param name Property name (e.g., "preferred_language")
-     * @param value Property value (e.g., "vi")
-     */
     actual fun setUserProperty(name: String, value: String) {
         if (!isInitialized) initialize()
 
         try {
             analytics.setUserProperty(name, value)
+            posthog?.register(mapOf(name to value))
             println("[AnalyticsService] 🏷️ User property set: $name = $value")
         } catch (e: Exception) {
             println("[AnalyticsService] ❌ Error setting user property: ${e.message}")
         }
     }
 
-    /**
-     * Update all user properties from UserPreferences
-     * Call this after every session
-     */
     actual fun updateUserProperties() {
         if (!isInitialized) initialize()
 
         try {
             val prefs = UserPreferences.getInstance()
-
-            // Language & theme
             setUserProperty("preferred_language", prefs.language.value.code)
-
-            // Lifecycle metrics
-            setUserProperty("lifetime_sessions", prefs.sessionCount.value.toString())
-            setUserProperty("lifetime_messages", prefs.messageCount.value.toString())
-            setUserProperty("lifetime_voice_messages", prefs.voiceMessageCount.value.toString())
-            setUserProperty("lifetime_image_messages", prefs.imageMessageCount.value.toString())
-
-            // User segment (based on session count)
-            val segment = when {
-                prefs.sessionCount.value <= 3 -> "new"
-                prefs.sessionCount.value <= 9 -> "casual"
-                prefs.sessionCount.value <= 24 -> "regular"
-                prefs.sessionCount.value <= 49 -> "engaged"
-                else -> "power_user"
-            }
-            setUserProperty("user_segment", segment)
-
-            // Feature adoption flags
-            setUserProperty("has_used_voice", prefs.hasUsedVoice.value.toString())
-            setUserProperty("has_used_image_diagnosis", prefs.hasUsedImageDiagnosis.value.toString())
-            setUserProperty("has_shared_location", prefs.hasSharedGpsLocation.value.toString())
-
-            // Days since install
-            setUserProperty("days_since_install", prefs.daysSinceInstall().toString())
-
-            println("[AnalyticsService] ✅ Updated all user properties")
-
         } catch (e: Exception) {
             println("[AnalyticsService] ❌ Error updating user properties: ${e.message}")
-            Firebase.crashlytics.recordException(e)
         }
     }
 
-    /**
-     * Log a screen view event
-     *
-     * @param screenName The screen name (e.g., "ChatScreen")
-     * @param screenClass The screen class (e.g., "com.nongtri.app.ui.screens.ChatScreen")
-     */
     actual fun logScreenView(screenName: String, screenClass: String) {
         if (!isInitialized) initialize()
 
-        val params = mapOf(
-            FirebaseAnalytics.Param.SCREEN_NAME to screenName,
-            FirebaseAnalytics.Param.SCREEN_CLASS to screenClass
-        )
-
-        logEvent(FirebaseAnalytics.Event.SCREEN_VIEW, params)
+        try {
+            val bundle = Bundle().apply {
+                putString(FirebaseAnalytics.Param.SCREEN_NAME, screenName)
+                putString(FirebaseAnalytics.Param.SCREEN_CLASS, screenClass)
+            }
+            analytics.logEvent(FirebaseAnalytics.Event.SCREEN_VIEW, bundle)
+            posthog?.capture("screen_view", mapOf("screen_name" to screenName, "screen_class" to screenClass))
+            println("[AnalyticsService] 📺 Screen view logged: $screenName ($screenClass)")
+        } catch (e: Exception) {
+            println("[AnalyticsService] ❌ Error logging screen view: ${e.message}")
+        }
     }
 }

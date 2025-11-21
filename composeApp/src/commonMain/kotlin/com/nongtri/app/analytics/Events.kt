@@ -81,6 +81,28 @@ object Events {
         }
     }
 
+    /**
+     * Log when app goes to foreground
+     */
+    fun logAppForegrounded() {
+        try {
+            AnalyticsService.logEvent("app_foregrounded", emptyMap())
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging app_foregrounded: ${e.message}")
+        }
+    }
+
+    /**
+     * Log when app goes to background
+     */
+    fun logAppBackgrounded() {
+        try {
+            AnalyticsService.logEvent("app_backgrounded", emptyMap())
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging app_backgrounded: ${e.message}")
+        }
+    }
+
     // ============================================================================
     // CHAT EVENTS
     // ============================================================================
@@ -207,6 +229,19 @@ object Events {
 
         } catch (e: Exception) {
             println("[Events] ❌ Error logging diagnosis_image_uploaded: ${e.message}")
+        }
+    }
+
+    /**
+     * User removed an attached image before sending
+     */
+    fun logImageAttachmentRemoved(source: String) {
+        try {
+            AnalyticsService.logEvent("image_attachment_removed", mapOf(
+                "image_source" to source
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging image_attachment_removed: ${e.message}")
         }
     }
 
@@ -347,6 +382,20 @@ object Events {
         }
     }
 
+    /**
+     * Log when voice transcription is applied to the composer
+     */
+    fun logVoiceTranscriptionApplied(durationMs: Long, transcriptionLength: Int) {
+        try {
+            AnalyticsService.logEvent("voice_transcription_applied", mapOf(
+                "duration_ms" to durationMs,
+                "transcription_length" to transcriptionLength
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging voice_transcription_applied: ${e.message}")
+        }
+    }
+
     // ============================================================================
     // PERMISSION EVENTS
     // ============================================================================
@@ -393,6 +442,17 @@ object Events {
     }
 
     /**
+    * Voice permission dialog dismissed without action
+    */
+    fun logVoicePermissionDismissed() {
+        try {
+            AnalyticsService.logEvent("voice_permission_dismissed", emptyMap())
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging voice_permission_dismissed: ${e.message}")
+        }
+    }
+
+    /**
      * Image permission requested
      */
     fun logImagePermissionRequested(permissionType: String) {
@@ -431,6 +491,19 @@ object Events {
             ))
         } catch (e: Exception) {
             println("[Events] ❌ Error logging image_permission_denied: ${e.message}")
+        }
+    }
+
+    /**
+     * Image permission dialog dismissed without action
+     */
+    fun logImagePermissionDismissed(permissionType: String) {
+        try {
+            AnalyticsService.logEvent("image_permission_dismissed", mapOf(
+                "permission_type" to permissionType
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging image_permission_dismissed: ${e.message}")
         }
     }
 
@@ -475,6 +548,17 @@ object Events {
         }
     }
 
+    /**
+     * Location permission dialog dismissed without action
+     */
+    fun logLocationPermissionDismissed() {
+        try {
+            AnalyticsService.logEvent("location_permission_dismissed", emptyMap())
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging location_permission_dismissed: ${e.message}")
+        }
+    }
+
     // ============================================================================
     // ERROR TRACKING EVENTS
     // ============================================================================
@@ -491,6 +575,19 @@ object Events {
             ))
         } catch (e: Exception) {
             println("[Events] ❌ Error logging network_request_failed: ${e.message}")
+        }
+    }
+
+    /**
+     * Network reconnected after a disconnect
+     */
+    fun logNetworkReconnected(disconnectionDurationMs: Long) {
+        try {
+            AnalyticsService.logEvent("network_reconnected", mapOf(
+                "disconnection_duration_ms" to disconnectionDurationMs
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging network_reconnected: ${e.message}")
         }
     }
 
@@ -1781,7 +1878,7 @@ object Events {
     fun logStarterQuestionClicked(questionIndex: Int, questionText: String) {
         try {
             AnalyticsService.logEvent("starter_question_clicked", mapOf(
-                "question_index" to questionIndex,
+                "question_index" to questionIndex + 1, // 1-based for reporting
                 "question_text" to questionText
             ))
         } catch (e: Exception) {

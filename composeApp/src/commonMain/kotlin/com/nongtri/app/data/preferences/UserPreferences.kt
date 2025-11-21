@@ -45,6 +45,10 @@ expect class UserPreferences {
     fun removePendingDiagnosisJobId(jobId: String)
     fun getPendingDiagnosisJobIds(): Set<String>
 
+    // Language selection timestamp (for time-to-chat metrics)
+    fun setLanguageSelectionTimestamp(timestampMs: Long)
+    fun getLanguageSelectionTimestamp(): Long
+
     // Analytics tracking methods
     fun incrementSessionCount()
     fun incrementMessageCount()

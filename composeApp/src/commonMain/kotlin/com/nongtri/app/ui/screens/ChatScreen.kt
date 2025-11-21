@@ -51,6 +51,7 @@ fun ChatScreen(
 
     var showMenu by remember { mutableStateOf(false) }
     var showLocationBottomSheet by remember { mutableStateOf(false) }
+    var locationSheetStart by remember { mutableStateOf<Long?>(null) }
     val locationViewModel = rememberLocationViewModel()
     val locationState by locationViewModel.locationState.collectAsState()
 
@@ -86,31 +87,36 @@ fun ChatScreen(
     // Snackbar for error messages (only for non-permission errors)
     val snackbarHostState = remember { SnackbarHostState() }
     var currentOptimisticMessageId by remember { mutableStateOf<String?>(null) }
+    var starterQuestionsCount by remember { mutableStateOf(0) }
+    var firstViewLogged by remember { mutableStateOf(false) }
 
     // ROUND 10: Track screen display time
     val screenDisplayTime = remember { System.currentTimeMillis() }
 
-    // Track first view for analytics
-    LaunchedEffect(Unit) {
-        // ROUND 10: Track generic screen view
-        com.nongtri.app.analytics.Events.logScreenViewed("chat")
+    // Track first view for analytics (wait for starter questions to load)
+    LaunchedEffect(uiState.messages.size, locationState.currentLocation, locationState.ipLocation, starterQuestionsCount, firstViewLogged) {
+        if (!firstViewLogged) {
+            com.nongtri.app.analytics.Events.logScreenViewed("chat")
 
-        val hasWelcomeCard = uiState.messages.isEmpty()
-        val locationDisplayed = locationState.currentLocation != null || locationState.ipLocation != null
-        val locationType = when {
-            locationState.gpsLocation != null -> "gps"
-            locationState.ipLocation != null -> "ip"
-            else -> "none"
+            val hasWelcomeCard = uiState.messages.isEmpty()
+            val locationDisplayed = locationState.currentLocation != null || locationState.ipLocation != null
+            val locationType = when {
+                locationState.gpsLocation != null -> "gps"
+                locationState.ipLocation != null -> "ip"
+                else -> "none"
+            }
+
+            com.nongtri.app.analytics.Events.logChatScreenFirstView(
+                hasWelcomeCard = hasWelcomeCard,
+                hasStarterQuestions = starterQuestionsCount > 0,
+                starterQuestionsCount = starterQuestionsCount,
+                locationDisplayed = locationDisplayed,
+                locationType = locationType,
+                timeSinceLanguageSelectionMs = viewModel.timeSinceLanguageSelectionMs()
+            )
+
+            firstViewLogged = true
         }
-
-        com.nongtri.app.analytics.Events.logChatScreenFirstView(
-            hasWelcomeCard = hasWelcomeCard,
-            hasStarterQuestions = false, // Starter questions not implemented yet
-            starterQuestionsCount = 0,
-            locationDisplayed = locationDisplayed,
-            locationType = locationType,
-            timeSinceLanguageSelectionMs = 0L // TODO: Track from language selection screen
-        )
     }
 
     // ROUND 10: Track screen time spent
@@ -496,6 +502,10 @@ fun ChatScreen(
 
                     // Populate input field with transcribed text
                     viewModel.updateMessage(text)
+                    com.nongtri.app.analytics.Events.logVoiceTranscriptionApplied(
+                        durationMs = voiceRecordingViewModel.getLastRecordingDurationMs(),
+                        transcriptionLength = text.length
+                    )
 
                     // Store voice metadata for when user sends
                     val result = voiceRecordingViewModel.getTranscriptionResult()
@@ -548,6 +558,7 @@ fun ChatScreen(
 
                             // Remove button
                             IconButton(onClick = {
+                                com.nongtri.app.analytics.Events.logImageAttachmentRemoved(selectedImageSource)
                                 viewModel.removeAttachedImage()
                                 selectedImageSource = "unknown"
                                 if (viewModel.uiState.value.currentMessage == strings.defaultPlantQuestion) {
@@ -826,6 +837,11 @@ fun ChatScreen(
                                     }
                                 }
                             }
+                            ,
+                            onStarterQuestionsLoaded = { count ->
+                                starterQuestionsCount = count
+                                viewModel.updateStarterQuestionsCount(count)
+                            }
                         )
                     }
                 }
@@ -934,6 +950,7 @@ fun ChatScreen(
     }
 
     // Location Bottom Sheet
+    var locationSheetStart by remember { mutableStateOf<Long?>(null) }
     if (showLocationBottomSheet) {
         val locationState by locationViewModel.locationState.collectAsState()
 
@@ -941,6 +958,8 @@ fun ChatScreen(
         // This handles the case when user returns from settings with permission granted
         LaunchedEffect(showLocationBottomSheet) {
             locationViewModel.checkPermissionState()
+            locationSheetStart = System.currentTimeMillis()
+            com.nongtri.app.analytics.Events.logScreenViewed("location_sheet")
         }
 
         LocationBottomSheet(
@@ -964,12 +983,26 @@ fun ChatScreen(
             },
             onDismiss = {
                 showLocationBottomSheet = false
+                locationSheetStart?.let { start ->
+                    com.nongtri.app.analytics.Events.logScreenTimeSpent("location_sheet", System.currentTimeMillis() - start)
+                }
+                locationSheetStart = null
             }
         )
+    } else {
+        locationSheetStart?.let { start ->
+            com.nongtri.app.analytics.Events.logScreenTimeSpent("location_sheet", System.currentTimeMillis() - start)
+        }
+        locationSheetStart = null
     }
 
     // Voice Permission Bottom Sheet
+    var voicePermissionSheetStart by remember { mutableStateOf<Long?>(null) }
     if (showVoicePermissionBottomSheet) {
+        LaunchedEffect(Unit) {
+            voicePermissionSheetStart = System.currentTimeMillis()
+            com.nongtri.app.analytics.Events.logScreenViewed("voice_permission_sheet")
+        }
         // Continuously check permission state while bottom sheet is visible
         // This handles the case when user goes to Settings and grants permission
         LaunchedEffect(showVoicePermissionBottomSheet) {
@@ -995,13 +1028,28 @@ fun ChatScreen(
                 showVoicePermissionBottomSheet = false
                 // Check permission after dismissing in case user granted it
                 voicePermissionViewModel.checkPermissionState()
+                com.nongtri.app.analytics.Events.logVoicePermissionDismissed()
+                voicePermissionSheetStart?.let { start ->
+                    com.nongtri.app.analytics.Events.logScreenTimeSpent("voice_permission_sheet", System.currentTimeMillis() - start)
+                }
+                voicePermissionSheetStart = null
             },
             language = language
         )
+    } else {
+        voicePermissionSheetStart?.let { start ->
+            com.nongtri.app.analytics.Events.logScreenTimeSpent("voice_permission_sheet", System.currentTimeMillis() - start)
+        }
+        voicePermissionSheetStart = null
     }
 
     // Image Permission Bottom Sheet
+    var imagePermissionSheetStart by remember { mutableStateOf<Long?>(null) }
     if (showImagePermissionBottomSheet) {
+        LaunchedEffect(Unit) {
+            imagePermissionSheetStart = System.currentTimeMillis()
+            com.nongtri.app.analytics.Events.logScreenViewed("image_permission_sheet")
+        }
         ImagePermissionBottomSheet(
             hasCameraPermission = imagePermissionState.hasCameraPermission,
             hasStoragePermission = imagePermissionState.hasStoragePermission,
@@ -1023,6 +1071,11 @@ fun ChatScreen(
             onDismiss = {
                 showImagePermissionBottomSheet = false
                 imagePermissionViewModel.checkPermissionState()
+                com.nongtri.app.analytics.Events.logImagePermissionDismissed("camera_storage")
+                imagePermissionSheetStart?.let { start ->
+                    com.nongtri.app.analytics.Events.logScreenTimeSpent("image_permission_sheet", System.currentTimeMillis() - start)
+                }
+                imagePermissionSheetStart = null
             },
             onBack = if (permissionSheetOpenedFromImageSelector) {
                 {
@@ -1033,13 +1086,21 @@ fun ChatScreen(
             } else null,
             language = language
         )
+    } else {
+        imagePermissionSheetStart?.let { start ->
+            com.nongtri.app.analytics.Events.logScreenTimeSpent("image_permission_sheet", System.currentTimeMillis() - start)
+        }
+        imagePermissionSheetStart = null
     }
 
     // Image Source Selector Bottom Sheet
+    var imageSourceSheetStart by remember { mutableStateOf<Long?>(null) }
     if (showImageSourceSelector) {
         // ROUND 5: Track image source sheet opened
         LaunchedEffect(Unit) {
             com.nongtri.app.analytics.Events.logImageSourceSheetOpened()
+            imageSourceSheetStart = System.currentTimeMillis()
+            com.nongtri.app.analytics.Events.logScreenViewed("image_source_sheet")
         }
 
         ImageSourceBottomSheet(
@@ -1176,16 +1237,31 @@ fun ChatScreen(
             },
             onDismiss = {
                 showImageSourceSelector = false
+                imageSourceSheetStart?.let { start ->
+                    com.nongtri.app.analytics.Events.logScreenTimeSpent("image_source_sheet", System.currentTimeMillis() - start)
+                }
+                imageSourceSheetStart = null
             }
         )
+    } else {
+        imageSourceSheetStart?.let { start ->
+            com.nongtri.app.analytics.Events.logScreenTimeSpent("image_source_sheet", System.currentTimeMillis() - start)
+        }
+        imageSourceSheetStart = null
     }
 
     // Fullscreen Image Viewer
+    var fullscreenStart by remember { mutableStateOf<Long?>(null) }
     if (showFullscreenImage != null) {
         val message = uiState.messages
             .firstOrNull { it.imageUrl == showFullscreenImage }
         val diagnosisData = message?.diagnosisData
         val jobId = message?.diagnosisPendingJobId
+
+        LaunchedEffect(showFullscreenImage) {
+            fullscreenStart = System.currentTimeMillis()
+            com.nongtri.app.analytics.Events.logScreenViewed("image_fullscreen_dialog")
+        }
 
         FullscreenImageDialog(
             language = language,
@@ -1194,7 +1270,16 @@ fun ChatScreen(
             jobId = jobId,
             onDismiss = {
                 showFullscreenImage = null
+                fullscreenStart?.let { start ->
+                    com.nongtri.app.analytics.Events.logScreenTimeSpent("image_fullscreen_dialog", System.currentTimeMillis() - start)
+                }
+                fullscreenStart = null
             }
         )
+    } else {
+        fullscreenStart?.let { start ->
+            com.nongtri.app.analytics.Events.logScreenTimeSpent("image_fullscreen_dialog", System.currentTimeMillis() - start)
+        }
+        fullscreenStart = null
     }
 }

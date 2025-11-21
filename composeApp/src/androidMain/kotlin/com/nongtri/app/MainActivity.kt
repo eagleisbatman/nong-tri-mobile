@@ -54,8 +54,16 @@ class MainActivity : ComponentActivity() {
 
         if (granted) {
             println("Location permission granted")
+            com.nongtri.app.analytics.Events.logLocationPermissionGranted(
+                permissionType = if (fineLocationGranted) "fine" else "coarse",
+                timeToGrantMs = 0L
+            )
         } else {
             println("Location permission denied")
+            com.nongtri.app.analytics.Events.logLocationPermissionDenied(
+                denialCount = 1,
+                canRequestAgain = true
+            )
         }
     }
 
@@ -68,8 +76,16 @@ class MainActivity : ComponentActivity() {
 
         if (granted) {
             println("RECORD_AUDIO permission granted")
+            com.nongtri.app.analytics.Events.logVoicePermissionGranted(
+                timeToGrantMs = 0L,
+                firstGrant = true
+            )
         } else {
             println("RECORD_AUDIO permission denied")
+            com.nongtri.app.analytics.Events.logVoicePermissionDenied(
+                denialCount = 1,
+                canRequestAgain = true
+            )
         }
     }
 
@@ -82,8 +98,10 @@ class MainActivity : ComponentActivity() {
 
         if (granted) {
             println("CAMERA permission granted")
+            com.nongtri.app.analytics.Events.logImagePermissionGranted("camera", timeToGrantMs = 0L)
         } else {
             println("CAMERA permission denied")
+            com.nongtri.app.analytics.Events.logImagePermissionDenied("camera", denialCount = 1, canRequestAgain = true)
         }
     }
 
@@ -96,8 +114,10 @@ class MainActivity : ComponentActivity() {
 
         if (granted) {
             println("Storage permission granted")
+            com.nongtri.app.analytics.Events.logImagePermissionGranted("storage", timeToGrantMs = 0L)
         } else {
             println("Storage permission denied")
+            com.nongtri.app.analytics.Events.logImagePermissionDenied("storage", denialCount = 1, canRequestAgain = true)
         }
     }
 
@@ -303,6 +323,11 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onStart() {
+        super.onStart()
+        com.nongtri.app.analytics.Events.logAppForegrounded()
+    }
+
     override fun onStop() {
         super.onStop()
 
@@ -329,6 +354,8 @@ class MainActivity : ComponentActivity() {
         )
 
         println("[MainActivity] Session ended - duration: ${sessionDuration}ms, messages: $sessionMessagesCount")
+
+        com.nongtri.app.analytics.Events.logAppBackgrounded()
     }
 
     override fun onDestroy() {

@@ -15,6 +15,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.nongtri.app.analytics.Events
 import com.nongtri.app.analytics.Funnels
+import com.nongtri.app.data.preferences.UserPreferences
 import com.nongtri.app.l10n.Language
 import com.nongtri.app.l10n.LocalizationProvider
 import com.nongtri.app.ui.components.TestTags
@@ -137,6 +138,9 @@ fun LanguageSelectionScreen(
 
                         // Log onboarding completed
                         Events.logOnboardingCompleted()
+
+                        // Store language selection time for downstream metrics
+                        UserPreferences.getInstance().setLanguageSelectionTimestamp(System.currentTimeMillis())
 
                         // Callback to parent
                         onLanguageSelected(language)

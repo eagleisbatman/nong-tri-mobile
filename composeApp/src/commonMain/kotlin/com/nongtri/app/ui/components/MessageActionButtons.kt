@@ -44,6 +44,8 @@ fun MessageActionButtons(
     var showCopiedSnackbar by remember { mutableStateOf(false) }
     var feedbackGiven by remember { mutableStateOf<Boolean?>(null) }
     var showShareSheet by remember { mutableStateOf(false) }
+    var ttsStartTime by remember { mutableStateOf<Long?>(null) }
+    var lastTtsState by remember { mutableStateOf(ttsState) }
 
     Row(
         modifier = modifier
@@ -262,6 +264,28 @@ fun MessageActionButtons(
                 )
             }
         }
+    }
+
+    // Track TTS state transitions for completion metrics
+    LaunchedEffect(ttsState) {
+        if (ttsState == TtsState.PLAYING && ttsStartTime == null) {
+            ttsStartTime = System.currentTimeMillis()
+        }
+        if (ttsState == TtsState.IDLE && (lastTtsState == TtsState.PLAYING || lastTtsState == TtsState.PAUSED)) {
+            ttsStartTime?.let { start ->
+                val duration = System.currentTimeMillis() - start
+                com.nongtri.app.analytics.Events.logTtsPlaybackCompleted(
+                    messageIndex = 0,
+                    playbackDuration = duration,
+                    listenedToEnd = true
+                )
+            }
+            ttsStartTime = null
+        }
+        if (ttsState == TtsState.ERROR) {
+            ttsStartTime = null
+        }
+        lastTtsState = ttsState
     }
 
     // Show copied confirmation

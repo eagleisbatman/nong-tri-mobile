@@ -41,6 +41,7 @@ kotlin {
             implementation("com.google.firebase:firebase-messaging-ktx")
             implementation("com.google.firebase:firebase-analytics-ktx")
             implementation("com.google.firebase:firebase-crashlytics-ktx")
+            implementation("com.posthog:posthog-android:3.+")
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -75,6 +76,11 @@ android {
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
         versionName = "1.0.0"
+        buildConfigField("String", "POSTHOG_API_KEY", "\"phc_vyClYZ9dk21j6kHRU0SAnlwwlrsCVeMRCafrgt2kqra\"")
+        buildConfigField("String", "POSTHOG_HOST", "\"https://us.i.posthog.com\"")
+    }
+    buildFeatures {
+        buildConfig = true
     }
     packaging {
         resources {
