@@ -76,8 +76,15 @@ android {
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
         versionName = "1.0.0"
-        buildConfigField("String", "POSTHOG_API_KEY", "\"phc_vyClYZ9dk21j6kHRU0SAnlwwlrsCVeMRCafrgt2kqra\"")
-        buildConfigField("String", "POSTHOG_HOST", "\"https://us.i.posthog.com\"")
+        
+        // Read PostHog config from local.properties or environment variables
+        // For local development, add to local.properties:
+        // posthog.api.key=your_key_here
+        // posthog.api.host=https://us.i.posthog.com
+        val posthogApiKey = project.findProperty("posthog.api.key") as String? ?: ""
+        val posthogHost = project.findProperty("posthog.api.host") as String? ?: "https://us.i.posthog.com"
+        buildConfigField("String", "POSTHOG_API_KEY", "\"$posthogApiKey\"")
+        buildConfigField("String", "POSTHOG_HOST", "\"$posthogHost\"")
     }
     buildFeatures {
         buildConfig = true
