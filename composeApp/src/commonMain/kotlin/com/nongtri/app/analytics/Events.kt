@@ -941,6 +941,33 @@ object Events {
     }
 
     /**
+     * Diagnosis pending surface viewed (processing card)
+     */
+    fun logDiagnosisPendingSurfaceViewed(jobId: String) {
+        try {
+            AnalyticsService.logEvent("diagnosis_pending_surface_viewed", mapOf(
+                "job_id" to jobId
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging diagnosis_pending_surface_viewed: ${e.message}")
+        }
+    }
+
+    /**
+     * Time spent on the diagnosis pending surface
+     */
+    fun logDiagnosisPendingSurfaceTimeSpent(jobId: String, timeSpentMs: Long) {
+        try {
+            AnalyticsService.logEvent("diagnosis_pending_surface_time", mapOf(
+                "job_id" to jobId,
+                "time_spent_ms" to timeSpentMs
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging diagnosis_pending_surface_time: ${e.message}")
+        }
+    }
+
+    /**
      * Diagnosis result viewed by user
      */
     fun logDiagnosisResultViewed(jobId: String, resultLength: Int) {
@@ -951,6 +978,35 @@ object Events {
             ))
         } catch (e: Exception) {
             println("[Events] ❌ Error logging diagnosis_result_viewed: ${e.message}")
+        }
+    }
+
+    /**
+     * Diagnosis result surface viewed (inline result card)
+     */
+    fun logDiagnosisResultSurfaceViewed(jobId: String, resultLength: Int) {
+        try {
+            AnalyticsService.logEvent("diagnosis_result_surface_viewed", mapOf(
+                "job_id" to jobId,
+                "result_length_chars" to resultLength
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging diagnosis_result_surface_viewed: ${e.message}")
+        }
+    }
+
+    /**
+     * Time spent viewing diagnosis result surface
+     */
+    fun logDiagnosisResultSurfaceTimeSpent(jobId: String, timeSpentMs: Long, resultLength: Int) {
+        try {
+            AnalyticsService.logEvent("diagnosis_result_surface_time", mapOf(
+                "job_id" to jobId,
+                "time_spent_ms" to timeSpentMs,
+                "result_length_chars" to resultLength
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging diagnosis_result_surface_time: ${e.message}")
         }
     }
 
@@ -2060,19 +2116,6 @@ object Events {
             ))
         } catch (e: Exception) {
             println("[Events] ❌ Error logging feature_retry_succeeded: ${e.message}")
-        }
-    }
-
-    /**
-     * Network reconnected after disconnection
-     */
-    fun logNetworkReconnected(disconnectionDurationMs: Long) {
-        try {
-            AnalyticsService.logEvent("network_reconnected", mapOf(
-                "disconnection_duration_ms" to disconnectionDurationMs
-            ))
-        } catch (e: Exception) {
-            println("[Events] ❌ Error logging network_reconnected: ${e.message}")
         }
     }
 

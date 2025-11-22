@@ -1,6 +1,6 @@
 package com.nongtri.app.data.api
 
-import com.nongtri.app.BuildConfig
+import com.nongtri.app.AppConfig
 import io.ktor.client.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.logging.*
@@ -14,7 +14,7 @@ import kotlinx.serialization.json.Json
  * Provides a shared HttpClient instance with proper configuration
  */
 class ApiClient private constructor() {
-    val baseUrl: String = BuildConfig.API_URL
+    val baseUrl: String = AppConfig.API_URL
 
     val client = HttpClient {
         install(ContentNegotiation) {
@@ -37,7 +37,7 @@ class ApiClient private constructor() {
                     }
                     // Only log in debug builds (release builds skip logging)
                     // For production, set level to NONE or remove this logger entirely
-                    if (BuildConfig.VERSION_NAME.contains("debug", ignoreCase = true) || 
+                    if (AppConfig.VERSION_NAME.contains("debug", ignoreCase = true) || 
                         System.getProperty("debug") == "true") {
                         println("[ApiClient] $redacted")
                     }

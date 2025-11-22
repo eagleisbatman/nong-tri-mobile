@@ -9,6 +9,7 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -34,11 +35,20 @@ fun DiagnosisPendingCard(
     strings: com.nongtri.app.l10n.Strings,
     modifier: Modifier = Modifier
 ) {
-    // ROUND 7: Track pending card viewed
+    // ROUND 7: Track pending card viewed + time on surface
+    val viewStartTime = remember(jobId) { System.currentTimeMillis() }
     LaunchedEffect(jobId) {
-        com.nongtri.app.analytics.Events.logDiagnosisPendingCardViewed(
-            jobId = jobId
-        )
+        com.nongtri.app.analytics.Events.logDiagnosisPendingCardViewed(jobId = jobId)
+        com.nongtri.app.analytics.Events.logDiagnosisPendingSurfaceViewed(jobId = jobId)
+    }
+    DisposableEffect(jobId) {
+        onDispose {
+            val duration = System.currentTimeMillis() - viewStartTime
+            com.nongtri.app.analytics.Events.logDiagnosisPendingSurfaceTimeSpent(
+                jobId = jobId,
+                timeSpentMs = duration
+            )
+        }
     }
 
     // Pulsing animation for the card

@@ -5,7 +5,7 @@ import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.util.Log
 import android.widget.Toast
-import com.nongtri.app.BuildConfig
+import com.nongtri.app.AppConfig
 import com.nongtri.app.data.preferences.UserPreferences
 import com.nongtri.app.l10n.LocalizationProvider
 import kotlinx.coroutines.Dispatchers
@@ -246,12 +246,12 @@ actual class TextToSpeechManager(
             .toRequestBody("application/json".toMediaType())
 
         val request = Request.Builder()
-            .url("${BuildConfig.API_URL}/api/tts")
+            .url("${AppConfig.API_URL}/api/tts")
             .post(requestBody)
             .build()
 
         // Execute request to get audio URL from backend
-        Log.d(TAG, "TTS: Sending request to ${BuildConfig.API_URL}/api/tts")
+        Log.d(TAG, "TTS: Sending request to ${AppConfig.API_URL}/api/tts")
         val (chunkUrls, primaryUrl) = client.newCall(request).execute().use { response ->
             Log.d(TAG, "TTS: Backend response code: ${response.code}")
 

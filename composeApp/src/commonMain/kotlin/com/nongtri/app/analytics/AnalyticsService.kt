@@ -19,8 +19,9 @@ expect object AnalyticsService {
     /**
      * Initialize analytics providers (Firebase, PostHog, etc.)
      * Call this in MainActivity.onCreate()
+     * @param context Optional context (Android only, for PostHog initialization)
      */
-    fun initialize()
+    fun initialize(context: Any? = null)
 
     /**
      * Log an event with parameters

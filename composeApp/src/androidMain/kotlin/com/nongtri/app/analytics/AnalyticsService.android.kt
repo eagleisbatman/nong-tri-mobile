@@ -5,7 +5,7 @@ import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.analytics.ktx.analytics
 import com.google.firebase.crashlytics.ktx.crashlytics
 import com.google.firebase.ktx.Firebase
-import com.nongtri.app.BuildConfig
+import com.nongtri.app.AppConfig
 import com.nongtri.app.data.preferences.UserPreferences
 import com.posthog.android.PostHogAndroid
 import com.posthog.android.PostHogAndroidConfig
@@ -17,22 +17,39 @@ actual object AnalyticsService {
     private lateinit var analytics: FirebaseAnalytics
     private var isInitialized = false
     private var posthog: PostHogAndroid? = null
+    private var applicationContext: android.content.Context? = null
 
-    actual fun initialize() {
+    actual fun initialize(context: Any?) {
         if (!isInitialized) {
             analytics = Firebase.analytics
             analytics.setAnalyticsCollectionEnabled(true)
 
-            if (BuildConfig.POSTHOG_API_KEY.isNotBlank() && BuildConfig.POSTHOG_HOST.isNotBlank()) {
-                val config = PostHogAndroidConfig(
-                    apiKey = BuildConfig.POSTHOG_API_KEY,
-                    host = BuildConfig.POSTHOG_HOST
-                )
-                posthog = PostHogAndroid.setup(Firebase.app.applicationContext, config)
-                println("[AnalyticsService] ✅ PostHog initialized")
+            // Get application context from parameter
+            applicationContext = if (context is android.content.Context) {
+                context.applicationContext
             } else {
-                println("[AnalyticsService] ⚠️ PostHog not configured")
+                null
             }
+
+            // TODO: Fix PostHog integration - SDK API needs verification
+            // PostHog initialization temporarily disabled due to API compatibility issues
+            /*
+            val posthogApiKey = com.nongtri.app.BuildConfig.POSTHOG_API_KEY
+            val posthogHost = com.nongtri.app.BuildConfig.POSTHOG_HOST
+            if (posthogApiKey.isNotBlank() && posthogHost.isNotBlank() && applicationContext != null) {
+                try {
+                    val config = PostHogAndroidConfig(
+                        apiKey = posthogApiKey,
+                        host = posthogHost
+                    )
+                    PostHogAndroid.setup(applicationContext!! as android.app.Application, config)
+                    posthog = PostHogAndroid.getInstance()
+                    println("[AnalyticsService] ✅ PostHog initialized")
+                } catch (e: Exception) {
+                    println("[AnalyticsService] ⚠️ PostHog initialization failed: ${e.message}")
+                }
+            }
+            */
 
             isInitialized = true
             println("[AnalyticsService] ✅ Initialized successfully")
@@ -42,7 +59,7 @@ actual object AnalyticsService {
     actual fun logEvent(eventName: String, params: Map<String, Any>) {
         if (!isInitialized) {
             println("[AnalyticsService] ⚠️ WARNING: Not initialized! Call initialize() first")
-            initialize()
+            initialize(null)
         }
 
         try {
@@ -62,7 +79,8 @@ actual object AnalyticsService {
 
             addGlobalParameters(bundle)
             analytics.logEvent(eventName, bundle)
-            posthog?.capture(eventName, params.mapValues { it.value })
+            // TODO: Re-enable PostHog once API is fixed
+            // posthog?.capture(eventName, params.mapValues { it.value })
 
             Firebase.crashlytics.log("Event: $eventName")
             println("[AnalyticsService] 📊 Event logged: $eventName (${params.size} params)")
@@ -77,20 +95,21 @@ actual object AnalyticsService {
         try {
             val prefs = UserPreferences.getInstance()
 
-            bundle.putString("app_version", BuildConfig.VERSION_NAME)
-            posthog?.register(mapOf("app_version" to BuildConfig.VERSION_NAME))
+            bundle.putString("app_version", AppConfig.VERSION_NAME)
+            // TODO: Re-enable PostHog once API is fixed
+            // posthog?.register(mapOf("app_version" to AppConfig.VERSION_NAME))
 
             bundle.putString("user_language", prefs.language.value.code)
-            posthog?.register(mapOf("user_language" to prefs.language.value.code))
+            // posthog?.register(mapOf("user_language" to prefs.language.value.code))
 
             val locationRepo = com.nongtri.app.data.repository.LocationRepository.getInstance()
             val hasLocation = locationRepo.hasLocation()
             bundle.putBoolean("has_location", hasLocation)
             bundle.putString("location_type", locationRepo.getLocationType())
-            posthog?.register(mapOf(
-                "has_location" to hasLocation,
-                "location_type" to locationRepo.getLocationType()
-            ))
+            // posthog?.register(mapOf(
+            //     "has_location" to hasLocation,
+            //     "location_type" to locationRepo.getLocationType()
+            // ))
 
             val cachedLocation = locationRepo.getCachedLocation()
             if (cachedLocation != null) {
@@ -100,22 +119,22 @@ actual object AnalyticsService {
                 bundle.putString("location_country", country)
                 bundle.putString("location_region", region)
                 bundle.putString("location_city", city)
-                posthog?.register(mapOf(
-                    "location_country" to country,
-                    "location_region" to region,
-                    "location_city" to city
-                ))
+                // posthog?.register(mapOf(
+                //     "location_country" to country,
+                //     "location_region" to region,
+                //     "location_city" to city
+                // ))
             }
 
             val timeZone = java.util.TimeZone.getDefault()
             bundle.putString("device_timezone_id", timeZone.id)
             bundle.putInt("timezone_offset_hours", timeZone.rawOffset / (1000 * 60 * 60))
             bundle.putString("platform", "android")
-            posthog?.register(mapOf(
-                "platform" to "android",
-                "device_timezone_id" to timeZone.id,
-                "timezone_offset_hours" to timeZone.rawOffset / (1000 * 60 * 60)
-            ))
+            // posthog?.register(mapOf(
+            //     "platform" to "android",
+            //     "device_timezone_id" to timeZone.id,
+            //     "timezone_offset_hours" to timeZone.rawOffset / (1000 * 60 * 60)
+            // ))
 
         } catch (e: Exception) {
             println("[AnalyticsService] ⚠️ Error adding global parameters: ${e.message}")
@@ -123,12 +142,13 @@ actual object AnalyticsService {
     }
 
     actual fun setUserId(userId: String) {
-        if (!isInitialized) initialize()
+        if (!isInitialized) initialize(null)
 
         try {
             analytics.setUserId(userId)
             Firebase.crashlytics.setUserId(userId)
-            posthog?.identify(userId, null, mapOf("user_id" to userId))
+            // TODO: Re-enable PostHog once API is fixed
+            // posthog?.identify(userId, null, mapOf("user_id" to userId))
             println("[AnalyticsService] 👤 User ID set: $userId")
         } catch (e: Exception) {
             println("[AnalyticsService] ❌ Error setting user ID: ${e.message}")
@@ -136,11 +156,12 @@ actual object AnalyticsService {
     }
 
     actual fun setUserProperty(name: String, value: String) {
-        if (!isInitialized) initialize()
+        if (!isInitialized) initialize(null)
 
         try {
             analytics.setUserProperty(name, value)
-            posthog?.register(mapOf(name to value))
+            // TODO: Re-enable PostHog once API is fixed
+            // posthog?.register(mapOf(name to value))
             println("[AnalyticsService] 🏷️ User property set: $name = $value")
         } catch (e: Exception) {
             println("[AnalyticsService] ❌ Error setting user property: ${e.message}")
@@ -148,7 +169,7 @@ actual object AnalyticsService {
     }
 
     actual fun updateUserProperties() {
-        if (!isInitialized) initialize()
+        if (!isInitialized) initialize(null)
 
         try {
             val prefs = UserPreferences.getInstance()
@@ -159,7 +180,7 @@ actual object AnalyticsService {
     }
 
     actual fun logScreenView(screenName: String, screenClass: String) {
-        if (!isInitialized) initialize()
+        if (!isInitialized) initialize(null)
 
         try {
             val bundle = Bundle().apply {
@@ -167,7 +188,8 @@ actual object AnalyticsService {
                 putString(FirebaseAnalytics.Param.SCREEN_CLASS, screenClass)
             }
             analytics.logEvent(FirebaseAnalytics.Event.SCREEN_VIEW, bundle)
-            posthog?.capture("screen_view", mapOf("screen_name" to screenName, "screen_class" to screenClass))
+            // TODO: Re-enable PostHog once API is fixed
+            // posthog?.capture("screen_view", mapOf("screen_name" to screenName, "screen_class" to screenClass))
             println("[AnalyticsService] 📺 Screen view logged: $screenName ($screenClass)")
         } catch (e: Exception) {
             println("[AnalyticsService] ❌ Error logging screen view: ${e.message}")

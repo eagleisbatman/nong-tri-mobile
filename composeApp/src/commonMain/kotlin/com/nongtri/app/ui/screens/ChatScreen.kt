@@ -950,7 +950,6 @@ fun ChatScreen(
     }
 
     // Location Bottom Sheet
-    var locationSheetStart by remember { mutableStateOf<Long?>(null) }
     if (showLocationBottomSheet) {
         val locationState by locationViewModel.locationState.collectAsState()
 

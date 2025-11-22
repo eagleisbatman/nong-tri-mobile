@@ -1,6 +1,6 @@
 package com.nongtri.app.data.api
 
-import com.nongtri.app.BuildConfig
+import com.nongtri.app.AppConfig
 import com.nongtri.app.data.preferences.UserPreferences
 import com.nongtri.app.l10n.LocalizationProvider
 import io.ktor.client.*
@@ -28,7 +28,7 @@ data class StreamMetadata(
 )
 
 class NongTriApi(
-    private val baseUrl: String = BuildConfig.API_URL
+    private val baseUrl: String = AppConfig.API_URL
 ) {
     private val userPreferences by lazy { UserPreferences.getInstance() }
 
@@ -55,7 +55,7 @@ class NongTriApi(
                         message
                     }
                     // Only log in debug builds (release builds skip logging)
-                    if (BuildConfig.VERSION_NAME.contains("debug", ignoreCase = true) || 
+                    if (AppConfig.VERSION_NAME.contains("debug", ignoreCase = true) || 
                         System.getProperty("debug") == "true") {
                         println("[NongTriApi] $redacted")
                     }

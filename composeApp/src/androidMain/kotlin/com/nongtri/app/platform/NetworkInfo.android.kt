@@ -3,12 +3,18 @@ package com.nongtri.app.platform
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
-import com.nongtri.app.App
 
 actual object NetworkInfo {
+    private var applicationContext: Context? = null
+
+    fun initialize(context: Context) {
+        applicationContext = context.applicationContext
+    }
+
     actual fun getNetworkType(): String {
+        val context = applicationContext ?: return "unknown"
         return try {
-            val cm = App.context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+            val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
             val network = cm.activeNetwork ?: return "none"
             val caps = cm.getNetworkCapabilities(network) ?: return "unknown"
             return when {

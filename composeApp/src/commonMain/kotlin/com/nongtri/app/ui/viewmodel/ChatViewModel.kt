@@ -396,7 +396,8 @@ class ChatViewModel(
                                         content = diagnosis.aiResponse ?: strings.diagnosisCompleted,
                                         timestamp = Clock.System.now(),
                                         diagnosisData = diagnosis.diagnosisData,
-                                        language = diagnosis.responseLanguage ?: "vi"
+                                        language = diagnosis.responseLanguage ?: "vi",
+                                        diagnosisPendingJobId = jobId
                                     )
 
                                     // Remove from active jobs and persisted set
@@ -525,7 +526,8 @@ class ChatViewModel(
                                             content = diagnosis.aiResponse ?: strings.diagnosisCompleted,
                                             timestamp = Clock.System.now(),
                                             diagnosisData = diagnosis.diagnosisData,
-                                            language = diagnosis.responseLanguage ?: "vi"
+                                            language = diagnosis.responseLanguage ?: "vi",
+                                            diagnosisPendingJobId = jobId
                                         )
 
                                         // Remove from active jobs and persisted set

@@ -178,7 +178,7 @@ class MainActivity : ComponentActivity() {
         UserPreferences.initialize(applicationContext)
 
         // Initialize Firebase Analytics
-        com.nongtri.app.analytics.AnalyticsService.initialize()
+        com.nongtri.app.analytics.AnalyticsService.initialize(applicationContext)
 
         // Set user ID for analytics
         val deviceId = UserPreferences.getInstance().getDeviceId()
@@ -214,6 +214,9 @@ class MainActivity : ComponentActivity() {
 
         // BATCH 3: Initialize NetworkMonitor for reconnection tracking
         networkMonitor = com.nongtri.app.platform.NetworkMonitor.getInstance(applicationContext)
+        
+        // Initialize NetworkInfo
+        com.nongtri.app.platform.NetworkInfo.initialize(applicationContext)
 
         // Initialize FCM for push notifications
         val fcmService = FCMService(applicationContext)

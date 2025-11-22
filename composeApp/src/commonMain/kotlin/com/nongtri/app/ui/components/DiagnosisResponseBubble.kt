@@ -36,16 +36,34 @@ fun DiagnosisResponseBubble(
     onAudioUrlCached: (String, String) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier
 ) {
-    // ROUND 6: Track diagnosis result read when displayed
-    val displayStartTime = remember { System.currentTimeMillis() }
+    val jobId = message.diagnosisPendingJobId ?: message.id
+    val displayStartTime = remember(message.id) { System.currentTimeMillis() }
+
+    // ROUND 6/10: Track diagnosis result viewed + time on surface
     LaunchedEffect(message.diagnosisData) {
         if (message.diagnosisData != null) {
-            val readTimeMs = System.currentTimeMillis() - displayStartTime
-            com.nongtri.app.analytics.Events.logDiagnosisResultRead(
-                jobId = message.diagnosisPendingJobId ?: message.id,
-                readTimeMs = readTimeMs,
-                scrollPercent = 100
+            com.nongtri.app.analytics.Events.logDiagnosisResultSurfaceViewed(
+                jobId = jobId,
+                resultLength = message.content.length
             )
+        }
+    }
+
+    DisposableEffect(message.id) {
+        onDispose {
+            if (message.diagnosisData != null) {
+                val timeSpent = System.currentTimeMillis() - displayStartTime
+                com.nongtri.app.analytics.Events.logDiagnosisResultRead(
+                    jobId = jobId,
+                    readTimeMs = timeSpent,
+                    scrollPercent = 100
+                )
+                com.nongtri.app.analytics.Events.logDiagnosisResultSurfaceTimeSpent(
+                    jobId = jobId,
+                    timeSpentMs = timeSpent,
+                    resultLength = message.content.length
+                )
+            }
         }
     }
 
