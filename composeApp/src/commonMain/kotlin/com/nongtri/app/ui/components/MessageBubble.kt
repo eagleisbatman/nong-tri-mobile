@@ -3,8 +3,10 @@ package com.nongtri.app.ui.components
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -67,6 +69,18 @@ fun MessageBubble(
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp)  // Increased vertical padding for better spacing
             .testTag(TestTags.messageBubble(index))
+            .pointerInput(message.id) {
+                detectTapGestures(
+                    onLongPress = {
+                        com.nongtri.app.analytics.Events.logMessageLongPressed(
+                            messageIndex = index,
+                            messageType = message.messageType ?: "text",
+                            messageLength = message.content.length,
+                            isUserMessage = isUser
+                        )
+                    }
+                )
+            }
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),

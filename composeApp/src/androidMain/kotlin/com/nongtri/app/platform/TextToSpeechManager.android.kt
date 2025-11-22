@@ -415,6 +415,20 @@ actual class TextToSpeechManager(
     }
 
     actual fun stop() {
+        mediaPlayer?.let {
+            val position = it.currentPosition
+            val duration = audioDurationMs
+            
+            // Track stop event if was playing
+            if (_state.value == TtsState.PLAYING || _state.value == TtsState.PAUSED) {
+                com.nongtri.app.analytics.Events.logTtsPlaybackStopped(
+                    messageIndex = 0, // Default, caller should set context
+                    playbackPositionMs = position.toLong(),
+                    audioDurationMs = duration
+                )
+            }
+        }
+        
         stopInternal()
         isProcessing = false
         currentAudioFile = null

@@ -135,10 +135,21 @@ actual class VoiceMessagePlayer(private val context: Context) {
         positionUpdateJob?.cancel()  // Stop position updates when pausing
         mediaPlayer?.let {
             if (it.isPlaying) {
+                val position = it.currentPosition
+                val duration = _duration.value
                 it.pause()
-                _position.value = it.currentPosition
+                _position.value = position
                 _isPlaying.value = false
-                Log.d(TAG, "Paused at ${it.currentPosition}ms")
+                Log.d(TAG, "Paused at ${position}ms")
+                
+                // Track pause event
+                _currentUrl.value?.let { url ->
+                    com.nongtri.app.analytics.Events.logVoiceMessagePlaybackPaused(
+                        messageId = url,
+                        playbackPositionMs = position.toLong(),
+                        durationMs = duration.toLong()
+                    )
+                }
             }
         }
     }

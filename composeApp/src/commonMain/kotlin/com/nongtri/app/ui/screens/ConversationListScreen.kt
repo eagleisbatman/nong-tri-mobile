@@ -76,7 +76,14 @@ fun ConversationListScreen(
                 },
                 navigationIcon = {
                     IconButton(
-                        onClick = onNavigateBack,
+                        onClick = {
+                            val timeOnScreen = System.currentTimeMillis() - screenDisplayTime
+                            com.nongtri.app.analytics.Events.logBackButtonClicked(
+                                screenName = "conversation_list",
+                                timeOnScreenMs = timeOnScreen
+                            )
+                            onNavigateBack()
+                        },
                         modifier = Modifier.testTag(TestTags.BACK_BUTTON)
                     ) {
                         Icon(
@@ -95,6 +102,10 @@ fun ConversationListScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
+                    com.nongtri.app.analytics.Events.logNewChatButtonClicked(
+                        triggerLocation = "fab",
+                        currentThreadId = null
+                    )
                     viewModel.createNewThread { thread ->
                         // ROUND 8: Track conversation created (in callback when we have the ID)
                         com.nongtri.app.analytics.Events.logConversationCreated(
@@ -196,6 +207,18 @@ fun ConversationListScreen(
                                     com.nongtri.app.analytics.Events.logConversationItemClicked(
                                         conversationId = thread.id.toString(),
                                         position = index + 1 // 1-based for analytics
+                                    )
+                                    // Track thread item clicked with detailed properties
+                                    val threadAgeDays = if (thread.updatedAt != null) {
+                                        val now = kotlinx.datetime.Clock.System.now()
+                                        val updated = thread.updatedAt
+                                        kotlin.time.Duration.between(updated, now).inWholeDays.toInt()
+                                    } else 0
+                                    com.nongtri.app.analytics.Events.logThreadItemClicked(
+                                        threadId = thread.id,
+                                        threadPosition = index + 1,
+                                        threadAgeDays = threadAgeDays,
+                                        messageCount = thread.messageCount ?: 0
                                     )
                                     onThreadSelected(thread.id, thread.title)
                                 },

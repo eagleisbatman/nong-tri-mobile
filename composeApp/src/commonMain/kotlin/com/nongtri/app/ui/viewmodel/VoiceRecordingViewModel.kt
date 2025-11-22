@@ -126,6 +126,12 @@ class VoiceRecordingViewModel(
                     // Error haptic feedback - recording too short
                     hapticFeedback.error()
 
+                    // Track recording too short event
+                    com.nongtri.app.analytics.Events.logVoiceRecordingTooShort(
+                        durationMs = durationMs,
+                        minDurationMs = 500L
+                    )
+
                     // Track recording error
                     com.nongtri.app.analytics.Events.logVoiceRecordingError(
                         errorType = "recording_too_short",

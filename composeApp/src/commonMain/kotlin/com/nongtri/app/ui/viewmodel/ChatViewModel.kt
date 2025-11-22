@@ -285,6 +285,8 @@ class ChatViewModel(
      */
     fun switchToThread(threadId: Int, threadTitle: String? = null) {
         viewModelScope.launch {
+            val previousThreadId = _uiState.value.currentThreadId
+            
             _uiState.update {
                 it.copy(
                     currentThreadId = threadId,
@@ -292,6 +294,16 @@ class ChatViewModel(
                     messages = emptyList() // Clear current messages
                 )
             }
+            
+            // Track thread switch
+            if (previousThreadId != null && previousThreadId != threadId) {
+                Events.logThreadSwitched(
+                    fromThreadId = previousThreadId,
+                    toThreadId = threadId,
+                    switchMethod = "manual"
+                )
+            }
+            
             loadThreadMessages(threadId)
         }
     }
@@ -479,6 +491,9 @@ class ChatViewModel(
         
         // Ensure job ID is tracked in active set
         activeDiagnosisJobIds.add(jobId)
+        
+        val pollingStartTime = System.currentTimeMillis()
+        Events.logDiagnosisPollingStarted(jobId = jobId, initialDelayMs = 10000L)
 
         viewModelScope.launch {
             var pollCount = 0
@@ -552,10 +567,26 @@ class ChatViewModel(
                                     }
 
                                     // Stop polling - diagnosis complete
+                                    val totalPollTime = System.currentTimeMillis() - pollingStartTime
+                                    Events.logDiagnosisPollingStopped(
+                                        jobId = jobId,
+                                        pollCount = pollCount,
+                                        totalPollTimeMs = totalPollTime,
+                                        resultReceived = true
+                                    )
                                     return@launch
                                 }
                                 "failed" -> {
                                     println("[ChatViewModel] ✗ Diagnosis failed: ${response.error}")
+
+                                    // Stop polling - diagnosis failed
+                                    val totalPollTime = System.currentTimeMillis() - pollingStartTime
+                                    Events.logDiagnosisPollingStopped(
+                                        jobId = jobId,
+                                        pollCount = pollCount,
+                                        totalPollTimeMs = totalPollTime,
+                                        resultReceived = false
+                                    )
 
                                     // Remove pending card and show error
                                     _uiState.update { state ->

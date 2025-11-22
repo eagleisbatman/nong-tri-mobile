@@ -171,6 +171,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        val coldStartTime = System.currentTimeMillis()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
@@ -194,6 +195,15 @@ class MainActivity : ComponentActivity() {
             entryPoint = if (intent?.action == android.content.Intent.ACTION_VIEW) "deeplink"
             else if (intent?.hasExtra("jobId") == true) "notification"
             else "launcher"
+        )
+        
+        // Track app cold start time
+        val onCreateEndTime = System.currentTimeMillis()
+        val coldStartDuration = onCreateEndTime - coldStartTime
+        com.nongtri.app.analytics.Events.logAppColdStartTime(
+            startTimeMs = coldStartDuration,
+            deviceModel = android.os.Build.MODEL,
+            androidVersion = android.os.Build.VERSION.RELEASE
         )
 
         // Track onboarding funnel step 1 (for first-time users only)

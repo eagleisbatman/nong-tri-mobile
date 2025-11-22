@@ -2279,4 +2279,444 @@ object Events {
             println("[Events] ❌ Error logging milestone_reached: ${e.message}")
         }
     }
+
+    // ============================================================================
+    // PHASE 1: CRITICAL MISSING EVENTS - THREAD MANAGEMENT
+    // ============================================================================
+
+    /**
+     * User switched between threads
+     */
+    fun logThreadSwitched(fromThreadId: Int, toThreadId: Int, switchMethod: String) {
+        try {
+            AnalyticsService.logEvent("thread_switched", mapOf(
+                "from_thread_id" to fromThreadId,
+                "to_thread_id" to toThreadId,
+                "switch_method" to switchMethod // "manual", "menu", "back", "new"
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging thread_switched: ${e.message}")
+        }
+    }
+
+    /**
+     * User clicked thread item in conversation list
+     */
+    fun logThreadItemClicked(threadId: Int, threadPosition: Int, threadAgeDays: Int, messageCount: Int) {
+        try {
+            AnalyticsService.logEvent("thread_item_clicked", mapOf(
+                "thread_id" to threadId,
+                "thread_position" to threadPosition,
+                "thread_age_days" to threadAgeDays,
+                "message_count" to messageCount
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging thread_item_clicked: ${e.message}")
+        }
+    }
+
+    /**
+     * User edited thread title
+     */
+    fun logThreadTitleEdited(threadId: Int, oldTitleLength: Int, newTitleLength: Int, editMethod: String) {
+        try {
+            AnalyticsService.logEvent("thread_title_edited", mapOf(
+                "thread_id" to threadId,
+                "old_title_length" to oldTitleLength,
+                "new_title_length" to newTitleLength,
+                "edit_method" to editMethod
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging thread_title_edited: ${e.message}")
+        }
+    }
+
+    /**
+     * User archived a thread
+     */
+    fun logThreadArchived(threadId: Int, threadAgeDays: Int, messageCount: Int) {
+        try {
+            AnalyticsService.logEvent("thread_archived", mapOf(
+                "thread_id" to threadId,
+                "thread_age_days" to threadAgeDays,
+                "message_count" to messageCount
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging thread_archived: ${e.message}")
+        }
+    }
+
+    // ============================================================================
+    // PHASE 1: CRITICAL MISSING EVENTS - PERFORMANCE METRICS
+    // ============================================================================
+
+    /**
+     * App cold start time (from onCreate to first render)
+     */
+    fun logAppColdStartTime(startTimeMs: Long, deviceModel: String, androidVersion: String) {
+        try {
+            AnalyticsService.logEvent("app_cold_start_time", mapOf(
+                "start_time_ms" to startTimeMs,
+                "device_model" to deviceModel,
+                "android_version" to androidVersion
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging app_cold_start_time: ${e.message}")
+        }
+    }
+
+    /**
+     * App warm start time (from onResume to first render)
+     */
+    fun logAppWarmStartTime(startTimeMs: Long, backgroundDurationMs: Long) {
+        try {
+            AnalyticsService.logEvent("app_warm_start_time", mapOf(
+                "start_time_ms" to startTimeMs,
+                "background_duration_ms" to backgroundDurationMs
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging app_warm_start_time: ${e.message}")
+        }
+    }
+
+    // ============================================================================
+    // PHASE 2: IMPORTANT EVENTS - MESSAGE INTERACTIONS
+    // ============================================================================
+
+    /**
+     * User long-pressed a message
+     */
+    fun logMessageLongPressed(messageIndex: Int, messageType: String, messageLength: Int, isUserMessage: Boolean) {
+        try {
+            AnalyticsService.logEvent("message_long_pressed", mapOf(
+                "message_index" to messageIndex,
+                "message_type" to messageType,
+                "message_length_chars" to messageLength,
+                "is_user_message" to isUserMessage
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging message_long_pressed: ${e.message}")
+        }
+    }
+
+    /**
+     * User clicked retry after message failure
+     */
+    fun logMessageRetryClicked(messageIndex: Int, errorType: String, retryCount: Int) {
+        try {
+            AnalyticsService.logEvent("message_retry_clicked", mapOf(
+                "message_index" to messageIndex,
+                "error_type" to errorType,
+                "retry_count" to retryCount
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging message_retry_clicked: ${e.message}")
+        }
+    }
+
+    /**
+     * User edited message before sending
+     */
+    fun logMessageEdited(originalLength: Int, editedLength: Int, editCount: Int, timeBeforeSendMs: Long) {
+        try {
+            AnalyticsService.logEvent("message_edited", mapOf(
+                "original_length" to originalLength,
+                "edited_length" to editedLength,
+                "edit_count" to editCount,
+                "time_before_send_ms" to timeBeforeSendMs
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging message_edited: ${e.message}")
+        }
+    }
+
+    // ============================================================================
+    // PHASE 2: IMPORTANT EVENTS - MENU & NAVIGATION
+    // ============================================================================
+
+    /**
+     * User clicked new chat button
+     */
+    fun logNewChatButtonClicked(triggerLocation: String, currentThreadId: Int?) {
+        try {
+            AnalyticsService.logEvent("new_chat_button_clicked", mapOf(
+                "trigger_location" to triggerLocation, // "menu", "fab", "conversation_list"
+                "current_thread_id" to (currentThreadId ?: 0)
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging new_chat_button_clicked: ${e.message}")
+        }
+    }
+
+    /**
+     * User clicked back button
+     */
+    fun logBackButtonClicked(screenName: String, timeOnScreenMs: Long) {
+        try {
+            AnalyticsService.logEvent("back_button_clicked", mapOf(
+                "screen_name" to screenName,
+                "time_on_screen_ms" to timeOnScreenMs
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging back_button_clicked: ${e.message}")
+        }
+    }
+
+    // ============================================================================
+    // PHASE 2: IMPORTANT EVENTS - IMAGE DIAGNOSIS
+    // ============================================================================
+
+    /**
+     * User expanded diagnosis result card
+     */
+    fun logDiagnosisResultExpanded(jobId: String, resultLength: Int, expandMethod: String) {
+        try {
+            AnalyticsService.logEvent("diagnosis_result_expanded", mapOf(
+                "job_id" to jobId,
+                "result_length_chars" to resultLength,
+                "expand_method" to expandMethod // "tap", "swipe"
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging diagnosis_result_expanded: ${e.message}")
+        }
+    }
+
+    /**
+     * User collapsed diagnosis result card
+     */
+    fun logDiagnosisResultCollapsed(jobId: String, timeExpandedMs: Long) {
+        try {
+            AnalyticsService.logEvent("diagnosis_result_collapsed", mapOf(
+                "job_id" to jobId,
+                "time_expanded_ms" to timeExpandedMs
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging diagnosis_result_collapsed: ${e.message}")
+        }
+    }
+
+    /**
+     * Started polling for diagnosis result
+     */
+    fun logDiagnosisPollingStarted(jobId: String, initialDelayMs: Long) {
+        try {
+            AnalyticsService.logEvent("diagnosis_polling_started", mapOf(
+                "job_id" to jobId,
+                "initial_delay_ms" to initialDelayMs
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging diagnosis_polling_started: ${e.message}")
+        }
+    }
+
+    /**
+     * Stopped polling for diagnosis result
+     */
+    fun logDiagnosisPollingStopped(jobId: String, pollCount: Int, totalPollTimeMs: Long, resultReceived: Boolean) {
+        try {
+            AnalyticsService.logEvent("diagnosis_polling_stopped", mapOf(
+                "job_id" to jobId,
+                "poll_count" to pollCount,
+                "total_poll_time_ms" to totalPollTimeMs,
+                "result_received" to resultReceived
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging diagnosis_polling_stopped: ${e.message}")
+        }
+    }
+
+    /**
+     * User zoomed diagnosis image
+     */
+    fun logDiagnosisImageZoomed(jobId: String, zoomLevel: Float, zoomDurationMs: Long) {
+        try {
+            AnalyticsService.logEvent("diagnosis_image_zoomed", mapOf(
+                "job_id" to jobId,
+                "zoom_level" to zoomLevel,
+                "zoom_duration_ms" to zoomDurationMs
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging diagnosis_image_zoomed: ${e.message}")
+        }
+    }
+
+    // ============================================================================
+    // PHASE 2: IMPORTANT EVENTS - VOICE MESSAGES
+    // ============================================================================
+
+    /**
+     * User paused voice message playback
+     */
+    fun logVoiceMessagePlaybackPaused(messageId: String, playbackPositionMs: Long, durationMs: Long) {
+        try {
+            AnalyticsService.logEvent("voice_message_playback_paused", mapOf(
+                "message_id" to messageId,
+                "playback_position_ms" to playbackPositionMs,
+                "duration_ms" to durationMs
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging voice_message_playback_paused: ${e.message}")
+        }
+    }
+
+    /**
+     * User sought in voice message playback
+     */
+    fun logVoiceMessagePlaybackSeeked(messageId: String, fromPositionMs: Long, toPositionMs: Long) {
+        try {
+            AnalyticsService.logEvent("voice_message_playback_seeked", mapOf(
+                "message_id" to messageId,
+                "from_position_ms" to fromPositionMs,
+                "to_position_ms" to toPositionMs
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging voice_message_playback_seeked: ${e.message}")
+        }
+    }
+
+    /**
+     * Voice recording cancelled for being too short
+     */
+    fun logVoiceRecordingTooShort(durationMs: Long, minDurationMs: Long) {
+        try {
+            AnalyticsService.logEvent("voice_recording_too_short", mapOf(
+                "duration_ms" to durationMs,
+                "min_duration_ms" to minDurationMs
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging voice_recording_too_short: ${e.message}")
+        }
+    }
+
+    // ============================================================================
+    // PHASE 2: IMPORTANT EVENTS - TTS
+    // ============================================================================
+
+    /**
+     * User sought in TTS playback
+     */
+    fun logTtsPlaybackSeeked(messageIndex: Int, fromPositionMs: Long, toPositionMs: Long) {
+        try {
+            AnalyticsService.logEvent("tts_playback_seeked", mapOf(
+                "message_index" to messageIndex,
+                "from_position_ms" to fromPositionMs,
+                "to_position_ms" to toPositionMs
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging tts_playback_seeked: ${e.message}")
+        }
+    }
+
+    /**
+     * User stopped TTS playback (different from pause)
+     */
+    fun logTtsPlaybackStopped(messageIndex: Int, playbackPositionMs: Long, audioDurationMs: Long) {
+        try {
+            AnalyticsService.logEvent("tts_playback_stopped", mapOf(
+                "message_index" to messageIndex,
+                "playback_position_ms" to playbackPositionMs,
+                "audio_duration_ms" to audioDurationMs
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging tts_playback_stopped: ${e.message}")
+        }
+    }
+
+    // ============================================================================
+    // PHASE 2: IMPORTANT EVENTS - LOCATION
+    // ============================================================================
+
+    /**
+     * User clicked to update location
+     */
+    fun logLocationUpdateClicked(currentLocationType: String, triggerLocation: String) {
+        try {
+            AnalyticsService.logEvent("location_update_clicked", mapOf(
+                "current_location_type" to currentLocationType,
+                "trigger_location" to triggerLocation
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging location_update_clicked: ${e.message}")
+        }
+    }
+
+    /**
+     * User opened settings for location permission
+     */
+    fun logLocationPermissionSettingsOpened(denialCount: Int, trigger: String) {
+        try {
+            AnalyticsService.logEvent("location_permission_settings_opened", mapOf(
+                "denial_count" to denialCount,
+                "trigger" to trigger
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging location_permission_settings_opened: ${e.message}")
+        }
+    }
+
+    // ============================================================================
+    // PHASE 2: IMPORTANT EVENTS - USER ENGAGEMENT
+    // ============================================================================
+
+    /**
+     * User dismissed welcome card
+     */
+    fun logWelcomeCardDismissed(timeDisplayedMs: Long, dismissalMethod: String) {
+        try {
+            AnalyticsService.logEvent("welcome_card_dismissed", mapOf(
+                "time_displayed_ms" to timeDisplayedMs,
+                "dismissal_method" to dismissalMethod // "swipe", "tap", "auto"
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging welcome_card_dismissed: ${e.message}")
+        }
+    }
+
+    /**
+     * User hovered over starter question (if applicable)
+     */
+    fun logStarterQuestionHovered(questionIndex: Int, questionText: String) {
+        try {
+            AnalyticsService.logEvent("starter_question_hovered", mapOf(
+                "question_index" to questionIndex,
+                "question_text" to questionText
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging starter_question_hovered: ${e.message}")
+        }
+    }
+
+    /**
+     * User hovered over follow-up question
+     */
+    fun logFollowUpQuestionHovered(questionIndex: Int, questionText: String, messageIndex: Int) {
+        try {
+            AnalyticsService.logEvent("follow_up_question_hovered", mapOf(
+                "question_index" to questionIndex,
+                "question_text" to questionText,
+                "message_index" to messageIndex
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging follow_up_question_hovered: ${e.message}")
+        }
+    }
+
+    // ============================================================================
+    // PHASE 2: IMPORTANT EVENTS - ERROR RECOVERY
+    // ============================================================================
+
+    /**
+     * User dismissed error dialog
+     */
+    fun logErrorDialogDismissed(errorType: String, errorMessage: String, dismissalMethod: String) {
+        try {
+            AnalyticsService.logEvent("error_dialog_dismissed", mapOf(
+                "error_type" to errorType,
+                "error_message" to errorMessage.substring(0, 200),
+                "dismissal_method" to dismissalMethod
+            ))
+        } catch (e: Exception) {
+            println("[Events] ❌ Error logging error_dialog_dismissed: ${e.message}")
+        }
+    }
 }
