@@ -791,7 +791,7 @@ class NongTriApi(
     }
 
     /**
-     * Get translations for a specific language from Weblate
+     * Get translations for a specific language from Traduora
      */
     suspend fun getTranslations(languageCode: String): Result<com.nongtri.app.data.model.TranslationResponse> {
         return try {

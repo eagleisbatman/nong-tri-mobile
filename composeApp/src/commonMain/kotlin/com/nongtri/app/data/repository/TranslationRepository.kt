@@ -6,7 +6,7 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
 
 /**
- * Repository for managing translations from Weblate API
+ * Repository for managing translations from Traduora API
  *
  * Flow:
  * 1. Check server version vs cached version
